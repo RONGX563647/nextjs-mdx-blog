@@ -51,7 +51,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="zh-CN" suppressHydrationWarning={true}>
-      <body className="min-h-screen flex flex-col">
+      <body className="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-blue-900/20 dark:via-purple-900/20 dark:to-pink-900/20">
         <ThemeProvider attribute="class" defaultTheme="system">
           <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm border-b">
             <Container>

@@ -13,26 +13,30 @@ export default function Home() {
   return (
     <div>
       {/* Hero Section */}
-      <section className="relative overflow-hidden py-32">
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 via-purple-500/20 to-pink-500/20 animate-gradient-x"></div>
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMtMS42NTcgMC0zIDEuMzQzLTMgM3MxLjM0MyAzIDMgMyAzLTEuMzQzIDMtMy0zLTEuMzQzLTMtMy0zem0tMTItN2MtMS42NTcgMC0zIDEuMzQzLTMgM3MxLjM0MyAzIDMgMyAzLTEuMzQzIDMtMy0zLTEuMzQzLTMtMy0zem0tMTIgN2MtMS42NTcgMC0zIDEuMzQzLTMgM3MxLjM0MyAzIDMgMyAzLTEuMzQzIDMtMy0zLTEuMzQzLTMtMy0zem0xMi0xN2MtMS42NTcgMC0zIDEuMzQzLTMgM3MxLjM0MyAzIDMgMyAzLTEuMzQzIDMtMy0zLTEuMzQzLTMtMy0zem0xMi03Yy0xLjY1NyAwLTMgMS4zNDMtMyAzczEuMzQzIDMgMyAzIDMtMS4zNDMgMy0zLTMtMS4zNDMtMy0zLTMtM3pNNjEgMzBjMC0xLjY1Ny0xLjM0My0zLTMtM3MtMyAxLjM0My0zIDMgMS4zNDMgMyAzIDMgMy0xLjM0MyAzLTN6bS00OC0yOGMwLTEuNjU3LTEuMzQzLTMtMy0zcy0zIDEuMzQzLTMgMyAxLjM0MyAzIDMgMyAzLTEuMzQzIDMtMy0zLTEuMzQzLTMtMy0zem0tMTIgN2MtMS42NTcgMC0zIDEuMzQzLTMgM3MxLjM0MyAzIDMgMyAzLTEuMzQzIDMtMy0zLTEuMzQzLTMtMy0zem0tMTItN2MtMS42NTcgMC0zIDEuMzQzLTMgM3MxLjM0MyAzIDMgMyAzLTEuMzQzIDMtMy0zLTEuMzQzLTMtMy0zem0xMi0xN2MtMS42NTcgMC0zIDEuMzQzLTMgM3MxLjM0MyAzIDMgMyAzLTEuMzQzIDMtMy0zLTEuMzQzLTMtMy0zem0xMi03Yy0xLjY1NyAwLTMgMS4zNDMtMyAzczEuMzQzIDMgMyAzIDMtMS4zNDMgMy0zLTMtMS4zNDMtMy0zLTMtM3oiIGZpbGw9IiMyMDIxMjEiIGZpbGwtb3BhY2l0eT0iMC4wNSIvPjwvZz48L3N2Zz4=')]"></div>
-        <div className="relative z-10">
-          <h1 className="text-5xl font-bold tracking-tight lg:text-6xl mb-6">
-            你好，我是 <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">刘荣翔</span>
-          </h1>
-          <p className="text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-2xl">
-            测试开发工程师 | 自动化测试 | 接口/性能测试 | 后端技术支撑
-          </p>
-          <div className="flex flex-wrap gap-4">
-            <Button asChild className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white">
+      <section className="py-40 text-center">
+        <div className="max-w-4xl mx-auto">
+          {/* 3D Text Animation */}
+          <div className="mb-12">
+            <h1 className="font-bold tracking-tight mb-6 animate-3d-pop">
+              <span className="text-4xl md:text-5xl lg:text-6xl">你好，我是</span>
+              <span className="mx-2 text-6xl md:text-7xl lg:text-9xl text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">RONGX</span>
+            </h1>
+            <p className="text-2xl md:text-3xl text-gray-700 dark:text-gray-300 mb-12 max-w-3xl mx-auto">
+              测试开发工程师 | 自动化测试 | 接口/性能测试 |
+            </p>
+          </div>
+          
+          {/* CTA Buttons */}
+          <div className="flex flex-wrap justify-center gap-6">
+            <Button asChild className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white text-lg px-10 py-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300">
               <Link href="/about">了解更多</Link>
             </Button>
-            <Button asChild variant="outline">
+            <Button asChild variant="outline" className="text-lg px-10 py-6 rounded-xl border-2 border-gray-300 dark:border-gray-600 hover:border-blue-600 dark:hover:border-blue-400 hover:bg-white/5 dark:hover:bg-gray-800/50 transition-all duration-300">
               <Link href="/portfolio">查看项目</Link>
             </Button>
-            <Button asChild variant="secondary">
+            <Button asChild variant="secondary" className="text-lg px-10 py-6 rounded-xl bg-white/20 dark:bg-gray-800/20 backdrop-blur-sm hover:bg-white/30 dark:hover:bg-gray-800/30 transition-all duration-300">
               <a href="#" className="flex items-center gap-2">
-                <Download size={16} />
+                <Download size={20} />
                 下载简历
               </a>
             </Button>
