@@ -1,92 +1,87 @@
 "use client"
 
-import { Canvas, useFrame } from '@react-three/fiber'
-import { OrbitControls, Sphere, Torus } from '@react-three/drei'
-import { useEffect, useRef, useMemo } from 'react'
-import * as THREE from 'three'
-
-// 旋转球体组件
-function RotatingSpheres() {
-  const meshRef = useRef<THREE.Group>(null)
-
-  useFrame((state) => {
-    if (meshRef.current) {
-      meshRef.current.rotation.y = state.clock.getElapsedTime() * 0.1
-    }
-  })
-
-  return (
-    <group ref={meshRef}>
-      <Sphere position={[-3, 2, -5]} scale={1}>
-        <meshStandardMaterial color="#3b82f6" opacity={0.2} transparent />
-      </Sphere>
-      <Sphere position={[3, -2, -5]} scale={1.5}>
-        <meshStandardMaterial color="#8b5cf6" opacity={0.2} transparent />
-      </Sphere>
-      <Sphere position={[0, 0, -8]} scale={0.8}>
-        <meshStandardMaterial color="#ec4899" opacity={0.2} transparent />
-      </Sphere>
-    </group>
-  )
-}
-
-// 旋转圆环组件
-function RotatingTori() {
-  const meshRef = useRef<THREE.Group>(null)
-
-  useFrame((state) => {
-    if (meshRef.current) {
-      meshRef.current.rotation.x = state.clock.getElapsedTime() * 0.07
-    }
-  })
-
-  return (
-    <group ref={meshRef}>
-      <Torus position={[0, 0, -10]} scale={2} args={[3, 0.5, 16, 100]}>
-        <meshStandardMaterial color="#3b82f6" opacity={0.1} transparent />
-      </Torus>
-      <Torus position={[0, 0, -10]} scale={1.5} args={[2, 0.3, 16, 100]}>
-        <meshStandardMaterial color="#8b5cf6" opacity={0.1} transparent />
-      </Torus>
-    </group>
-  )
-}
+import React from 'react'
 
 export function Hero3DBackground() {
-  const canvasRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    const handleResize = () => {
-      if (canvasRef.current) {
-        const width = canvasRef.current.offsetWidth
-        const height = canvasRef.current.offsetHeight
-        canvasRef.current.style.width = `${width}px`
-        canvasRef.current.style.height = `${height}px`
-      }
-    }
-
-    handleResize()
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
-  }, [])
-
   return (
-    <div 
-      ref={canvasRef}
-      className="absolute inset-0 -z-10 overflow-hidden"
-      style={{ width: '100%', height: '100%' }}
-    >
-      <Canvas camera={{ position: [0, 0, 10] }}>
-        <OrbitControls enableZoom={false} enablePan={false} enableRotate={false} />
-        <ambientLight intensity={0.5} />
-        <pointLight position={[10, 10, 10]} intensity={1} />
+    <div className="absolute inset-0 -z-10 overflow-hidden">
+      {/* 背景渐变 */}
+      <div className="absolute inset-0 bg-gradient-to-br from-background to-primary/10"></div>
+      
+      {/* 动画球体 */}
+      <div className="absolute inset-0 overflow-hidden">
+        {/* 球体1 */}
+        <div 
+          className="absolute w-32 h-32 rounded-full bg-blue-500/20 blur-2xl"
+          style={{
+            top: '20%',
+            left: '10%',
+            animation: 'float 8s ease-in-out infinite',
+          }}
+        />
         
-        {/* 浮动球体 */}
-        <RotatingSpheres />
+        {/* 球体2 */}
+        <div 
+          className="absolute w-40 h-40 rounded-full bg-purple-500/20 blur-2xl"
+          style={{
+            top: '60%',
+            right: '15%',
+            animation: 'float 10s ease-in-out infinite reverse',
+          }}
+        />
         
-        {/* 环绕 torus */}
-        <RotatingTori />
-      </Canvas>
+        {/* 球体3 */}
+        <div 
+          className="absolute w-24 h-24 rounded-full bg-pink-500/20 blur-2xl"
+          style={{
+            top: '40%',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            animation: 'float 12s ease-in-out infinite',
+          }}
+        />
+        
+        {/* 圆环 */}
+        <div 
+          className="absolute w-64 h-64 rounded-full border-2 border-blue-500/10"
+          style={{
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            animation: 'rotate 20s linear infinite',
+          }}
+        />
+        
+        <div 
+          className="absolute w-48 h-48 rounded-full border-2 border-purple-500/10"
+          style={{
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            animation: 'rotate 15s linear infinite reverse',
+          }}
+        />
+      </div>
+      
+      <style jsx global>{`
+        @keyframes float {
+          0%, 100% {
+            transform: translateY(0px) scale(1);
+          }
+          50% {
+            transform: translateY(-20px) scale(1.05);
+          }
+        }
+        
+        @keyframes rotate {
+          0% {
+            transform: translate(-50%, -50%) rotate(0deg);
+          }
+          100% {
+            transform: translate(-50%, -50%) rotate(360deg);
+          }
+        }
+      `}</style>
     </div>
   )
 }
