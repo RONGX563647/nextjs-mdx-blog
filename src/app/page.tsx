@@ -1,4 +1,3 @@
-import { PostCard } from '@/components/PostCard'
 import { Button } from '@/components/ui/button'
 import { EasterEgg } from '@/components/EasterEgg'
 import { GlassCard } from '@/components/GlassCard'
@@ -6,16 +5,10 @@ import { Hero3DBackground } from '@/components/Hero3DBackground'
 import { MouseParallax } from '@/components/MouseParallax'
 import { ScrollAnimation } from '@/components/ScrollAnimation'
 import { ThreeDCarousel } from '@/components/ThreeDCarousel'
-import { allPosts } from 'contentlayer/generated'
-import { compareDesc } from 'date-fns'
 import { Github, Download, ExternalLink } from 'lucide-react'
 import Link from 'next/link'
 
 export default function Home() {
-  const posts = allPosts.sort((a, b) =>
-    compareDesc(new Date(a.date), new Date(b.date)),
-  )
-
   return (
     <div>
       {/* Hero Section */}
@@ -32,7 +25,7 @@ export default function Home() {
                 </h1>
               </EasterEgg>
               <p className="text-2xl md:text-3xl text-gray-700 dark:text-gray-300 mb-12 max-w-3xl mx-auto">
-                测试开发工程师 | 自动化测试 | 接口/性能测试 |
+                测试开发工程师 | 自动化测试 | 接口、性能测试 
               </p>
             </MouseParallax>
           </ScrollAnimation>
@@ -115,9 +108,6 @@ export default function Home() {
           <h2 className="text-3xl font-semibold tracking-tight mb-6 text-center">
             项目展示
           </h2>
-          <p className="text-gray-600 dark:text-gray-300 mb-10 max-w-2xl mx-auto text-center">
-            3D旋转木马展示我的技术项目
-          </p>
         </ScrollAnimation>
         <ScrollAnimation>
           <div className="max-w-4xl mx-auto">
@@ -126,24 +116,6 @@ export default function Home() {
         </ScrollAnimation>
       </section>
 
-      {/* Blog Section */}
-      <section className="py-20 border-t border-gray-200 dark:border-gray-700">
-        <ScrollAnimation>
-          <h2 className="text-3xl font-semibold tracking-tight mb-6">
-            博客文章
-          </h2>
-          <p className="text-gray-600 dark:text-gray-300 mb-10 max-w-2xl">
-            分享我的技术学习心得和项目经验。
-          </p>
-        </ScrollAnimation>
-        <div className="space-y-12">
-          {posts.map((post, idx) => (
-            <ScrollAnimation key={idx} delay={0.2 * idx}>
-              <PostCard {...post} />
-            </ScrollAnimation>
-          ))}
-        </div>
-      </section>
     </div>
   )
 }

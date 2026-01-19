@@ -10,7 +10,7 @@ import Link from 'next/link'
 import './global.css'
 
 const meta = {
-  title: '个人博客',
+  title: 'RONGX',
   description:
     '基于 Next.js 15 + TypeScript + Tailwind CSS 构建的个人博客网站，融合了创意设计与技术展示。',
   image: `${WEBSITE_HOST_URL}/og-image.png`,
@@ -19,7 +19,7 @@ const meta = {
 export const metadata: Metadata = {
   title: {
     default: meta.title,
-    template: '%s | 个人博客',
+    template: '%s | RONGX',
   },
   description: meta.description,
   openGraph: {
@@ -61,7 +61,7 @@ export default function RootLayout({
               <div className="flex items-center justify-between py-4">
                 <div className="flex items-center gap-4">
                   <Link href="/" className="text-2xl font-bold">
-                    个人博客
+                    RONGX
                   </Link>
                   <Navigation />
                 </div>
@@ -78,7 +78,7 @@ export default function RootLayout({
             <Container>
               <div className="flex flex-col md:flex-row justify-between items-center gap-4">
                 <p className="text-sm text-muted-foreground">
-                  © {new Date().getFullYear()} 个人博客. 保留所有权利.
+                  © {new Date().getFullYear()} RONGX. 保留所有权利.
                 </p>
                 <div className="flex items-center gap-4">
                   <Link className="link" href="/">首页</Link>

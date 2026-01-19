@@ -12,9 +12,9 @@ export function Navigation() {
       <Link href="/portfolio" className="px-3 py-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors">
         项目
       </Link>
-      <Link href="/posts" className="px-3 py-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors">
+      <a href="https://blog.csdn.net" target="_blank" rel="noopener noreferrer" className="px-3 py-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors">
         博客
-      </Link>
+      </a>
     </nav>
   )
 }
