@@ -4,15 +4,9 @@ const { withContentlayer } = require('next-contentlayer')
 const nextConfig = {
   turbopack: {},
   experimental: {
-    turbo: {
-      rules: {
-        '*.mdx': {
-          loaders: ['@mdx-js/loader'],
-          as: '*.js',
-        },
-      },
-    },
+    mdxRs: true,
   },
+  pageExtensions: ['js', 'jsx', 'md', 'mdx', 'ts', 'tsx'],
 }
 
 module.exports = withContentlayer(nextConfig)
