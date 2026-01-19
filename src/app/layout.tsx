@@ -50,7 +50,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="zh-CN">
+    <html lang="zh-CN" suppressHydrationWarning={true}>
       <body className="min-h-screen flex flex-col">
         <ThemeProvider attribute="class" defaultTheme="system">
           <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm border-b">
