@@ -9,6 +9,9 @@ export function Navigation() {
       <Link href="/about" className="px-3 py-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors">
         关于
       </Link>
+      <Link href="/portfolio" className="px-3 py-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors">
+        项目
+      </Link>
       <Link href="/posts" className="px-3 py-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors">
         博客
       </Link>
