@@ -8,16 +8,16 @@ import Link from 'next/link'
 import './global.css'
 
 const meta = {
-  title: 'Hunter Chang - Website',
+  title: '个人博客',
   description:
-    'Sleep deprived father. FE Engineer in China. Lover of Ramen and Kpop',
-  image: `${WEBSITE_HOST_URL}/og-preview.jpg`,
+    '基于 Next.js 15 + TypeScript + Tailwind CSS 构建的个人博客网站，融合了创意设计与技术展示。',
+  image: `${WEBSITE_HOST_URL}/og-image.png`,
 }
 
 export const metadata: Metadata = {
   title: {
     default: meta.title,
-    template: '%s | Hunter Chang',
+    template: '%s | 个人博客',
   },
   description: meta.description,
   openGraph: {
@@ -25,7 +25,7 @@ export const metadata: Metadata = {
     description: meta.description,
     url: WEBSITE_HOST_URL,
     siteName: meta.title,
-    locale: 'en-US',
+    locale: 'zh-CN',
     type: 'website',
     images: [
       {
@@ -50,28 +50,36 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
-      <body>
-        <ThemeProvider attribute="class" defaultTheme="dark">
-          <header className="py-4">
+    <html lang="zh-CN">
+      <body className="min-h-screen flex flex-col">
+        <ThemeProvider attribute="class" defaultTheme="system">
+          <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm border-b">
             <Container>
-              <div className="flex items-center justify-between py-6">
-                <Navigation />
+              <div className="flex items-center justify-between py-4">
+                <div className="flex items-center gap-4">
+                  <Link href="/" className="text-2xl font-bold">
+                    个人博客
+                  </Link>
+                  <Navigation />
+                </div>
                 <ThemeSwitch />
               </div>
             </Container>
           </header>
-          <main>
+          <main className="flex-1">
             <Container>{children}</Container>
           </main>
-          <footer className="py-16">
+          <footer className="py-12 border-t">
             <Container>
-              <p>
-                Built by{' '}
-                <Link className="link" href="https://twitter.com/hunterhchang">
-                  Hunter Chang
-                </Link>
-              </p>
+              <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+                <p className="text-sm text-muted-foreground">
+                  © {new Date().getFullYear()} 个人博客. 保留所有权利.
+                </p>
+                <div className="flex items-center gap-4">
+                  <Link className="link" href="/">首页</Link>
+                  <Link className="link" href="/about">关于</Link>
+                </div>
+              </div>
             </Container>
           </footer>
         </ThemeProvider>
