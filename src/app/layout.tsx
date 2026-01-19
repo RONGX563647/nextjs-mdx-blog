@@ -1,6 +1,8 @@
 import { ThemeProvider } from '@/app/providers'
 import { Container } from '@/components/Container'
+import { CustomCursor } from '@/components/CustomCursor'
 import { Navigation } from '@/components/Navigation'
+import { PageTransition } from '@/components/PageTransition'
 import ThemeSwitch from '@/components/ThemeSwitch'
 import { WEBSITE_HOST_URL } from '@/lib/constants'
 import type { Metadata } from 'next'
@@ -53,6 +55,7 @@ export default function RootLayout({
     <html lang="zh-CN" suppressHydrationWarning={true}>
       <body className="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-blue-900/20 dark:via-purple-900/20 dark:to-pink-900/20">
         <ThemeProvider attribute="class" defaultTheme="system">
+          <CustomCursor />
           <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm border-b">
             <Container>
               <div className="flex items-center justify-between py-4">
@@ -67,7 +70,9 @@ export default function RootLayout({
             </Container>
           </header>
           <main className="flex-1">
-            <Container>{children}</Container>
+            <Container>
+              <PageTransition>{children}</PageTransition>
+            </Container>
           </main>
           <footer className="py-12 border-t">
             <Container>
