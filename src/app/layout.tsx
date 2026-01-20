@@ -5,6 +5,7 @@ import { Navigation } from '@/components/Navigation'
 import { PageTransition } from '@/components/PageTransition'
 import ThemeSwitch from '@/components/ThemeSwitch'
 import { WEBSITE_HOST_URL } from '@/lib/constants'
+import { Analytics } from '@vercel/analytics/next'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import './global.css'
@@ -88,6 +89,7 @@ export default function RootLayout({
             </Container>
           </footer>
         </ThemeProvider>
+        <Analytics />
       </body>
     </html>
   )
