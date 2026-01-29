@@ -5,71 +5,37 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
-  workflow_dispatch: # 新增：支持手动触发部署
+  workflow_dispatch: # 支持手动触发部署
 
 jobs:
-  # 合并lint+build为一个job，减少重复步骤
-  lint-and-build:
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
+      # 检出代码
       - uses: actions/checkout@v4
       
-      - name: Check current directory (调试用，可保留/删除)
-        run: pwd && ls -la
-      
+      # 设置Node.js环境
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20.10.0'
-          cache: 'npm' # 缓存npm依赖，加速后续步骤
+          cache: 'npm' # 缓存npm依赖
       
-      - name: Install dependencies
-        run: npm install --legacy-peer-deps # 必须使用--legacy-peer-deps解决ESLint版本冲突
-      
-      - name: Run lint (临时禁用，需启用时注释echo，取消注释npm run lint)
-        run: echo "Linting disabled temporarily"
-        # run: npm run lint
-      
-      - name: Run build
-        run: npx next build
-      
-      # 保存构建产物（供deploy步骤复用，避免重复build）
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: next-build
-          path: |
-            .next/
-            public/
-            package.json
-
-  deploy:
-    needs: lint-and-build # 依赖lint+build完成
-    if: github.ref == 'refs/heads/main' # 仅main分支触发部署
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20.10.0'
-          cache: 'npm'
-      
+      # 安装依赖（使用--legacy-peer-deps解决ESLint版本冲突）
       - name: Install dependencies
         run: npm install --legacy-peer-deps
       
-      # 下载build步骤的产物
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: next-build
-          path: .
+      # 运行构建
+      - name: Build project
+        run: npm run build
       
-      # 使用 npx vercel 命令直接部署，避免 Action 路径问题
+      # 仅在main分支部署
       - name: Deploy to Vercel
-        run: npx vercel --prod
-        env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+        if: github.ref == 'refs/heads/main'
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-args: '--prod'
+          working-directory: .
