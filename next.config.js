@@ -4,7 +4,7 @@ const nextConfig = {
   experimental: {
     mdxRs: true,
   },
-  pageExtensions: ['js', 'jsx', 'md', 'mdx', 'ts', 'tsx'],
+  pageExtensions: ['js', 'jsx', 'md', 'mdx', 'ts', 'tsx']
 }
 
 module.exports = nextConfig

@@ -22,7 +22,7 @@ export function CustomCursor() {
   return (
     <>
       <motion.div
-        className="fixed top-0 left-0 w-6 h-6 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full pointer-events-none z-50 mix-blend-difference"
+        className="hidden md:block fixed top-0 left-0 w-6 h-6 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full pointer-events-none z-50 mix-blend-difference"
         style={{
           x: springX,
           y: springY,
@@ -31,7 +31,7 @@ export function CustomCursor() {
         }}
       />
       <motion.div
-        className="fixed top-0 left-0 w-20 h-20 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full pointer-events-none z-40 mix-blend-difference opacity-20"
+        className="hidden md:block fixed top-0 left-0 w-20 h-20 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full pointer-events-none z-40 mix-blend-difference opacity-20"
         style={{
           x: springX,
           y: springY,

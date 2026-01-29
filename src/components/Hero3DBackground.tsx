@@ -2,6 +2,49 @@
 
 import React from 'react'
 
+interface AnimatedSphereProps {
+  size: string
+  color: string
+  top: string
+  left: string
+  animationDuration: number
+  reverse?: boolean
+}
+
+interface AnimatedRingProps {
+  size: string
+  color: string
+  animationDuration: number
+  reverse?: boolean
+}
+
+function AnimatedSphere({ size, color, top, left, animationDuration, reverse = false }: AnimatedSphereProps) {
+  return (
+    <div 
+      className={`absolute ${size} ${size} rounded-full ${color} blur-2xl`}
+      style={{
+        top,
+        left,
+        animation: `float ${animationDuration}s ease-in-out infinite ${reverse ? 'reverse' : ''}`,
+      }}
+    />
+  )
+}
+
+function AnimatedRing({ size, color, animationDuration, reverse = false }: AnimatedRingProps) {
+  return (
+    <div 
+      className={`absolute ${size} ${size} rounded-full border-2 ${color}`}
+      style={{
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        animation: `rotate ${animationDuration}s linear infinite ${reverse ? 'reverse' : ''}`,
+      }}
+    />
+  )
+}
+
 export function Hero3DBackground() {
   return (
     <div className="absolute inset-0 -z-10 overflow-hidden">
@@ -10,56 +53,43 @@ export function Hero3DBackground() {
       
       {/* 动画球体 */}
       <div className="absolute inset-0 overflow-hidden">
-        {/* 球体1 */}
-        <div 
-          className="absolute w-32 h-32 rounded-full bg-blue-500/20 blur-2xl"
-          style={{
-            top: '20%',
-            left: '10%',
-            animation: 'float 8s ease-in-out infinite',
-          }}
+        <AnimatedSphere 
+          size="w-32 h-32"
+          color="bg-blue-500/20"
+          top="20%"
+          left="10%"
+          animationDuration={8}
         />
         
-        {/* 球体2 */}
-        <div 
-          className="absolute w-40 h-40 rounded-full bg-purple-500/20 blur-2xl"
-          style={{
-            top: '60%',
-            right: '15%',
-            animation: 'float 10s ease-in-out infinite reverse',
-          }}
+        <AnimatedSphere 
+          size="w-40 h-40"
+          color="bg-purple-500/20"
+          top="60%"
+          left="85%"
+          animationDuration={10}
+          reverse
         />
         
-        {/* 球体3 */}
-        <div 
-          className="absolute w-24 h-24 rounded-full bg-pink-500/20 blur-2xl"
-          style={{
-            top: '40%',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            animation: 'float 12s ease-in-out infinite',
-          }}
+        <AnimatedSphere 
+          size="w-24 h-24"
+          color="bg-pink-500/20"
+          top="40%"
+          left="50%"
+          animationDuration={12}
         />
         
         {/* 圆环 */}
-        <div 
-          className="absolute w-64 h-64 rounded-full border-2 border-blue-500/10"
-          style={{
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            animation: 'rotate 20s linear infinite',
-          }}
+        <AnimatedRing 
+          size="w-64 h-64"
+          color="border-blue-500/10"
+          animationDuration={20}
         />
         
-        <div 
-          className="absolute w-48 h-48 rounded-full border-2 border-purple-500/10"
-          style={{
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            animation: 'rotate 15s linear infinite reverse',
-          }}
+        <AnimatedRing 
+          size="w-48 h-48"
+          color="border-purple-500/10"
+          animationDuration={15}
+          reverse
         />
       </div>
       
