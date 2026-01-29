@@ -66,12 +66,10 @@ jobs:
           name: next-build
           path: .
       
-      # 核心修正：使用正确的Vercel Action路径和参数
+      # 使用 npx vercel 命令直接部署，避免 Action 路径问题
       - name: Deploy to Vercel
-        uses: vercel/actions/deploy@v2 # 正确的Action路径
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }} # 修正参数名
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }} # 修正参数名
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }} # 修正参数名
-          vercel-args: '--prod' # 修正生产环境部署参数
-          working-directory: ./ # 指定部署目录（默认当前，可根据项目调整）
+        run: npx vercel --prod
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
