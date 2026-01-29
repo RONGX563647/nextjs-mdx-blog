@@ -54,7 +54,7 @@ export function Navigation() {
         </Link>
         {/* 博客链接 - 在新标签页打开 */}
         <a 
-          href="https://blog.csdn.net" 
+          href="https://blog.csdn.net/King_model?type=blog" 
           target="_blank" 
           rel="noopener noreferrer" 
           className="px-4 py-3 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
@@ -114,7 +114,7 @@ export function Navigation() {
             </Link>
             {/* 博客链接 - 在新标签页打开 */}
             <a 
-              href="https://blog.csdn.net" 
+              href="https://blog.csdn.net/King_model?type=blog" 
               target="_blank" 
               rel="noopener noreferrer" 
               className="px-4 py-3 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
