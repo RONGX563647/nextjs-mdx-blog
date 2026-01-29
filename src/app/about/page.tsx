@@ -7,7 +7,7 @@
 import { WEBSITE_HOST_URL } from '@/lib/constants' // 网站主机URL
 import type { Metadata } from 'next' // Next.js元数据类型
 import { Button } from '@/components/ui/button' // 按钮组件
-import { Github, Linkedin, Mail, Phone, MapPin, Award } from 'lucide-react' // 图标组件
+import { Github, GitMerge, Linkedin, Mail, Phone, MapPin, Award } from 'lucide-react' // 图标组件
 import Link from 'next/link' // Next.js链接组件
 
 // 页面元数据
@@ -149,52 +149,196 @@ export default function About() {
       <section className="py-16 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-semibold mb-12">经历时间轴</h2>
-          <div className="relative max-w-3xl mx-auto">
-            {/* 时间轴线 */}
-            <div className="absolute left-0 md:left-1/2 top-0 bottom-0 w-0.5 bg-blue-600/20 dark:bg-blue-400/20 transform md:translate-x-[-50%]"></div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {/* 主要时间轴（左侧，宽度为2/3） */}
+            <div className="md:col-span-2">
+              <div className="relative max-w-3xl mx-auto">
+                {/* 时间轴线 */}
+                <div className="absolute left-0 md:left-1/2 top-0 bottom-0 w-0.5 bg-blue-600/20 dark:bg-blue-400/20 transform md:translate-x-[-50%]"></div>
+                
+                {/* 时间轴项目 */}
+                <div className="space-y-12">
+                  {/* 教育经历 */}
+                  <div className="relative flex flex-col md:flex-row items-start">
+                    <div className="absolute left-[-9px] md:left-1/2 top-4 w-4 h-4 rounded-full bg-blue-600 dark:bg-blue-400 transform md:translate-x-[-50%] z-10"></div>
+                    <div className="md:w-1/2 md:pr-12 md:text-right mb-6 md:mb-0">
+                      <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-lg transition-shadow">
+                        <span className="text-sm text-blue-600 dark:text-blue-400 font-semibold">2024.09 - 2028.06</span>
+                        <h3 className="text-xl font-semibold mt-2 mb-2">福建师范大学</h3>
+                        <p className="text-gray-600 dark:text-gray-300">软件工程（本科）</p>
+                        <p className="text-gray-600 dark:text-gray-300 mt-2">主修课程：数据结构、算法设计、数据库原理、操作系统、计算机网络、软件工程</p>
+                        <div className="mt-4 flex gap-2">
+                      <Button asChild variant="secondary" size="sm">
+                        <a href="https://gitee.com" className="flex items-center gap-2">
+                          <GitMerge size={14} />
+                          Gitee
+                        </a>
+                      </Button>
+                    </div>
+                      </div>
+                    </div>
+                    <div className="md:w-1/2 md:pl-12"></div>
+                  </div>
+                  
+                  {/* 项目经历1：福师畅聊 */}
+                  <div className="relative flex flex-col md:flex-row items-start">
+                    <div className="absolute left-[-9px] md:left-1/2 top-4 w-4 h-4 rounded-full bg-purple-600 dark:bg-purple-400 transform md:translate-x-[-50%] z-10"></div>
+                    <div className="md:w-1/2 md:pr-12"></div>
+                    <div className="md:w-1/2 md:pl-12">
+                      <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-lg transition-shadow">
+                        <span className="text-sm text-purple-600 dark:text-purple-400 font-semibold">2025.08 - 2025.10</span>
+                        <h3 className="text-xl font-semibold mt-2 mb-2">福师畅聊</h3>
+                        <p className="text-gray-600 dark:text-gray-300">全栈开发工程师</p>
+                        <p className="text-gray-600 dark:text-gray-300 mt-2">基于 Spring Boot、Netty、Redis 开发的即时通讯应用，负责前后端全栈开发工作</p>
+                        <div className="mt-4 flex gap-2">
+                      <Button asChild variant="secondary" size="sm">
+                        <a href="https://gitee.com" className="flex items-center gap-2">
+                          <GitMerge size={14} />
+                          Gitee
+                        </a>
+                      </Button>
+                    </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* 项目经历2：师大云学 */}
+                  <div className="relative flex flex-col md:flex-row items-start">
+                    <div className="absolute left-[-9px] md:left-1/2 top-4 w-4 h-4 rounded-full bg-green-600 dark:bg-green-400 transform md:translate-x-[-50%] z-10"></div>
+                    <div className="md:w-1/2 md:pr-12 md:text-right mb-6 md:mb-0">
+                      <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-lg transition-shadow">
+                        <span className="text-sm text-green-600 dark:text-green-400 font-semibold">2025.07 - 2025.09</span>
+                        <h3 className="text-xl font-semibold mt-2 mb-2">师大云学</h3>
+                        <p className="text-gray-600 dark:text-gray-300">全栈开发工程师</p>
+                        <p className="text-gray-600 dark:text-gray-300 mt-2">基于 Spring Cloud Alibaba 开发的在线教育平台，负责前后端全栈开发工作</p>
+                        <div className="mt-4 flex gap-2">
+                      <Button asChild variant="secondary" size="sm">
+                        <a href="https://gitee.com" className="flex items-center gap-2">
+                          <GitMerge size={14} />
+                          Gitee
+                        </a>
+                      </Button>
+                    </div>
+                      </div>
+                    </div>
+                    <div className="md:w-1/2 md:pl-12"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
             
-            {/* 时间轴项目 */}
-            <div className="space-y-12">
-              {/* 教育经历 */}
-              <div className="relative flex flex-col md:flex-row items-start">
-                <div className="absolute left-[-9px] md:left-1/2 top-4 w-4 h-4 rounded-full bg-blue-600 dark:bg-blue-400 transform md:translate-x-[-50%] z-10"></div>
-                <div className="md:w-1/2 md:pr-12 md:text-right mb-6 md:mb-0">
-                  <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-lg transition-shadow">
-                    <span className="text-sm text-blue-600 dark:text-blue-400 font-semibold">2024.09 - 2028.06</span>
-                    <h3 className="text-xl font-semibold mt-2 mb-2">福建师范大学</h3>
-                    <p className="text-gray-600 dark:text-gray-300">软件工程（本科）</p>
-                    <p className="text-gray-600 dark:text-gray-300 mt-2">主修课程：数据结构、算法设计、数据库原理、操作系统、计算机网络、软件工程</p>
+            {/* 副时间轴（右侧，宽度为1/3） */}
+            <div className="md:col-span-1">
+              <h3 className="text-xl font-semibold mb-6">技术发展历程</h3>
+              <div className="relative">
+                {/* 副时间轴线 */}
+                <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-gray-300 dark:bg-gray-600"></div>
+                
+                {/* 副时间轴项目 */}
+                <div className="space-y-8 pl-6">
+                  {/* 洛谷oj 50题 */}
+                  <div className="relative">
+                    <div className="absolute left-[-10px] top-2 w-4 h-4 rounded-full bg-blue-500 dark:bg-blue-400"></div>
+                    <div className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                      <span className="text-sm text-blue-600 dark:text-blue-400 font-semibold">2024.10.1</span>
+                      <h4 className="text-lg font-semibold mt-2 mb-2">洛谷oj</h4>
+                      <p className="text-gray-600 dark:text-gray-300">50题</p>
+                    </div>
+                  </div>
+                  
+                  {/* Leetcode oc100题 */}
+                  <div className="relative">
+                    <div className="absolute left-[-10px] top-2 w-4 h-4 rounded-full bg-indigo-500 dark:bg-indigo-400"></div>
+                    <div className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                      <span className="text-sm text-indigo-600 dark:text-indigo-400 font-semibold">2024.12.1</span>
+                      <h4 className="text-lg font-semibold mt-2 mb-2">Leetcode</h4>
+                      <p className="text-gray-600 dark:text-gray-300">oc100题</p>
+                    </div>
+                  </div>
+                  
+                  {/* 软件工程实践课项目 */}
+                  <div className="relative">
+                    <div className="absolute left-[-10px] top-2 w-4 h-4 rounded-full bg-yellow-500 dark:bg-yellow-400"></div>
+                    <div className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                      <span className="text-sm text-yellow-600 dark:text-yellow-400 font-semibold">2025.6.1</span>
+                      <h4 className="text-lg font-semibold mt-2 mb-2">软件工程实践课项目</h4>
+                      <p className="text-gray-600 dark:text-gray-300">银行管理系统</p>
+                      <p className="text-gray-600 dark:text-gray-300 text-sm mt-1">java + jdbc + swing</p>
+                      <div className="mt-3 flex gap-2">
+                        <Button asChild variant="secondary" size="sm">
+                          <a href="https://gitee.com" className="flex items-center gap-2">
+                            <GitMerge size={12} />
+                            Gitee
+                          </a>
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* CSDN 10w浏览量 */}
+                  <div className="relative">
+                    <div className="absolute left-[-10px] top-2 w-4 h-4 rounded-full bg-green-500 dark:bg-green-400"></div>
+                    <div className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                      <span className="text-sm text-green-600 dark:text-green-400 font-semibold">2025.10.1</span>
+                      <h4 className="text-lg font-semibold mt-2 mb-2">CSDN</h4>
+                      <p className="text-gray-600 dark:text-gray-300">10w浏览量</p>
+                    </div>
+                  </div>
+                  
+                  {/* 计算机网络实践课项目 */}
+                  <div className="relative">
+                    <div className="absolute left-[-10px] top-2 w-4 h-4 rounded-full bg-orange-500 dark:bg-orange-400"></div>
+                    <div className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                      <span className="text-sm text-orange-600 dark:text-orange-400 font-semibold">2025.11.1</span>
+                      <h4 className="text-lg font-semibold mt-2 mb-2">计算机网络实践课项目</h4>
+                      <p className="text-gray-600 dark:text-gray-300">局域网聊天室</p>
+                      <div className="mt-3 flex gap-2">
+                        <Button asChild variant="secondary" size="sm">
+                          <a href="https://gitee.com" className="flex items-center gap-2">
+                            <GitMerge size={12} />
+                            Gitee
+                          </a>
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* 数据库实践课项目 */}
+                  <div className="relative">
+                    <div className="absolute left-[-10px] top-2 w-4 h-4 rounded-full bg-teal-500 dark:bg-teal-400"></div>
+                    <div className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                      <span className="text-sm text-teal-600 dark:text-teal-400 font-semibold">2025.12.1</span>
+                      <h4 className="text-lg font-semibold mt-2 mb-2">数据库实践课项目</h4>
+                      <p className="text-gray-600 dark:text-gray-300">CMP管理系统</p>
+                      <div className="mt-3 flex gap-2">
+                        <Button asChild variant="secondary" size="sm">
+                          <a href="https://gitee.com" className="flex items-center gap-2">
+                            <GitMerge size={12} />
+                            Gitee
+                          </a>
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Web应用开发课项目 */}
+                  <div className="relative">
+                    <div className="absolute left-[-10px] top-2 w-4 h-4 rounded-full bg-pink-500 dark:bg-pink-400"></div>
+                    <div className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                      <span className="text-sm text-pink-600 dark:text-pink-400 font-semibold">2026.1</span>
+                      <h4 className="text-lg font-semibold mt-2 mb-2">Web应用开发课项目</h4>
+                      <p className="text-gray-600 dark:text-gray-300">简易Mybatis</p>
+                      <div className="mt-3 flex gap-2">
+                        <Button asChild variant="secondary" size="sm">
+                          <a href="https://gitee.com" className="flex items-center gap-2">
+                            <GitMerge size={12} />
+                            Gitee
+                          </a>
+                        </Button>
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <div className="md:w-1/2 md:pl-12"></div>
-              </div>
-              
-              {/* 项目经历1：福师畅聊 */}
-              <div className="relative flex flex-col md:flex-row items-start">
-                <div className="absolute left-[-9px] md:left-1/2 top-4 w-4 h-4 rounded-full bg-purple-600 dark:bg-purple-400 transform md:translate-x-[-50%] z-10"></div>
-                <div className="md:w-1/2 md:pr-12"></div>
-                <div className="md:w-1/2 md:pl-12">
-                  <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-lg transition-shadow">
-                    <span className="text-sm text-purple-600 dark:text-purple-400 font-semibold">2025.08 - 2025.10</span>
-                    <h3 className="text-xl font-semibold mt-2 mb-2">福师畅聊</h3>
-                    <p className="text-gray-600 dark:text-gray-300">全栈开发工程师</p>
-                    <p className="text-gray-600 dark:text-gray-300 mt-2">基于 Spring Boot、Netty、Redis 开发的即时通讯应用，负责前后端全栈开发工作</p>
-                  </div>
-                </div>
-              </div>
-              
-              {/* 项目经历2：师大云学 */}
-              <div className="relative flex flex-col md:flex-row items-start">
-                <div className="absolute left-[-9px] md:left-1/2 top-4 w-4 h-4 rounded-full bg-green-600 dark:bg-green-400 transform md:translate-x-[-50%] z-10"></div>
-                <div className="md:w-1/2 md:pr-12 md:text-right mb-6 md:mb-0">
-                  <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-lg transition-shadow">
-                    <span className="text-sm text-green-600 dark:text-green-400 font-semibold">2025.07 - 2025.09</span>
-                    <h3 className="text-xl font-semibold mt-2 mb-2">师大云学</h3>
-                    <p className="text-gray-600 dark:text-gray-300">全栈开发工程师</p>
-                    <p className="text-gray-600 dark:text-gray-300 mt-2">基于 Spring Cloud Alibaba 开发的在线教育平台，负责前后端全栈开发工作</p>
-                  </div>
-                </div>
-                <div className="md:w-1/2 md:pl-12"></div>
               </div>
             </div>
           </div>
