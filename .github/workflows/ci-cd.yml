@@ -1,64 +1,77 @@
 name: CI/CD
-# Debug version to check directory structure
-
+# 支持push、PR、手动触发
 on:
   push:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+  workflow_dispatch: # 新增：支持手动触发部署
 
 jobs:
-  lint:
+  # 合并lint+build为一个job，减少重复步骤
+  lint-and-build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Check current directory
-        run: pwd
-      - name: List files in current directory
-        run: ls -la
+      
+      - name: Check current directory (调试用，可保留/删除)
+        run: pwd && ls -la
+      
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20.10.0'
-          cache: 'npm'
+          cache: 'npm' # 缓存npm依赖，加速后续步骤
+      
       - name: Install dependencies
-        run: npm install --legacy-peer-deps
-      - name: Run lint (temporarily disabled due to ESLint compatibility issues)
+        run: npm install --legacy-peer-deps # 若依赖无冲突可移除--legacy-peer-deps
+      
+      - name: Run lint (临时禁用，需启用时注释echo，取消注释npm run lint)
         run: echo "Linting disabled temporarily"
         # run: npm run lint
-
-  build:
-    needs: lint
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20.10.0'
-          cache: 'npm'
-      - name: Install dependencies
-        run: npm install --legacy-peer-deps
+      
       - name: Run build
         run: npx next build
+      
+      # 保存构建产物（供deploy步骤复用，避免重复build）
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: next-build
+          path: |
+            .next/
+            public/
+            package.json
 
   deploy:
-    needs: build
-    if: github.ref == 'refs/heads/main'
+    needs: lint-and-build # 依赖lint+build完成
+    if: github.ref == 'refs/heads/main' # 仅main分支触发部署
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20.10.0'
           cache: 'npm'
+      
       - name: Install dependencies
         run: npm install --legacy-peer-deps
-      - name: Deploy to Vercel
-        uses: vercel/action@v4
+      
+      # 下载build步骤的产物
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
         with:
-          token: ${{ secrets.VERCEL_TOKEN }}
-          project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          org-id: ${{ secrets.VERCEL_ORG_ID }}
-          prod: true
+          name: next-build
+          path: .
+      
+      # 核心修正：使用正确的Vercel Action路径和参数
+      - name: Deploy to Vercel
+        uses: vercel/actions/deploy@v2 # 正确的Action路径
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }} # 修正参数名
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }} # 修正参数名
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }} # 修正参数名
+          vercel-args: '--prod' # 修正生产环境部署参数
+          working-directory: ./ # 指定部署目录（默认当前，可根据项目调整）
