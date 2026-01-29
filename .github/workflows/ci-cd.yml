@@ -56,11 +56,9 @@ jobs:
       - name: Install dependencies
         run: npm install --legacy-peer-deps
       - name: Deploy to Vercel
-        uses: amondnet/vercel-action@v26
+        uses: vercel/action@v4
         with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          vercel-args: '--prod'
-          working-directory: .
-          scope: ${{ secrets.VERCEL_ORG_ID }}
+          token: ${{ secrets.VERCEL_TOKEN }}
+          project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          org-id: ${{ secrets.VERCEL_ORG_ID }}
+          prod: true
