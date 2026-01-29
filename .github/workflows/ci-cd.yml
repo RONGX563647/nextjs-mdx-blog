@@ -24,7 +24,7 @@ jobs:
           cache: 'npm' # 缓存npm依赖，加速后续步骤
       
       - name: Install dependencies
-        run: npm install --legacy-peer-deps # 若依赖无冲突可移除--legacy-peer-deps
+        run: npm install --legacy-peer-deps # 必须使用--legacy-peer-deps解决ESLint版本冲突
       
       - name: Run lint (临时禁用，需启用时注释echo，取消注释npm run lint)
         run: echo "Linting disabled temporarily"
