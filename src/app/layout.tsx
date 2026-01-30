@@ -78,69 +78,63 @@ export default function RootLayout({
 }) {
   return (
     <html lang="zh-CN" suppressHydrationWarning={true}>
-      <body className="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-blue-900/20 dark:via-purple-900/20 dark:to-pink-900/20">
-        {/* 主题提供者，用于管理浅色/深色主题 */}
+      <body className="min-h-screen flex flex-col bg-background">
         <ThemeProvider attribute="class" defaultTheme="system">
-          {/* 自定义光标效果 */}
           <CustomCursor />
           
-          {/* 头部导航栏 */}
-          <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm border-b">
+          <header className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b border-border">
             <Container>
-              <div className="flex items-center justify-between py-4">
-                {/* Logo和导航菜单 */}
-                <div className="flex items-center gap-4">
-                  <Link href="/" className="text-4xl font-bold">
+              <div className="flex items-center justify-between py-5">
+                <div className="flex items-center gap-6">
+                  <Link href="/" className="text-5xl font-bold tracking-tighter">
                     RONGX
                   </Link>
                   <Navigation />
                 </div>
-                {/* 右侧按钮组 */}
                 <div className="flex items-center gap-4">
-                  {/* GitHub链接 */}
                   <a 
                     href="https://github.com/RONGX563647" 
                     target="_blank" 
                     rel="noopener noreferrer" 
-                    className="px-4 py-3 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors flex items-center gap-2"
+                    className="px-4 py-2 hover:bg-accent hover:text-accent-foreground transition-colors flex items-center gap-2 text-sm font-medium"
                   >
-                    <Github size={24} />
+                    <Github size={20} />
                     GitHub
                   </a>
-                  {/* 主题切换按钮 */}
                   <ThemeSwitch />
                 </div>
               </div>
             </Container>
           </header>
           
-          {/* 主内容区域 */}
           <main className="flex-1">
             <Container>
-              {/* 页面过渡动画，包裹页面内容 */}
               <PageTransition>{children}</PageTransition>
             </Container>
           </main>
           
-          {/* 页脚 */}
-          <footer className="py-12 border-t">
+          <footer className="py-16 border-t border-border">
             <Container>
-              <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-                {/* 版权信息 */}
-                <p className="text-sm text-muted-foreground">
-                  © {new Date().getFullYear()} RONGX. 保留所有权利.
-                </p>
-                {/* 页脚导航链接 */}
-                <div className="flex items-center gap-4">
-                  <Link className="link" href="/">首页</Link>
-                  <Link className="link" href="/about">关于</Link>
+              <div className="flex flex-col md:flex-row justify-between items-start gap-8">
+                <div>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    © {new Date().getFullYear()} RONGX
+                  </p>
+                  <p className="text-xs text-muted-foreground/70">
+                    构建高质量的全栈应用
+                  </p>
+                </div>
+                <div className="flex items-center gap-8">
+                  <Link className="link text-sm" href="/">首页</Link>
+                  <Link className="link text-sm" href="/about">关于</Link>
+                  <Link className="link text-sm" href="/portfolio">项目</Link>
+                  <Link className="link text-sm" href="/blog">博客</Link>
                 </div>
               </div>
             </Container>
           </footer>
         </ThemeProvider>
         
-        {/* Vercel分析工具，用于统计网站访问数据 */}
         <Analytics />
       </body>
     </html>

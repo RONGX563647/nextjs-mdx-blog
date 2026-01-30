@@ -175,9 +175,9 @@ export default function Portfolio() {
       </section>
 
       {/* 3D Carousel Portfolio */}
-      <section className="py-16 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
+      <section className="py-16 border-t border-border bg-muted/30">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-semibold mb-12 text-center">我的项目</h2>
+          <h2 className="text-3xl font-bold mb-12 text-center">我的项目</h2>
           
           {/* 3D Carousel Container */}
           <div className="relative overflow-hidden py-10">
@@ -198,14 +198,14 @@ export default function Portfolio() {
                         style={{ height: '100%' }}
                       >
                         {/* Project Header with Icon */}
-                        <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-6">
+                        <div className="bg-primary p-6">
                           <div className="flex justify-between items-center">
-                            <h2 className="text-2xl font-bold text-white">{project.title}</h2>
-                            <div className="bg-white/20 backdrop-blur-sm p-3 rounded-full">
-                              <Code size={24} className="text-white" />
+                            <h2 className="text-2xl font-bold text-primary-foreground">{project.title}</h2>
+                            <div className="bg-primary-foreground/20 backdrop-blur-sm p-3 rounded-full">
+                              <Code size={24} className="text-primary-foreground" />
                             </div>
                           </div>
-                          <p className="text-white/80 mt-2">{project.date}</p>
+                          <p className="text-primary-foreground/80 mt-2">{project.date}</p>
                         </div>
                         
                         {/* Project Content */}
@@ -217,12 +217,12 @@ export default function Portfolio() {
                           {/* Project Skills */}
                           <div className="flex flex-wrap gap-2 mb-6">
                             {project.skills.slice(0, 6).map((skill, skillIndex) => (
-                              <span key={skillIndex} className="px-3 py-1 bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 rounded-full text-sm group-hover:scale-105 transition-transform">
+                              <span key={skillIndex} className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm group-hover:scale-105 transition-transform">
                                 {skill}
                               </span>
                             ))}
                             {project.skills.length > 6 && (
-                              <span className="px-3 py-1 bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200 rounded-full text-sm group-hover:scale-105 transition-transform">
+                              <span className="px-3 py-1 bg-muted text-muted-foreground rounded-full text-sm group-hover:scale-105 transition-transform">
                                 +{project.skills.length - 6} 更多
                               </span>
                             )}
@@ -234,12 +234,12 @@ export default function Portfolio() {
                             <ul className="space-y-2">
                               {project.responsibilities.slice(0, 2).map((responsibility, respIndex) => (
                                 <li key={respIndex} className="flex items-start gap-2">
-                                  <div className="h-2 w-2 rounded-full bg-blue-600 dark:bg-blue-400 mt-2 flex-shrink-0"></div>
-                                  <span className="text-gray-600 dark:text-gray-300 text-sm">{responsibility}</span>
+                                  <div className="h-2 w-2 rounded-full bg-primary mt-2 flex-shrink-0"></div>
+                                  <span className="text-muted-foreground text-sm">{responsibility}</span>
                                 </li>
                               ))}
                               {project.responsibilities.length > 2 && (
-                                <li className="text-sm text-blue-600 dark:text-blue-400 font-medium mt-2">
+                                <li className="text-sm text-primary font-medium mt-2">
                                   +{project.responsibilities.length - 2} 更多职责
                                 </li>
                               )}
@@ -248,13 +248,13 @@ export default function Portfolio() {
                           
                           {/* Project Links */}
                           <div className="flex gap-4">
-                            <Button asChild className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white group-hover:shadow-lg transition-all">
+                            <Button asChild className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground group-hover:shadow-lg transition-all">
                               <Link href={project.link} className="flex items-center justify-center gap-2">
                                 查看详情
                                 <ExternalLink size={16} />
                               </Link>
                             </Button>
-                            <Button asChild variant="secondary" className="group-hover:bg-gray-200 dark:group-hover:bg-gray-700 transition-all">
+                            <Button asChild variant="secondary" className="group-hover:bg-secondary/80 transition-all">
                               <a href="#" className="flex items-center gap-2">
                                 <Github size={16} />
                               </a>
@@ -272,22 +272,22 @@ export default function Portfolio() {
       </section>
 
       {/* Project Details Preview */}
-      <section className="py-16 border-t border-gray-200 dark:border-gray-700">
+      <section className="py-16 border-t border-border">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-semibold mb-12 text-center">项目详情预览</h2>
+          <h2 className="text-3xl font-bold mb-12 text-center">项目详情预览</h2>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
             {projects.map((project) => (
-              <div key={project.id} className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-all duration-500">
+              <div key={project.id} className="bg-background border border-border rounded shadow-sm overflow-hidden hover:shadow-md transition-all duration-500">
                 <div className="p-6">
-                  <h3 className="text-2xl font-semibold mb-4">{project.title}</h3>
-                  <p className="text-gray-600 dark:text-gray-300 mb-6">{project.description}</p>
+                  <h3 className="text-2xl font-bold mb-4">{project.title}</h3>
+                  <p className="text-muted-foreground mb-6">{project.description}</p>
                   
                   <div className="space-y-4 mb-6">
                     <h4 className="font-semibold text-lg">技术栈</h4>
                     <div className="flex flex-wrap gap-2">
                       {project.skills.map((skill, index) => (
-                        <span key={index} className="px-3 py-1 bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200 rounded-full text-sm">
+                        <span key={index} className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm">
                           {skill}
                         </span>
                       ))}

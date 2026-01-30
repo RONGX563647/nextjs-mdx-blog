@@ -27,46 +27,37 @@ export function Navigation() {
   return (
     <>
       {/* 桌面端导航栏 */}
-      <nav className="hidden md:flex items-center gap-4 text-lg">
-        {/* 首页链接 */}
+      <nav className="hidden md:flex items-center gap-2 text-base">
         <Link 
           href="/" 
-          className={`px-4 py-3 rounded-md transition-all duration-300 ${pathname === '/' ? 'text-blue-600 font-semibold' : 'hover:bg-accent hover:text-accent-foreground'}`}
-          style={pathname === '/' ? { borderBottom: '3px solid #1e40af' } : {}}
+          className={`px-4 py-2 transition-all duration-300 ${pathname === '/' ? 'text-primary font-bold' : 'hover:text-primary'}`}
         >
           首页
         </Link>
-        {/* 关于链接 */}
         <Link 
           href="/about" 
-          className={`px-4 py-3 rounded-md transition-all duration-300 ${pathname === '/about' ? 'text-blue-600 font-semibold' : 'hover:bg-accent hover:text-accent-foreground'}`}
-          style={pathname === '/about' ? { borderBottom: '3px solid #1e40af' } : {}}
+          className={`px-4 py-2 transition-all duration-300 ${pathname === '/about' ? 'text-primary font-bold' : 'hover:text-primary'}`}
         >
           关于
         </Link>
-        {/* 项目链接 */}
         <Link 
           href="/portfolio" 
-          className={`px-4 py-3 rounded-md transition-all duration-300 ${pathname === '/portfolio' ? 'text-blue-600 font-semibold' : 'hover:bg-accent hover:text-accent-foreground'}`}
-          style={pathname === '/portfolio' ? { borderBottom: '3px solid #1e40af' } : {}}
+          className={`px-4 py-2 transition-all duration-300 ${pathname === '/portfolio' ? 'text-primary font-bold' : 'hover:text-primary'}`}
         >
           项目
         </Link>
-        {/* 博客链接 */}
         <Link 
           href="/blog" 
-          className={`px-4 py-3 rounded-md transition-all duration-300 ${pathname === '/blog' ? 'text-blue-600 font-semibold' : 'hover:bg-accent hover:text-accent-foreground'}`}
-          style={pathname === '/blog' ? { borderBottom: '3px solid #1e40af' } : {}}
+          className={`px-4 py-2 transition-all duration-300 ${pathname === '/blog' ? 'text-primary font-bold' : 'hover:text-primary'}`}
         >
           博客
         </Link>
-        {/* 简历下载链接 */}
         <a 
           href="/1.pdf" 
           download 
-          className="px-4 py-3 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors flex items-center gap-2"
+          className="px-4 py-2 hover:text-primary transition-colors flex items-center gap-2"
         >
-          <Download size={24} />
+          <Download size={20} />
           简历
         </a>
       </nav>
@@ -85,45 +76,40 @@ export function Navigation() {
       
       {/* 移动端菜单 */}
       {mobileMenuOpen && (
-        <div className="md:hidden absolute top-full left-0 right-0 bg-background border-b shadow-lg z-50">
+        <div className="md:hidden absolute top-full left-0 right-0 bg-background border-b border-border z-50">
           <div className="flex flex-col p-4 gap-2">
-            {/* 首页链接 */}
             <Link 
               href="/" 
-              className={`px-4 py-3 rounded-md transition-all duration-300 ${pathname === '/' ? 'text-blue-600 font-semibold bg-accent/50' : 'hover:bg-accent hover:text-accent-foreground'}`}
+              className={`px-4 py-3 transition-all duration-300 ${pathname === '/' ? 'text-primary font-bold' : 'hover:text-primary'}`}
               onClick={() => setMobileMenuOpen(false)}
             >
               首页
             </Link>
-            {/* 关于链接 */}
             <Link 
               href="/about" 
-              className={`px-4 py-3 rounded-md transition-all duration-300 ${pathname === '/about' ? 'text-blue-600 font-semibold bg-accent/50' : 'hover:bg-accent hover:text-accent-foreground'}`}
+              className={`px-4 py-3 transition-all duration-300 ${pathname === '/about' ? 'text-primary font-bold' : 'hover:text-primary'}`}
               onClick={() => setMobileMenuOpen(false)}
             >
               关于
             </Link>
-            {/* 项目链接 */}
             <Link 
               href="/portfolio" 
-              className={`px-4 py-3 rounded-md transition-all duration-300 ${pathname === '/portfolio' ? 'text-blue-600 font-semibold bg-accent/50' : 'hover:bg-accent hover:text-accent-foreground'}`}
+              className={`px-4 py-3 transition-all duration-300 ${pathname === '/portfolio' ? 'text-primary font-bold' : 'hover:text-primary'}`}
               onClick={() => setMobileMenuOpen(false)}
             >
               项目
             </Link>
-            {/* 博客链接 */}
             <Link 
               href="/blog" 
-              className={`px-4 py-3 rounded-md transition-all duration-300 ${pathname === '/blog' ? 'text-blue-600 font-semibold bg-accent/50' : 'hover:bg-accent hover:text-accent-foreground'}`}
+              className={`px-4 py-3 transition-all duration-300 ${pathname === '/blog' ? 'text-primary font-bold' : 'hover:text-primary'}`}
               onClick={() => setMobileMenuOpen(false)}
             >
               博客
             </Link>
-            {/* 简历下载链接 */}
             <a 
               href="/1.pdf" 
               download 
-              className="px-4 py-3 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors flex items-center gap-2"
+              className="px-4 py-3 hover:text-primary transition-colors flex items-center gap-2"
               onClick={() => setMobileMenuOpen(false)}
             >
               <Download size={20} />

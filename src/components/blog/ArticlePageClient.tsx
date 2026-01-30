@@ -62,7 +62,7 @@ export default function ArticlePageClient({ article, categoryName, prevArticle, 
       setIsTocCollapsed(savedCollapsed === 'true')
     }
   }, [])
-  
+
   useEffect(() => {
     const extractHeadings = () => {
       const extractedHeadings: Heading[] = []
@@ -152,12 +152,12 @@ export default function ArticlePageClient({ article, categoryName, prevArticle, 
         onCollapseChange={handleCollapseChange}
       />
 
-      <article className={`py-8 transition-all duration-500 ease-in-out ${isTocCollapsed ? 'lg:ml-[35px]' : 'lg:ml-[335px]'}`}>
+      <article className={`py-8 transition-all duration-500 ease-in-out ${isTocCollapsed ? 'lg:ml-[35px]' : 'lg:ml-[calc(26.66%+15px)]'}`}>
         <div className="container mx-auto px-4">
-          <div className="max-w-7xl mx-auto">
+          <div className="max-w-4xl mx-auto">
             <Link
               href={`/blog/${article.category}`}
-              className="inline-flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 mb-6 transition-colors"
+              className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary mb-6 transition-colors"
             >
               <ArrowLeft className="h-4 w-4" />
               返回 {categoryName}
@@ -167,7 +167,7 @@ export default function ArticlePageClient({ article, categoryName, prevArticle, 
               <div className="flex items-center gap-2 mb-3">
                 <Link
                   href={`/blog/${article.category}`}
-                  className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full text-sm hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
+                  className="inline-flex items-center gap-1 px-3 py-1 bg-primary/10 text-primary rounded-full text-sm hover:bg-primary/20 transition-colors"
                 >
                   <BookOpen className="h-3 w-3" />
                   {categoryName}
@@ -178,7 +178,7 @@ export default function ArticlePageClient({ article, categoryName, prevArticle, 
                 {article.title}
               </h1>
               
-              <div className="flex items-center gap-4 mb-6 text-sm text-gray-500 dark:text-gray-400">
+              <div className="flex items-center gap-4 mb-6 text-sm text-muted-foreground">
                 <div className="flex items-center gap-1">
                   <User className="h-4 w-4" />
                   <span>博主</span>
@@ -197,34 +197,45 @@ export default function ArticlePageClient({ article, categoryName, prevArticle, 
               </div>
             </header>
 
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 md:p-8">
-              {/* Article content */}
-              <div className="prose prose-lg max-w-none">
+            <div className="bg-background border border-border rounded shadow-sm p-6 md:p-8">
+              <div className="prose prose-lg dark:prose-invert max-w-none">
                 <ReactMarkdown
                   remarkPlugins={[remarkGfm]}
-                  rehypePlugins={[rehypeSlug, rehypeAutolinkHeadings, rehypeHighlight]}
+                  rehypePlugins={[
+                    rehypeHighlight,
+                    rehypeSlug,
+                    [
+                      rehypeAutolinkHeadings,
+                      {
+                        behavior: 'wrap',
+                        properties: {
+                          className: ['anchor-link'],
+                        },
+                      },
+                    ],
+                  ]}
                 >
                   {article.content}
                 </ReactMarkdown>
               </div>
             </div>
 
-            <div className="mt-8 bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+            <div className="mt-8 bg-background border border-border rounded shadow-sm p-6">
               <div className="flex flex-col md:flex-row justify-between gap-4">
                 {prevArticle ? (
                   <Link 
                     href={`/blog/${article.category}/${prevArticle.slug}`}
-                    className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                    className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors"
                   >
                     <ArrowLeft className="h-4 w-4" />
                     <div>
-                      <div className="text-xs text-gray-500 dark:text-gray-500">上一页</div>
+                      <div className="text-xs text-muted-foreground">上一页</div>
                       <div className="font-medium">{prevArticle.title}</div>
                     </div>
                   </Link>
                 ) : (
-                  <div className="w-1/2 opacity-0">
-                    <div className="text-xs text-gray-500 dark:text-gray-500">上一页</div>
+                  <div className="w-full md:w-1/2 opacity-0">
+                    <div className="text-xs text-muted-foreground">上一页</div>
                     <div className="font-medium">无</div>
                   </div>
                 )}
@@ -232,17 +243,17 @@ export default function ArticlePageClient({ article, categoryName, prevArticle, 
                 {nextArticle ? (
                   <Link 
                     href={`/blog/${article.category}/${nextArticle.slug}`}
-                    className="flex items-center justify-end gap-2 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                    className="flex items-center justify-end gap-2 text-muted-foreground hover:text-primary transition-colors"
                   >
                     <div className="text-right">
-                      <div className="text-xs text-gray-500 dark:text-gray-500">下一页</div>
+                      <div className="text-xs text-muted-foreground">下一页</div>
                       <div className="font-medium">{nextArticle.title}</div>
                     </div>
                     <ArrowRight className="h-4 w-4" />
                   </Link>
                 ) : (
-                  <div className="w-1/2 opacity-0">
-                    <div className="text-xs text-gray-500 dark:text-gray-500">下一页</div>
+                  <div className="w-full md:w-1/2 opacity-0">
+                    <div className="text-xs text-muted-foreground">下一页</div>
                     <div className="font-medium">无</div>
                   </div>
                 )}

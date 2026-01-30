@@ -53,7 +53,7 @@ export default async function CategoryPage({ params }: PageProps) {
           <div className="max-w-4xl mx-auto">
             <Link
               href="/blog"
-              className="inline-flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 mb-8 transition-colors"
+              className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary mb-8 transition-colors"
             >
               <ArrowLeft className="h-4 w-4" />
               返回专栏列表
@@ -61,20 +61,20 @@ export default async function CategoryPage({ params }: PageProps) {
 
             <div className="mb-12">
               <div className="flex items-center gap-3 mb-4">
-                <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                  <BookOpen className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                <div className="p-3 bg-primary/10 rounded-lg">
+                  <BookOpen className="h-6 w-6 text-primary" />
                 </div>
                 <div>
                   <h1 className="text-3xl md:text-4xl font-bold tracking-tight">
                     {categoryName}
                   </h1>
-                  <p className="text-gray-600 dark:text-gray-300 mt-1">
+                  <p className="text-muted-foreground mt-1">
                     共 {articles.length} 篇文章
                   </p>
                 </div>
               </div>
               {currentCategory.description && (
-                <p className="text-gray-600 dark:text-gray-300 ml-12">
+                <p className="text-muted-foreground ml-12">
                   {currentCategory.description}
                 </p>
               )}
@@ -85,22 +85,22 @@ export default async function CategoryPage({ params }: PageProps) {
                 <Link
                   key={article.slug}
                   href={`/blog/${category}/${article.slug}`}
-                  className="block p-6 bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 border border-gray-200 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-400 group"
+                  className="block p-6 bg-background border border-border rounded shadow-sm hover:shadow-md transition-all duration-300 hover:border-primary group"
                 >
                   <div className="flex items-start gap-4">
-                    <div className="p-2 bg-gray-100 dark:bg-gray-700 rounded-lg group-hover:bg-blue-100 dark:group-hover:bg-blue-900/30 transition-colors flex-shrink-0">
-                      <FileText className="h-5 w-5 text-gray-600 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400" />
+                    <div className="p-2 bg-muted rounded-lg group-hover:bg-primary/10 transition-colors flex-shrink-0">
+                      <FileText className="h-5 w-5 text-muted-foreground group-hover:text-primary" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h2 className="text-xl font-semibold mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-2">
+                      <h2 className="text-xl font-bold mb-2 group-hover:text-primary transition-colors line-clamp-2">
                         {article.title}
                       </h2>
                       {article.description && (
-                        <p className="text-gray-600 dark:text-gray-300 text-sm line-clamp-2 mb-3">
+                        <p className="text-muted-foreground text-sm line-clamp-2 mb-3">
                           {article.description}
                         </p>
                       )}
-                      <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
                         {article.date && (
                           <div className="flex items-center gap-1">
                             <Calendar className="h-3 w-3" />
@@ -108,14 +108,14 @@ export default async function CategoryPage({ params }: PageProps) {
                           </div>
                         )}
                         <div className="flex items-center gap-1">
-                          <span className="px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded text-xs">
+                          <span className="px-2 py-0.5 bg-primary/10 text-primary rounded text-xs">
                             {categoryName}
                           </span>
                         </div>
                       </div>
                     </div>
                     <div className="flex-shrink-0">
-                      <ArrowLeft className="h-5 w-5 text-gray-400 group-hover:text-blue-500 rotate-180 transition-transform" />
+                      <ArrowLeft className="h-5 w-5 text-muted-foreground group-hover:text-primary rotate-180 transition-transform" />
                     </div>
                   </div>
                 </Link>
@@ -124,8 +124,8 @@ export default async function CategoryPage({ params }: PageProps) {
 
             {articles.length === 0 && (
               <div className="text-center py-16">
-                <FileText className="h-16 w-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-                <p className="text-gray-500 dark:text-gray-400 text-lg">
+                <FileText className="h-16 w-16 text-muted-foreground/30 mx-auto mb-4" />
+                <p className="text-muted-foreground text-lg">
                   该专栏暂无文章
                 </p>
               </div>

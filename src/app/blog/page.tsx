@@ -43,48 +43,56 @@ export default async function BlogPage() {
 
   return (
     <div className="min-h-screen">
-      <section className="py-20">
+      <section className="py-24">
         <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto">
-            <div className="text-center mb-16">
-              <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-6">
+          <div className="max-w-6xl mx-auto">
+            <div className="mb-20">
+              <div className="flex items-center gap-4 mb-6">
+                <div className="w-16 h-1 bg-primary"></div>
+                <p className="text-sm font-semibold tracking-widest uppercase text-primary">
+                  技术博客
+                </p>
+              </div>
+              <h1 className="text-5xl md:text-6xl font-bold tracking-tighter mb-6">
                 技术博客专栏
               </h1>
-              <p className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+              <p className="text-xl text-muted-foreground max-w-2xl">
                 深入学习编程技术，从基础到进阶，记录学习过程中的思考与总结
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {categoriesWithCount.map((category) => (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {categoriesWithCount.map((category, index) => (
                 <Link
                   key={category.id}
                   href={`/blog/${category.id}`}
-                  className="group block p-6 bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-200 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-400"
+                  className={`group block p-8 border border-border hover:border-primary transition-all duration-300 ${
+                    index === 0 ? 'md:col-span-2 lg:col-span-1' : ''
+                  }`}
                 >
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg group-hover:bg-blue-200 dark:group-hover:bg-blue-900/50 transition-colors">
-                      <BookOpen className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                  <div className="flex items-start justify-between mb-6">
+                    <div className="p-3 bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                      <BookOpen className="h-6 w-6 text-primary" />
                     </div>
-                    <ArrowRight className="h-5 w-5 text-gray-400 group-hover:text-blue-500 group-hover:translate-x-1 transition-all" />
+                    <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
                   </div>
                   
-                  <h2 className="text-2xl font-semibold mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                  <h2 className="text-2xl font-bold mb-3 group-hover:text-primary transition-colors">
                     {category.name}
                   </h2>
                   
-                  <p className="text-gray-600 dark:text-gray-300 mb-4 line-clamp-2">
+                  <p className="text-muted-foreground mb-6 line-clamp-3 leading-relaxed">
                     {category.description || '探索相关知识体系，掌握核心技能'}
                   </p>
                   
-                  <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
-                    <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-2">
                       <FileText className="h-4 w-4" />
                       <span>{category.articleCount} 篇文章</span>
                     </div>
                     {category.latestArticle && (
-                      <div className="flex items-center gap-1">
-                        <span className="truncate max-w-[150px]">最新: {category.latestArticle}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="truncate max-w-[120px]">最新: {category.latestArticle}</span>
                       </div>
                     )}
                   </div>
@@ -93,9 +101,9 @@ export default async function BlogPage() {
             </div>
 
             {categoriesWithCount.length === 0 && (
-              <div className="text-center py-16">
-                <BookOpen className="h-16 w-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-                <p className="text-gray-500 dark:text-gray-400 text-lg">
+              <div className="text-center py-24">
+                <BookOpen className="h-20 w-20 text-muted-foreground/30 mx-auto mb-6" />
+                <p className="text-muted-foreground text-xl">
                   暂无专栏内容
                 </p>
               </div>

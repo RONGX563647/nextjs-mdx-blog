@@ -26,19 +26,10 @@ interface GlassCardProps {
 export function GlassCard({ children, className, hoverEffect = true }: GlassCardProps) {
   return (
     <div className={`
-      // 半透明背景
-      bg-white/30 dark:bg-gray-800/40
-      // 背景模糊效果
-      backdrop-blur-md
-      // 半透明边框
-      border border-white/50 dark:border-gray-700/50
-      // 圆角
-      rounded-xl
-      // 阴影效果
-      shadow-lg
-      // 悬停效果（如果启用）
-      ${hoverEffect ? 'hover:shadow-xl hover:bg-white/40 dark:hover:bg-gray-800/50 transition-all duration-300' : ''}
-      // 自定义类名
+      bg-background
+      border border-border
+      rounded
+      ${hoverEffect ? 'hover:border-primary transition-colors duration-300' : ''}
       ${className}
     `}>
       {children}

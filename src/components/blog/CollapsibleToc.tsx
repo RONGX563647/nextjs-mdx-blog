@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { List, ChevronLeft, ChevronRight, BookOpen, FileText } from 'lucide-react'
+import { List, ChevronLeft, ChevronRight, BookOpen, FileText, X, Menu } from 'lucide-react'
 
 interface Heading {
   id: string
@@ -69,9 +69,9 @@ export function CollapsibleToc({ headings, activeId, onHeadingClick, articles, c
 
   return (
     <aside 
-      className={`fixed left-0 top-0 h-full z-40 transition-all duration-500 ease-in-out ${
-        isCollapsed ? 'lg:w-[35px] lg:opacity-100' : 'lg:w-[320px] lg:opacity-100'
-      } w-full`}
+      className={`fixed left-0 top-0 h-full z-40 transition-all duration-500 ease-in-out hidden lg:flex ${
+        isCollapsed ? 'lg:w-[35px] lg:opacity-100' : 'lg:w-[calc(26.66%+15px)] lg:opacity-100'
+      }`}
       style={{
         paddingTop: '6rem',
         paddingBottom: '2rem',
@@ -118,7 +118,7 @@ export function CollapsibleToc({ headings, activeId, onHeadingClick, articles, c
                           onClick={() => onArticleClick?.(article.slug)}
                           className={`block w-full text-left px-3 py-2 rounded-md transition-all duration-200 text-sm ${
                             currentArticle?.slug === article.slug && currentArticle?.category === article.category
-                              ? 'bg-blue-50/80 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-medium'
+                              ? 'bg-primary/10 text-primary font-medium'
                               : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50/80 dark:hover:bg-gray-700'
                           }`}
                         >
@@ -145,7 +145,7 @@ export function CollapsibleToc({ headings, activeId, onHeadingClick, articles, c
                           onClick={() => onHeadingClick(heading.id)}
                           className={`block w-full text-left px-3 py-2 rounded-md transition-all duration-200 text-sm ${
                             activeId === heading.id
-                              ? 'bg-blue-50/80 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-medium'
+                              ? 'bg-primary/10 text-primary font-medium'
                               : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50/80 dark:hover:bg-gray-700'
                           }`}
                           style={{
