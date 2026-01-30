@@ -253,4 +253,116 @@
   [data-rehype-pretty-code-title] + pre {
     @apply mt-0 rounded-t-none border-t-0;
   }
+
+  /* Blog content styles */
+  .prose {
+    @apply max-w-none;
+  }
+
+  .prose h1 {
+    @apply text-3xl md:text-4xl font-bold mt-8 mb-4 pb-2 border-b border-gray-200 dark:border-gray-700;
+  }
+
+  .prose h2 {
+    @apply text-2xl md:text-3xl font-semibold mt-8 mb-4 pb-2 border-b border-gray-200 dark:border-gray-700;
+  }
+
+  .prose h3 {
+    @apply text-xl md:text-2xl font-semibold mt-6 mb-3;
+  }
+
+  .prose h4 {
+    @apply text-lg md:text-xl font-semibold mt-4 mb-2;
+  }
+
+  .prose p {
+    @apply text-gray-700 dark:text-gray-300 leading-relaxed mb-4;
+  }
+
+  .prose ul {
+    @apply list-disc list-inside mb-4 space-y-2;
+  }
+
+  .prose ol {
+    @apply list-decimal list-inside mb-4 space-y-2;
+  }
+
+  .prose li {
+    @apply text-gray-700 dark:text-gray-300;
+  }
+
+  .prose blockquote {
+    @apply border-l-4 border-blue-500 pl-4 py-2 my-4 bg-gray-50 dark:bg-gray-800 italic text-gray-700 dark:text-gray-300;
+  }
+
+  .prose pre {
+    @apply bg-gray-900 dark:bg-gray-950 rounded-lg p-4 overflow-x-auto my-4;
+  }
+
+  .prose code {
+    @apply bg-gray-100 dark:bg-gray-800 text-pink-600 dark:text-pink-400 font-mono text-sm;
+  }
+
+  .prose pre code {
+    @apply bg-transparent text-gray-100 dark:text-gray-100;
+  }
+
+  .prose table {
+    @apply w-full border-collapse my-4;
+  }
+
+  .prose thead {
+    @apply bg-gray-100 dark:bg-gray-800;
+  }
+
+  .prose th {
+    @apply border border-gray-300 dark:border-gray-700 px-4 py-2 text-left font-semibold;
+  }
+
+  .prose td {
+    @apply border border-gray-300 dark:border-gray-700 px-4 py-2;
+  }
+
+  .prose tbody tr:hover {
+    @apply bg-gray-50 dark:bg-gray-800;
+  }
+
+  .prose a {
+    @apply text-blue-600 dark:text-blue-400 hover:underline;
+  }
+
+  .prose img {
+    @apply rounded-lg my-4;
+  }
+
+  .prose hr {
+    @apply my-8 border-gray-300 dark:border-gray-700;
+  }
+
+  .prose strong {
+    @apply font-bold text-gray-900 dark:text-gray-100;
+  }
+
+  .prose em {
+    @apply italic;
+  }
+
+  /* Code block styles */
+  .hljs {
+    @apply bg-transparent;
+  }
+
+  /* Anchor link styles */
+  .anchor-link {
+    @apply absolute -left-6 top-0 opacity-0 group-hover:opacity-100 transition-opacity;
+  }
+
+  .anchor-link a {
+    @apply text-gray-400 hover:text-blue-500;
+  }
+
+  /* Table of contents active state */
+  .toc-active {
+    @apply bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-medium;
+  }
 }

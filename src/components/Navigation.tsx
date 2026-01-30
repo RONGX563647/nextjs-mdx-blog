@@ -52,15 +52,14 @@ export function Navigation() {
         >
           项目
         </Link>
-        {/* 博客链接 - 在新标签页打开 */}
-        <a 
-          href="https://blog.csdn.net/King_model?type=blog" 
-          target="_blank" 
-          rel="noopener noreferrer" 
-          className="px-4 py-3 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
+        {/* 博客链接 */}
+        <Link 
+          href="/blog" 
+          className={`px-4 py-3 rounded-md transition-all duration-300 ${pathname === '/blog' ? 'text-blue-600 font-semibold' : 'hover:bg-accent hover:text-accent-foreground'}`}
+          style={pathname === '/blog' ? { borderBottom: '3px solid #1e40af' } : {}}
         >
           博客
-        </a>
+        </Link>
         {/* 简历下载链接 */}
         <a 
           href="/1.pdf" 
@@ -112,16 +111,14 @@ export function Navigation() {
             >
               项目
             </Link>
-            {/* 博客链接 - 在新标签页打开 */}
-            <a 
-              href="https://blog.csdn.net/King_model?type=blog" 
-              target="_blank" 
-              rel="noopener noreferrer" 
-              className="px-4 py-3 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
+            {/* 博客链接 */}
+            <Link 
+              href="/blog" 
+              className={`px-4 py-3 rounded-md transition-all duration-300 ${pathname === '/blog' ? 'text-blue-600 font-semibold bg-accent/50' : 'hover:bg-accent hover:text-accent-foreground'}`}
               onClick={() => setMobileMenuOpen(false)}
             >
               博客
-            </a>
+            </Link>
             {/* 简历下载链接 */}
             <a 
               href="/1.pdf" 
