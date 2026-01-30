@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { List, ChevronLeft, ChevronRight, BookOpen, FileText } from 'lucide-react'
 
 interface Heading {
@@ -25,31 +25,30 @@ interface CollapsibleTocProps {
     category: string
   }
   onArticleClick?: (slug: string) => void
+  onCollapseChange?: (isCollapsed: boolean) => void
 }
 
 const TOC_STORAGE_KEY = 'blog-toc-collapsed'
 const SECTION_STORAGE_KEY = 'blog-toc-section'
 
-export function CollapsibleToc({ headings, activeId, onHeadingClick, articles, currentArticle, onArticleClick }: CollapsibleTocProps) {
-  const [isCollapsed, setIsCollapsed] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem(TOC_STORAGE_KEY)
-      if (saved !== null) {
-        return saved === 'true'
-      }
-    }
-    return true
-  })
+export function CollapsibleToc({ headings, activeId, onHeadingClick, articles, currentArticle, onArticleClick, onCollapseChange }: CollapsibleTocProps) {
+  const [isCollapsed, setIsCollapsed] = useState(true)
+  const [isSectionExpanded, setIsSectionExpanded] = useState(false)
+  const [isMounted, setIsMounted] = useState(false)
 
-  const [isSectionExpanded, setIsSectionExpanded] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem(SECTION_STORAGE_KEY)
-      if (saved !== null) {
-        return saved === 'true'
-      }
+  useEffect(() => {
+    setIsMounted(true)
+    const savedCollapsed = localStorage.getItem(TOC_STORAGE_KEY)
+    const savedSectionExpanded = localStorage.getItem(SECTION_STORAGE_KEY)
+    
+    if (savedCollapsed !== null) {
+      setIsCollapsed(savedCollapsed === 'true')
     }
-    return false
-  })
+    
+    if (savedSectionExpanded !== null) {
+      setIsSectionExpanded(savedSectionExpanded === 'true')
+    }
+  }, [])
 
   const toggleCollapse = () => {
     const newState = !isCollapsed
@@ -57,6 +56,7 @@ export function CollapsibleToc({ headings, activeId, onHeadingClick, articles, c
     if (typeof window !== 'undefined') {
       localStorage.setItem(TOC_STORAGE_KEY, String(newState))
     }
+    onCollapseChange?.(newState)
   }
 
   const toggleSection = () => {
@@ -70,7 +70,7 @@ export function CollapsibleToc({ headings, activeId, onHeadingClick, articles, c
   return (
     <aside 
       className={`fixed left-0 top-0 h-full z-40 transition-all duration-500 ease-in-out ${
-        isCollapsed ? 'lg:w-[35px] lg:opacity-100' : 'lg:w-[calc(26.66%+15px)] lg:opacity-100'
+        isCollapsed ? 'lg:w-[35px] lg:opacity-100' : 'lg:w-[320px] lg:opacity-100'
       } w-full`}
       style={{
         paddingTop: '6rem',

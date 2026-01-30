@@ -52,8 +52,17 @@ export default function ArticlePageClient({ article, categoryName, prevArticle, 
   const [headings, setHeadings] = useState<Heading[]>([])
   const [activeId, setActiveId] = useState<string>('')
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [isTocCollapsed, setIsTocCollapsed] = useState(false)
+  const [isTocCollapsed, setIsTocCollapsed] = useState(true)
+  const [isMounted, setIsMounted] = useState(false)
 
+  useEffect(() => {
+    setIsMounted(true)
+    const savedCollapsed = localStorage.getItem('blog-toc-collapsed')
+    if (savedCollapsed !== null) {
+      setIsTocCollapsed(savedCollapsed === 'true')
+    }
+  }, [])
+  
   useEffect(() => {
     const extractHeadings = () => {
       const extractedHeadings: Heading[] = []
@@ -89,26 +98,8 @@ export default function ArticlePageClient({ article, categoryName, prevArticle, 
   }, [article.content])
 
   useEffect(() => {
-    const checkTocCollapsed = () => {
-      if (typeof window !== 'undefined') {
-        const isCollapsed = localStorage.getItem('blog-toc-collapsed') === 'true'
-        setIsTocCollapsed(isCollapsed)
-      }
-    }
+    if (typeof window === 'undefined') return
 
-    checkTocCollapsed()
-
-    const handleStorageChange = () => {
-      checkTocCollapsed()
-    }
-
-    window.addEventListener('storage', handleStorageChange)
-    return () => {
-      window.removeEventListener('storage', handleStorageChange)
-    }
-  }, [])
-
-  useEffect(() => {
     const handleScroll = () => {
       const headingElements = document.querySelectorAll('h1, h2, h3, h4, h5, h6')
       let currentId = ''
@@ -145,6 +136,10 @@ export default function ArticlePageClient({ article, categoryName, prevArticle, 
     window.location.href = `/blog/${article.category}/${slug}`
   }
 
+  const handleCollapseChange = (isCollapsed: boolean) => {
+    setIsTocCollapsed(isCollapsed)
+  }
+
   return (
     <div className="min-h-screen">
       <CollapsibleToc 
@@ -154,9 +149,10 @@ export default function ArticlePageClient({ article, categoryName, prevArticle, 
         articles={articles}
         currentArticle={currentArticle}
         onArticleClick={handleArticleClick}
+        onCollapseChange={handleCollapseChange}
       />
 
-      <article className={`py-8 transition-all duration-500 ease-in-out ${isTocCollapsed ? 'lg:ml-[35px]' : 'lg:ml-[calc(26.66%+15px)]'}`}>
+      <article className={`py-8 transition-all duration-500 ease-in-out ${isTocCollapsed ? 'lg:ml-[35px]' : 'lg:ml-[335px]'}`}>
         <div className="container mx-auto px-4">
           <div className="max-w-7xl mx-auto">
             <Link
@@ -202,22 +198,11 @@ export default function ArticlePageClient({ article, categoryName, prevArticle, 
             </header>
 
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 md:p-8">
-              <div className="prose prose-lg dark:prose-invert max-w-none">
+              {/* Article content */}
+              <div className="prose prose-lg max-w-none">
                 <ReactMarkdown
                   remarkPlugins={[remarkGfm]}
-                  rehypePlugins={[
-                    rehypeHighlight,
-                    rehypeSlug,
-                    [
-                      rehypeAutolinkHeadings,
-                      {
-                        behavior: 'wrap',
-                        properties: {
-                          className: ['anchor-link'],
-                        },
-                      },
-                    ],
-                  ]}
+                  rehypePlugins={[rehypeSlug, rehypeAutolinkHeadings, rehypeHighlight]}
                 >
                   {article.content}
                 </ReactMarkdown>
