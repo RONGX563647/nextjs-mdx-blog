@@ -16,6 +16,7 @@ import { Analytics } from '@vercel/analytics/next' // Vercel分析工具
 import type { Metadata } from 'next' // Next.js元数据类型
 import Link from 'next/link' // Next.js链接组件
 import { Github } from 'lucide-react' // GitHub图标
+import { AIAssistant } from '@/components/ai/AIAssistant'
 import './global.css' // 全局样式
 
 // 网站基本元数据
@@ -112,6 +113,8 @@ export default function RootLayout({
               <PageTransition>{children}</PageTransition>
             </Container>
           </main>
+          
+          <AIAssistant />
           
           <footer className="py-16 border-t border-border">
             <Container>
