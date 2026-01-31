@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { ArrowLeft, FileText, Calendar, BookOpen } from 'lucide-react'
 import { getCategories, getArticles, getCategoryFromId } from '@/lib/blog'
 import { notFound } from 'next/navigation'
+import { ArticleDownloadButton } from '@/components/blog/ArticleDownloadButton'
 
 interface PageProps {
   params: Promise<{ category: string }>
@@ -82,43 +83,57 @@ export default async function CategoryPage({ params }: PageProps) {
 
             <div className="space-y-4">
               {articles.map((article) => (
-                <Link
+                <div 
                   key={article.slug}
-                  href={`/blog/${category}/${article.slug}`}
-                  className="block p-6 bg-background border border-border rounded shadow-sm hover:shadow-md transition-all duration-300 hover:border-primary group"
+                  className="p-6 bg-background border border-border rounded shadow-sm hover:shadow-md transition-all duration-300 hover:border-primary group"
                 >
                   <div className="flex items-start gap-4">
                     <div className="p-2 bg-muted rounded-lg group-hover:bg-primary/10 transition-colors flex-shrink-0">
                       <FileText className="h-5 w-5 text-muted-foreground group-hover:text-primary" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h2 className="text-xl font-bold mb-2 group-hover:text-primary transition-colors line-clamp-2">
-                        {article.title}
-                      </h2>
-                      {article.description && (
-                        <p className="text-muted-foreground text-sm line-clamp-2 mb-3">
-                          {article.description}
-                        </p>
-                      )}
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        {article.date && (
-                          <div className="flex items-center gap-1">
-                            <Calendar className="h-3 w-3" />
-                            <span>{article.date}</span>
-                          </div>
+                      <Link
+                        href={`/blog/${category}/${article.slug}`}
+                        className="block"
+                      >
+                        <h2 className="text-xl font-bold mb-2 group-hover:text-primary transition-colors line-clamp-2">
+                          {article.title}
+                        </h2>
+                        {article.description && (
+                          <p className="text-muted-foreground text-sm line-clamp-2 mb-3">
+                            {article.description}
+                          </p>
                         )}
-                        <div className="flex items-center gap-1">
-                          <span className="px-2 py-0.5 bg-primary/10 text-primary rounded text-xs">
-                            {categoryName}
-                          </span>
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                          {article.date && (
+                            <div className="flex items-center gap-1">
+                              <Calendar className="h-3 w-3" />
+                              <span>{article.date}</span>
+                            </div>
+                          )}
+                          <div className="flex items-center gap-1">
+                            <span className="px-2 py-0.5 bg-primary/10 text-primary rounded text-xs">
+                              {categoryName}
+                            </span>
+                          </div>
                         </div>
-                      </div>
+                      </Link>
                     </div>
-                    <div className="flex-shrink-0">
-                      <ArrowLeft className="h-5 w-5 text-muted-foreground group-hover:text-primary rotate-180 transition-transform" />
+                    <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                      <ArticleDownloadButton 
+                        category={article.category} 
+                        slug={article.slug} 
+                        title={article.title} 
+                      />
+                      <Link
+                        href={`/blog/${category}/${article.slug}`}
+                        className="flex items-center justify-center p-1 rounded-full hover:bg-primary/10 transition-colors"
+                      >
+                        <ArrowLeft className="h-4 w-4 text-muted-foreground group-hover:text-primary rotate-180 transition-transform" />
+                      </Link>
                     </div>
                   </div>
-                </Link>
+                </div>
               ))}
             </div>
 

@@ -32,7 +32,7 @@ export function ArticleContent({ content }: ArticleContentProps) {
             [
               rehypeAutolinkHeadings,
               {
-                behavior: 'wrap',
+                behavior: 'prepend',
                 properties: {
                   className: ['anchor-link'],
                 },

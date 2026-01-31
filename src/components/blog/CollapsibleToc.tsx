@@ -13,8 +13,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { List, ChevronLeft, ChevronRight, BookOpen, FileText } from 'lucide-react'
+import { List, ChevronLeft, ChevronRight, BookOpen, FileText, Download } from 'lucide-react'
 import { useTocCollapsed, useTocSectionExpanded } from '@/hooks/useToc'
+import { getArticle } from '@/lib/blog'
 
 interface Heading {
   id: string
@@ -55,6 +56,47 @@ export function CollapsibleToc({
 }: CollapsibleTocProps) {
   const { isCollapsed, toggleCollapse } = useTocCollapsed(onCollapseChange)
   const { isExpanded, toggleSection } = useTocSectionExpanded()
+
+  // 下载文章为Markdown文件
+  const handleDownload = async (article: Article) => {
+    try {
+      // 构建Markdown文件路径
+      const filePath = `/md/${article.category}/${article.slug}.md`
+      
+      // 从public目录获取Markdown内容
+      const response = await fetch(filePath)
+      if (!response.ok) {
+        throw new Error('Failed to fetch article')
+      }
+      
+      const content = await response.text()
+      
+      // 创建Markdown内容
+      const markdownContent = content
+      
+      // 创建Blob对象
+      const blob = new Blob([markdownContent], { type: 'text/markdown' })
+      const url = URL.createObjectURL(blob)
+      
+      // 创建下载链接
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `${article.title.replace(/[^a-zA-Z0-9]/g, '-')}.md`
+      document.body.appendChild(a)
+      
+      // 触发下载
+      a.click()
+      
+      // 清理
+      setTimeout(() => {
+        document.body.removeChild(a)
+        URL.revokeObjectURL(url)
+      }, 100)
+    } catch (error) {
+      console.error('Error downloading article:', error)
+      alert('下载文章失败，请稍后重试')
+    }
+  }
 
   return (
     <aside 
@@ -102,20 +144,31 @@ export function CollapsibleToc({
                   <div className="p-2 border-b border-gray-200 dark:border-gray-700">
                     <nav className="space-y-1">
                       {articles.map((article) => (
-                        <button
+                        <div 
                           key={article.slug}
-                          onClick={() => onArticleClick?.(article.slug)}
-                          className={`block w-full text-left px-3 py-2 rounded-md transition-all duration-200 text-sm ${
+                          className={`w-full px-3 py-2 rounded-md transition-all duration-200 text-sm ${
                             currentArticle?.slug === article.slug && currentArticle?.category === article.category
                               ? 'bg-primary/10 text-primary font-medium'
                               : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50/80 dark:hover:bg-gray-700'
                           }`}
                         >
-                          <div className="flex items-center gap-2">
-                            <FileText className="h-3 w-3 flex-shrink-0" />
-                            <span className="truncate">{article.title}</span>
+                          <div className="flex items-center justify-between gap-2">
+                            <button
+                              onClick={() => onArticleClick?.(article.slug)}
+                              className="flex-1 text-left flex items-center gap-2"
+                            >
+                              <FileText className="h-3 w-3 flex-shrink-0" />
+                              <span className="truncate">{article.title}</span>
+                            </button>
+                            <button
+                              onClick={() => handleDownload(article)}
+                              className="p-1 rounded-full hover:bg-primary/20 text-primary hover:text-primary/80 transition-colors flex-shrink-0"
+                              title="下载文章"
+                            >
+                              <Download className="h-3 w-3" />
+                            </button>
                           </div>
-                        </button>
+                        </div>
                       ))}
                     </nav>
                   </div>

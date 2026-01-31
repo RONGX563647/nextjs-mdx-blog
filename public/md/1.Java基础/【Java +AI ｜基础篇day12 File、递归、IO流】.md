@@ -1,10 +1,10 @@
-# 12📁 Java Day12 - File、递归、IO流
+##### 12📁 Java Day12 - File、递归、IO流
 
 > 💡 **核心提示**：文件操作和 IO 流是 Java 与外部数据交互的核心机制。本文系统讲解 File 类、递归算法、字节流和字符流的使用，帮你掌握 Java 文件操作。
 
 ---
 
-## 快速回顾
+#### 快速回顾
 
 - **File 类**：文件和目录路径名的抽象表示，用于创建、删除、遍历文件
 - **递归**：方法调用自身，用于解决树形结构问题（如遍历目录）
@@ -13,7 +13,7 @@
 
 ---
 
-## 目录
+#### 目录
 
 - [一、File 类](#一file-类)
   - [1. File 类构造方法](#1-file-类构造方法)
@@ -34,9 +34,9 @@
 
 ---
 
-## 详细内容
+#### 详细内容
 
-### 一、File 类
+##### 一、File 类
 
 #### 1. File 类构造方法
 
@@ -112,7 +112,7 @@ public static void listFiles(File dir) {
 
 ---
 
-### 二、递归算法
+##### 二、递归算法
 
 #### 1. 递归三要素
 
@@ -259,7 +259,7 @@ public static void deleteDirectory(File dir) {
 
 ---
 
-### 三、IO 流
+##### 三、IO 流
 
 #### 1. IO 流体系
 
@@ -424,7 +424,7 @@ public static Object deserialize(String path) {
 
 ---
 
-### 四、IO 流选择指南
+##### 四、IO 流选择指南
 
 | 场景 | 推荐流 |
 |------|--------|
@@ -436,9 +436,9 @@ public static Object deserialize(String path) {
 
 ---
 
-## 问答
+#### 问答
 
-### Q1：字节流和字符流有什么区别？
+##### Q1：字节流和字符流有什么区别？
 
 **答**：
 - **字节流**：以字节为单位，适合所有类型文件（图片、视频、二进制等）。
@@ -446,7 +446,7 @@ public static Object deserialize(String path) {
 - **关系**：字符流 = 字节流 + 编码表。
 - **建议**：文本用字符流，其他用字节流。
 
-### Q2：为什么要使用缓冲流？
+##### Q2：为什么要使用缓冲流？
 
 **答**：
 - **减少系统调用**：普通流每次读写都进行系统调用，缓冲流先写入缓冲区。
@@ -454,7 +454,7 @@ public static Object deserialize(String path) {
 - **支持更多功能**：如 BufferedReader 的 `readLine()` 方法。
 - **性能提升**：通常可提升 10 倍以上性能。
 
-### Q3：递归有什么优缺点？
+##### Q3：递归有什么优缺点？
 
 **答**：
 - **优点**：代码简洁，易于理解，适合树形结构问题。
@@ -463,7 +463,7 @@ public static Object deserialize(String path) {
   - 可能存在重复计算（如斐波那契数列）
 - **优化**：使用尾递归、记忆化搜索或改为迭代。
 
-### Q4：try-with-resources 是什么？
+##### Q4：try-with-resources 是什么？
 
 **答**：
 - JDK7 引入的语法糖，用于自动关闭资源。
@@ -478,7 +478,7 @@ try (FileInputStream fis = new FileInputStream("a.txt");
 }
 ```
 
-### Q5：序列化中的 serialVersionUID 有什么作用？
+##### Q5：序列化中的 serialVersionUID 有什么作用？
 
 **答**：
 - 序列化版本标识符，用于验证序列化和反序列化的类是否兼容。

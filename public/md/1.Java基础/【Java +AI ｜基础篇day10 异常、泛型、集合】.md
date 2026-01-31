@@ -1,10 +1,10 @@
-# 10⚠️ Java Day10 - 异常、泛型、集合
+##### 10⚠️ Java Day10 - 异常、泛型、集合
 
 > 💡 **核心提示**：异常处理、泛型和集合是 Java 进阶的核心内容。本文系统讲解异常体系、泛型机制、List 集合的使用，帮你写出更健壮、更通用的代码。
 
 ---
 
-## 快速回顾
+#### 快速回顾
 
 - **异常**：程序运行时的错误，Java 用类和对象描述，通过 try-catch 处理
 - **泛型**：参数化类型，提供编译时类型安全检查，避免强制类型转换
@@ -13,7 +13,7 @@
 
 ---
 
-## 目录
+#### 目录
 
 - [一、异常处理](#一异常处理)
   - [1. 异常体系结构](#1-异常体系结构)
@@ -35,9 +35,9 @@
 
 ---
 
-## 详细内容
+#### 详细内容
 
-### 一、异常处理
+##### 一、异常处理
 
 #### 1. 异常体系结构
 
@@ -182,7 +182,7 @@ public void withdraw(double amount) throws BusinessException {
 
 ---
 
-### 二、泛型（Generics）
+##### 二、泛型（Generics）
 
 #### 1. 泛型的作用
 
@@ -272,7 +272,7 @@ System.out.println(strList.getClass() == intList.getClass());  // true
 
 ---
 
-### 三、List 集合
+##### 三、List 集合
 
 #### 1. List 接口特点
 
@@ -363,7 +363,7 @@ students.sort(Comparator.comparing(Student::getAge).reversed());
 
 ---
 
-### 四、Collections 工具类
+##### 四、Collections 工具类
 
 ```java
 List<Integer> list = new ArrayList<>();
@@ -395,16 +395,16 @@ List<String> unmodifiableList = Collections.unmodifiableList(list);
 
 ---
 
-## 问答
+#### 问答
 
-### Q1：运行时异常和编译时异常有什么区别？
+##### Q1：运行时异常和编译时异常有什么区别？
 
 **答**：
 - **运行时异常（RuntimeException）**：编译器不强制处理，通常是编程错误，如空指针、数组越界。
 - **编译时异常**：编译器强制要求处理，通常是外部因素导致，如 IO 异常、SQL 异常。
 - **处理建议**：运行时异常通过完善代码避免，编译时异常必须显式处理。
 
-### Q2：泛型擦除会带来什么问题？
+##### Q2：泛型擦除会带来什么问题？
 
 **答**：
 - 运行时无法获取泛型类型信息（`T.class` 编译错误）。
@@ -412,14 +412,14 @@ List<String> unmodifiableList = Collections.unmodifiableList(list);
 - 泛型类型在反射时丢失。
 - **解决方案**：使用 `Class<T>` 传递类型信息，或使用通配符。
 
-### Q3：ArrayList 和 LinkedList 如何选择？
+##### Q3：ArrayList 和 LinkedList 如何选择？
 
 **答**：
 - **ArrayList**：随机访问频繁、增删操作少、内存敏感的场景。
 - **LinkedList**：频繁增删、需要实现队列/栈、不需要随机访问的场景。
 - **注意**：大多数场景 ArrayList 性能更好，LinkedList 仅在特定场景有优势。
 
-### Q4：为什么要使用泛型？
+##### Q4：为什么要使用泛型？
 
 **答**：
 - **类型安全**：编译时检查类型，避免运行时 ClassCastException。
@@ -427,7 +427,7 @@ List<String> unmodifiableList = Collections.unmodifiableList(list);
 - **代码复用**：编写通用算法，适用于多种类型。
 - **可读性**：代码意图更清晰。
 
-### Q5：try-with-resources 有什么优势？
+##### Q5：try-with-resources 有什么优势？
 
 **答**：
 - **自动关闭资源**：无需手动调用 `close()`。

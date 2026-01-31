@@ -109,6 +109,7 @@ export default function ArticlePageClient({
               category={article.category}
               categoryName={categoryName}
               date={article.date}
+              content={article.content}
             />
 
             <ArticleContent content={article.content} />

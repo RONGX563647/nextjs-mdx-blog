@@ -1,10 +1,10 @@
-# 00📚 Java00 核心知识点归纳
+##### 00📚 Java00 核心知识点归纳
 
 > 💡 **核心提示**：本文系统归纳 Java 编程的核心知识点，涵盖基础语法、面向对象、常用 API、集合框架、异常处理、IO 流、多线程、网络编程等内容，帮助快速回顾和查漏补缺。
 
 ---
 
-## 快速回顾
+#### 快速回顾
 
 - **基础语法**：变量、数据类型、运算符、流程控制、数组
 - **面向对象**：封装、继承、多态、抽象类、接口
@@ -73,9 +73,9 @@
 
 ---
 
-## 详细内容
+#### 详细内容
 
-### 一、Java 基础语法
+##### 一、Java 基础语法
 
 #### 1. 数据类型
 
@@ -120,7 +120,7 @@ for (String s : list) { }
 
 ---
 
-### 二、面向对象
+##### 二、面向对象
 
 #### 1. 类与对象
 
@@ -203,7 +203,7 @@ public class Bird extends Animal implements Flyable {
 
 ---
 
-### 三、常用 API
+##### 三、常用 API
 
 #### 1. String
 
@@ -301,7 +301,7 @@ int sum = numbers.stream().mapToInt(Integer::intValue).sum();
 
 ---
 
-### 四、异常处理
+##### 四、异常处理
 
 ```java
 // try-catch-finally
@@ -323,7 +323,7 @@ try (FileInputStream fis = new FileInputStream("file.txt")) {
 
 ---
 
-### 五、IO 流
+##### 五、IO 流
 
 ```java
 // 文件复制
@@ -344,7 +344,7 @@ public void copyFile(String src, String dest) throws IOException {
 
 ---
 
-### 六、多线程
+##### 六、多线程
 
 #### 1. 创建线程
 
@@ -409,7 +409,7 @@ executor.shutdown();
 
 ---
 
-### 七、网络编程
+##### 七、网络编程
 
 #### 1. TCP 通信
 
@@ -447,7 +447,7 @@ String received = new String(packet.getData(), 0, packet.getLength());
 
 ---
 
-### 八、反射与注解
+##### 八、反射与注解
 
 #### 1. 反射
 
@@ -490,23 +490,23 @@ String value = anno.value();
 
 ---
 
-## 问答
+#### 问答
 
-### Q1：Java 中 == 和 equals 的区别？
+##### Q1：Java 中 == 和 equals 的区别？
 
 **答**：
 - `==`：比较引用地址（基本类型比较值）。
 - `equals`：比较内容，默认实现是 `==`，需要重写。
 - String 重写了 equals，比较字符串内容。
 
-### Q2：ArrayList 和 LinkedList 的区别？
+##### Q2：ArrayList 和 LinkedList 的区别？
 
 **答**：
 - **ArrayList**：数组实现，随机访问快 O(1)，增删慢 O(n)。
 - **LinkedList**：链表实现，随机访问慢 O(n)，增删快 O(1)。
 - 大多数场景使用 ArrayList。
 
-### Q3：HashMap 的工作原理？
+##### Q3：HashMap 的工作原理？
 
 **答**：
 - 基于哈希表实现，数组 + 链表/红黑树。
@@ -514,14 +514,14 @@ String value = anno.value();
 - 冲突时使用链表存储，链表长度超过 8 转为红黑树。
 - 负载因子 0.75，超过时扩容为原来的 2 倍。
 
-### Q4：synchronized 和 Lock 的区别？
+##### Q4：synchronized 和 Lock 的区别？
 
 **答**：
 - **synchronized**：JVM 实现，自动释放锁，不可中断。
 - **Lock**：API 实现，手动释放锁，可中断、可超时、可公平。
 - 简单场景用 synchronized，复杂场景用 Lock。
 
-### Q5：TCP 和 UDP 的区别？
+##### Q5：TCP 和 UDP 的区别？
 
 **答**：
 - **TCP**：面向连接、可靠传输、有序、流量控制，适合文件传输、HTTP。

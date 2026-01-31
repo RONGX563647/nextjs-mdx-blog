@@ -1,10 +1,10 @@
-# 15💬 Java Day14 - 项目实战：Socket 聊天室
+##### 15💬 Java Day14 - 项目实战：Socket 聊天室
 
 > 💡 **核心提示**：通过 Socket 聊天室项目，综合运用网络编程、多线程、IO 流等知识，实现一个支持多客户端的实时聊天系统。
 
 ---
 
-## 快速回顾
+#### 快速回顾
 
 - **项目目标**：实现一个基于 TCP 的多人聊天室
 - **核心功能**：用户登录、群聊、私聊、在线用户列表
@@ -13,7 +13,7 @@
 
 ---
 
-## 目录
+#### 目录
 
 - [一、项目架构设计](#一项目架构设计)
   - [1. 系统架构](#1-系统架构)
@@ -34,9 +34,9 @@
 
 ---
 
-## 详细内容
+#### 详细内容
 
-### 一、项目架构设计
+##### 一、项目架构设计
 
 #### 1. 系统架构
 
@@ -79,7 +79,7 @@ public class Message implements Serializable {
 
 ---
 
-### 二、服务器端实现
+##### 二、服务器端实现
 
 #### 1. 聊天服务器
 
@@ -250,7 +250,7 @@ public class ClientHandler implements Runnable {
 
 ---
 
-### 三、客户端实现
+##### 三、客户端实现
 
 #### 1. 聊天客户端
 
@@ -366,7 +366,7 @@ public class ChatClient {
 
 ---
 
-### 四、功能说明
+##### 四、功能说明
 
 #### 1. 命令列表
 
@@ -398,7 +398,7 @@ A和B的客户端显示私聊消息
 
 ---
 
-### 五、代码优化建议
+##### 五、代码优化建议
 
 #### 1. 心跳机制
 
@@ -451,16 +451,16 @@ private boolean authenticate(String username, String password) {
 
 ---
 
-## 问答
+#### 问答
 
-### Q1：为什么要使用 ConcurrentHashMap 存储客户端？
+##### Q1：为什么要使用 ConcurrentHashMap 存储客户端？
 
 **答**：
 - `ConcurrentHashMap` 是线程安全的哈希表。
 - 多个线程可能同时访问和修改客户端集合（新用户登录、用户退出）。
 - 使用普通 `HashMap` 需要额外同步，而 `ConcurrentHashMap` 内部已优化。
 
-### Q2：如何处理客户端异常断开？
+##### Q2：如何处理客户端异常断开？
 
 **答**：
 - 在 `catch` 块中捕获 `IOException`。
@@ -468,14 +468,14 @@ private boolean authenticate(String username, String password) {
 - 广播用户离开消息。
 - 关闭相关资源（socket、流）。
 
-### Q3：为什么使用 ObjectInputStream/ObjectOutputStream？
+##### Q3：为什么使用 ObjectInputStream/ObjectOutputStream？
 
 **答**：
 - 可以直接传输 Java 对象，无需手动序列化/反序列化。
 - 代码更简洁，类型安全。
 - 传输的消息类需要实现 `Serializable` 接口。
 
-### Q4：如何支持文件传输？
+##### Q4：如何支持文件传输？
 
 **答**：
 - 添加新的消息类型 `FILE`。
@@ -492,7 +492,7 @@ public class FileMessage implements Serializable {
 }
 ```
 
-### Q5：如何扩展为 Web 聊天室？
+##### Q5：如何扩展为 Web 聊天室？
 
 **答**：
 - 使用 WebSocket 替代 Socket。
