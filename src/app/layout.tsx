@@ -17,6 +17,7 @@ import type { Metadata } from 'next' // Next.js元数据类型
 import Link from 'next/link' // Next.js链接组件
 import { Github } from 'lucide-react' // GitHub图标
 import { AIAssistant } from '@/components/ai/AIAssistant'
+import { HeaderWithDoubleClick } from '@/components/HeaderWithDoubleClick' // Header with double-click functionality
 import './global.css' // 全局样式
 
 // 网站基本元数据
@@ -83,30 +84,8 @@ export default function RootLayout({
         <ThemeProvider attribute="class" defaultTheme="system">
           <CustomCursor />
           
-          <header className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b border-border">
-            <Container>
-              <div className="flex items-center justify-between py-5">
-                <div className="flex items-center gap-6">
-                  <Link href="/" className="text-5xl font-bold tracking-tighter">
-                    RONGX
-                  </Link>
-                  <Navigation />
-                </div>
-                <div className="flex items-center gap-4">
-                  <a 
-                    href="https://github.com/RONGX563647" 
-                    target="_blank" 
-                    rel="noopener noreferrer" 
-                    className="px-4 py-2 hover:bg-accent hover:text-accent-foreground transition-colors flex items-center gap-2 text-sm font-medium"
-                  >
-                    <Github size={20} />
-                    GitHub
-                  </a>
-                  <ThemeSwitch />
-                </div>
-              </div>
-            </Container>
-          </header>
+          {/* Header with double-click logo functionality */}
+          <HeaderWithDoubleClick />
           
           <main className="flex-1">
             <Container>

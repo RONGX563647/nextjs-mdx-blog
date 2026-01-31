@@ -50,20 +50,20 @@ export default function About() {
         <div className="container mx-auto px-4">
           <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-6">关于我</h1>
           <p className="text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-3xl">
-            我是一名全栈开发工程师，专注于 Java 后端和 Vue3 前端开发，
-            拥有扎实的前后端技术基础，能够为项目提供完整的技术解决方案。
+            我是一名全栈开发工程师，专注于Java后端和Vue3前端技术栈，
+            拥有扎实的前后端开发基础，能够独立完成从需求分析到部署上线的全流程开发。
           </p>
           
           {/* 社交链接 */}
           <div className="flex flex-wrap gap-4 mb-12">
             <Button asChild variant="secondary" className="bg-gradient-to-r from-blue-600/10 to-purple-600/10 hover:from-blue-600/20 hover:to-purple-600/20 border-blue-600/30">
-              <a href="mailto:example@example.com" className="flex items-center gap-2">
+              <a href="mailto:lrx563647@qq.com" className="flex items-center gap-2">
                 <Mail size={18} />
                 发送邮件
               </a>
             </Button>
             <Button asChild variant="secondary" className="bg-gradient-to-r from-gray-800/10 to-gray-600/10 hover:from-gray-800/20 hover:to-gray-600/20 border-gray-600/30">
-              <a href="https://github.com" className="flex items-center gap-2">
+              <a href="https://github.com/RONGX563647" className="flex items-center gap-2">
                 <Github size={18} />
                 GitHub
               </a>
@@ -96,14 +96,14 @@ export default function About() {
                 <Mail className="h-6 w-6 text-blue-600 dark:text-blue-400 mt-1 flex-shrink-0" />
                 <div>
                   <h3 className="font-semibold text-lg">邮箱</h3>
-                  <p className="text-gray-600 dark:text-gray-300">example@example.com</p>
+                  <p className="text-gray-600 dark:text-gray-300">lrx563647@qq.com</p>
                 </div>
               </div>
               <div className="flex items-start gap-4 p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md transition-shadow">
                 <Phone className="h-6 w-6 text-blue-600 dark:text-blue-400 mt-1 flex-shrink-0" />
                 <div>
                   <h3 className="font-semibold text-lg">电话</h3>
-                  <p className="text-gray-600 dark:text-gray-300">138****1234</p>
+                  <p className="text-gray-600 dark:text-gray-300">18876381526</p>
                 </div>
               </div>
               <div className="flex items-start gap-4 p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md transition-shadow">
@@ -121,23 +121,23 @@ export default function About() {
               <ul className="space-y-4">
                 <li className="flex items-start gap-3 p-3 bg-white dark:bg-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                   <div className="h-2 w-2 rounded-full bg-blue-600 dark:bg-blue-400 mt-2 flex-shrink-0"></div>
-                  <span>扎实的编码与逻辑能力，熟悉前后端开发流程</span>
+                  <span>Java基础知识扎实，了解JUC/JVM，熟悉SSM、Spring Boot、Spring Cloud等后端框架</span>
                 </li>
                 <li className="flex items-start gap-3 p-3 bg-white dark:bg-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                   <div className="h-2 w-2 rounded-full bg-blue-600 dark:bg-blue-400 mt-2 flex-shrink-0"></div>
-                  <span>精通 Java 后端开发，熟悉 Spring Boot、Spring Cloud 框架</span>
+                  <span>熟悉Vue3生态，掌握Composition API、Pinia状态管理、Vue Router路由等前端技术</span>
                 </li>
                 <li className="flex items-start gap-3 p-3 bg-white dark:bg-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                   <div className="h-2 w-2 rounded-full bg-blue-600 dark:bg-blue-400 mt-2 flex-shrink-0"></div>
-                  <span>熟练掌握 Vue3 前端开发，熟悉组件化开发和响应式设计</span>
+                  <span>掌握MySQL、Redis等数据库技术，了解SQL优化和缓存设计</span>
                 </li>
                 <li className="flex items-start gap-3 p-3 bg-white dark:bg-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                   <div className="h-2 w-2 rounded-full bg-blue-600 dark:bg-blue-400 mt-2 flex-shrink-0"></div>
-                  <span>熟悉 MySQL、Redis 等数据库和缓存技术</span>
+                  <span>熟悉Linux操作系统，掌握Docker容器化技术和基本的服务器部署运维技能</span>
                 </li>
                 <li className="flex items-start gap-3 p-3 bg-white dark:bg-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                   <div className="h-2 w-2 rounded-full bg-blue-600 dark:bg-blue-400 mt-2 flex-shrink-0"></div>
-                  <span>了解微服务架构和分布式系统设计</span>
+                  <span>具备完整的项目开发经验，能够独立完成从需求分析到部署上线的全流程开发</span>
                 </li>
               </ul>
             </div>
@@ -180,7 +180,7 @@ export default function About() {
                     <div className="md:w-1/2 md:pl-12"></div>
                   </div>
                   
-                  {/* 项目经历1：福师畅聊 */}
+                  {/* 项目经历1：福师畅聊 - 全栈开发 */}
                   <div className="relative flex flex-col md:flex-row items-start">
                     <div className="absolute left-[-9px] md:left-1/2 top-4 w-4 h-4 rounded-full bg-purple-600 dark:bg-purple-400 transform md:translate-x-[-50%] z-10"></div>
                     <div className="md:w-1/2 md:pr-12"></div>
@@ -189,7 +189,7 @@ export default function About() {
                         <span className="text-sm text-purple-600 dark:text-purple-400 font-semibold">2025.08 - 2025.10</span>
                         <h3 className="text-xl font-semibold mt-2 mb-2">福师畅聊</h3>
                         <p className="text-gray-600 dark:text-gray-300">全栈开发工程师</p>
-                        <p className="text-gray-600 dark:text-gray-300 mt-2">基于 Spring Boot、Netty、Redis 开发的即时通讯应用，负责前后端全栈开发工作</p>
+                        <p className="text-gray-600 dark:text-gray-300 mt-2">基于Java + Vue3技术栈开发的即时通讯应用，使用Netty实现长连接，Spring Boot构建后端API，Vue3 + Element Plus实现前端界面，支持实时消息推送和群聊功能</p>
                         <div className="mt-4 flex gap-2">
                       <Button asChild variant="secondary" size="sm">
                         <a href="https://gitee.com" className="flex items-center gap-2">
@@ -202,7 +202,7 @@ export default function About() {
                     </div>
                   </div>
                   
-                  {/* 项目经历2：师大云学 */}
+                  {/* 项目经历2：师大云学 - 全栈开发 */}
                   <div className="relative flex flex-col md:flex-row items-start">
                     <div className="absolute left-[-9px] md:left-1/2 top-4 w-4 h-4 rounded-full bg-green-600 dark:bg-green-400 transform md:translate-x-[-50%] z-10"></div>
                     <div className="md:w-1/2 md:pr-12 md:text-right mb-6 md:mb-0">
@@ -210,7 +210,7 @@ export default function About() {
                         <span className="text-sm text-green-600 dark:text-green-400 font-semibold">2025.07 - 2025.09</span>
                         <h3 className="text-xl font-semibold mt-2 mb-2">师大云学</h3>
                         <p className="text-gray-600 dark:text-gray-300">全栈开发工程师</p>
-                        <p className="text-gray-600 dark:text-gray-300 mt-2">基于 Spring Cloud Alibaba 开发的在线教育平台，负责前后端全栈开发工作</p>
+                        <p className="text-gray-600 dark:text-gray-300 mt-2">基于Java + Vue3技术栈开发的在线教育平台，使用Spring Boot + MyBatis Plus构建后端，Vue3 + Vite实现前端，支持课程管理、在线学习、考试测评等功能</p>
                         <div className="mt-4 flex gap-2">
                       <Button asChild variant="secondary" size="sm">
                         <a href="https://gitee.com" className="flex items-center gap-2">
@@ -350,9 +350,9 @@ export default function About() {
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-semibold mb-12">技能雷达图</h2>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-            {/* 后端开发能力雷达图 */}
+            {/* 后端技术能力雷达图 */}
             <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
-              <h3 className="text-xl font-semibold mb-6 text-center">后端开发能力</h3>
+              <h3 className="text-xl font-semibold mb-6 text-center">后端技术能力</h3>
               <div className="aspect-square max-w-md mx-auto">
                 <svg viewBox="0 0 200 200" className="w-full h-full">
                   {/* 雷达网格 */}
@@ -404,19 +404,19 @@ export default function About() {
                   />
                   
                   {/* 标签 */}
-                  <g fontSize="12" textAnchor="middle" fill="#6b7280" className="dark:fill-gray-300">
-                    <text x="100" y="20">Java</text>
-                    <text x="180" y="100">Spring Boot</text>
-                    <text x="100" y="180">MySQL</text>
-                    <text x="20" y="100">Redis</text>
+                  <g fontSize="11" textAnchor="middle" fill="#6b7280" className="dark:fill-gray-300">
+                    <text x="100" y="25">Java</text>
+                    <text x="175" y="100">Spring Boot</text>
+                    <text x="100" y="175">MySQL</text>
+                    <text x="25" y="100">Linux</text>
                   </g>
                 </svg>
               </div>
             </div>
             
-            {/* 前端开发能力雷达图 */}
+            {/* 前端技术能力雷达图 */}
             <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
-              <h3 className="text-xl font-semibold mb-6 text-center">前端开发能力</h3>
+              <h3 className="text-xl font-semibold mb-6 text-center">前端技术能力</h3>
               <div className="aspect-square max-w-md mx-auto">
                 <svg viewBox="0 0 200 200" className="w-full h-full">
                   {/* 雷达网格 */}
@@ -453,14 +453,14 @@ export default function About() {
                   {/* 数据多边形 */}
                   <polygon
                     points={[
-                      100 + 80 * Math.cos(0) * 0.90,
-                      100 + 80 * Math.sin(0) * 0.90,
-                      100 + 80 * Math.cos((2 * Math.PI) / 4) * 0.85,
-                      100 + 80 * Math.sin((2 * Math.PI) / 4) * 0.85,
-                      100 + 80 * Math.cos((4 * Math.PI) / 4) * 0.80,
-                      100 + 80 * Math.sin((4 * Math.PI) / 4) * 0.80,
-                      100 + 80 * Math.cos((6 * Math.PI) / 4) * 0.75,
-                      100 + 80 * Math.sin((6 * Math.PI) / 4) * 0.75,
+                      100 + 80 * Math.cos(0) * 0.95,
+                      100 + 80 * Math.sin(0) * 0.95,
+                      100 + 80 * Math.cos((2 * Math.PI) / 4) * 0.90,
+                      100 + 80 * Math.sin((2 * Math.PI) / 4) * 0.90,
+                      100 + 80 * Math.cos((4 * Math.PI) / 4) * 0.85,
+                      100 + 80 * Math.sin((4 * Math.PI) / 4) * 0.85,
+                      100 + 80 * Math.cos((6 * Math.PI) / 4) * 0.80,
+                      100 + 80 * Math.sin((6 * Math.PI) / 4) * 0.80,
                     ].join(' ')}
                     fill="rgba(139, 92, 246, 0.2)"
                     stroke="#8b5cf6"
@@ -468,11 +468,11 @@ export default function About() {
                   />
                   
                   {/* 标签 */}
-                  <g fontSize="12" textAnchor="middle" fill="#6b7280" className="dark:fill-gray-300">
-                    <text x="100" y="20">Vue3</text>
-                    <text x="180" y="100">JavaScript</text>
-                    <text x="100" y="180">CSS/Tailwind</text>
-                    <text x="20" y="100">React</text>
+                  <g fontSize="11" textAnchor="middle" fill="#6b7280" className="dark:fill-gray-300">
+                    <text x="100" y="25">Vue3</text>
+                    <text x="175" y="100">JavaScript</text>
+                    <text x="100" y="175">CSS3</text>
+                    <text x="25" y="100">HTML5</text>
                   </g>
                 </svg>
               </div>
@@ -505,13 +505,13 @@ export default function About() {
         <h2 className="text-2xl font-semibold mb-10">联系方式</h2>
         <div className="flex flex-wrap gap-4">
           <Button asChild variant="secondary">
-            <a href="mailto:example@example.com" className="flex items-center gap-2">
+            <a href="mailto:lrx563647@qq.com" className="flex items-center gap-2">
               <Mail size={16} />
               发送邮件
             </a>
           </Button>
           <Button asChild variant="secondary">
-            <a href="https://github.com" className="flex items-center gap-2">
+            <a href="https://github.com/RONGX563647" className="flex items-center gap-2">
               <Github size={16} />
               GitHub
             </a>

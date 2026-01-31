@@ -2,7 +2,7 @@
  * 3D 轮播组件
  * 
  * 功能：
- * - 显示项目列表的进度条动画
+ * - 显示Java + Vue3全栈项目列表的进度条动画
  * - 支持自定义项目数据
  * - 每个项目有独立的进度条动画
  * - 支持进度条闪烁效果
@@ -26,6 +26,7 @@ interface Project {
   description: string     // 项目描述
   color: string          // 进度条颜色
   link: string           // 项目链接
+  targetProgress: number  // 目标进度百分比
 }
 
 /**
@@ -42,38 +43,43 @@ interface ThreeDCarouselProps {
 const defaultProjects: Project[] = [
   {
     id: '1',
-    title: '福师畅聊',
-    description: '即时通讯应用',
+    title: '企业级后台管理系统',
+    description: 'Vue3 + Spring Boot + MyBatis Plus',
     color: '#3b82f6',  // 蓝色
-    link: '#'
+    link: '#',
+    targetProgress: 95
   },
   {
     id: '2',
-    title: '师大云学',
-    description: '在线教育平台',
+    title: '在线教育平台',
+    description: 'Vue3 + Java + MySQL + Redis',
     color: '#8b5cf6',  // 紫色
-    link: '#'
+    link: '#',
+    targetProgress: 88
   },
   {
     id: '3',
-    title: '自动化测试',
-    description: '测试框架',
+    title: '电商商城系统',
+    description: 'Vue3 + Spring Cloud + Nacos',
     color: '#ec4899',  // 粉色
-    link: '#'
+    link: '#',
+    targetProgress: 82
   },
   {
     id: '4',
-    title: '性能测试',
-    description: '压测工具',
+    title: '智能客服系统',
+    description: 'Vue3 + Java + WebSocket + AI',
     color: '#10b981',  // 绿色
-    link: '#'
+    link: '#',
+    targetProgress: 75
   },
   {
     id: '5',
-    title: '接口测试',
-    description: 'API测试',
+    title: '数据分析可视化平台',
+    description: 'Vue3 + Java + ECharts + Kafka',
     color: '#f59e0b',  // 橙色
-    link: '#'
+    link: '#',
+    targetProgress: 68
   }
 ]
 
@@ -94,28 +100,32 @@ function ProgressBarItem({ project, delay }: { project: Project; delay: number }
   const [progress, setProgress] = useState(0)
 
   useEffect(() => {
+    // 计算动画持续时间，确保至少 5 秒
+    const totalDuration = Math.max(5000, project.targetProgress * 50) // 至少 5秒，或根据进度计算
+    const intervalTime = totalDuration / project.targetProgress // 每增加 1% 所需的时间
+
     // 延迟启动动画，创建级联效果
     const timer = setTimeout(() => {
-      // 创建定时器，每 20ms 增加 1%
+      // 创建定时器，按照计算的间隔时间增加进度
       const interval = setInterval(() => {
         setProgress((prev) => {
-          // 如果达到 100%，清除定时器
-          if (prev >= 100) {
+          // 如果达到目标进度，清除定时器
+          if (prev >= project.targetProgress) {
             clearInterval(interval)
-            return 100
+            return project.targetProgress
           }
           // 否则增加进度
-          return prev + 1
+          return prev + 0.5 // 每次增加 0.5%，使动画更平滑
         })
-      }, 20)
+      }, intervalTime / 2) // 每 0.5% 触发一次
 
       // 清理函数：清除定时器
       return () => clearInterval(interval)
-    }, delay * 100)  // 延迟时间转换为毫秒
+    }, delay * 200)  // 延迟时间转换为毫秒，增加延迟以获得更好的级联效果
 
     // 清理函数：清除延迟定时器
     return () => clearTimeout(timer)
-  }, [delay])
+  }, [delay, project.targetProgress])
 
   return (
     <a 
@@ -150,8 +160,8 @@ function ProgressBarItem({ project, delay }: { project: Project; delay: number }
             className="absolute top-0 left-0 w-full h-full bg-white opacity-30"
             style={{
               transform: `translateX(-100%)`,
-              // 只有在进度未完成时才显示闪烁动画
-              animation: progress < 100 ? 'shimmer 1.5s infinite' : 'none',
+              // 只有在进度未达到目标时才显示闪烁动画
+              animation: progress < project.targetProgress ? 'shimmer 1.5s infinite' : 'none',
             }}
           />
         </div>
@@ -181,7 +191,7 @@ export function ThreeDCarousel({ projects = defaultProjects }: ThreeDCarouselPro
     <div className="w-full py-12">
       <div className="container mx-auto px-4">
         {/* 标题 */}
-        <h2 className="text-3xl font-bold mb-8 text-center">测试项目进度</h2>
+        <h2 className="text-3xl font-bold mb-8 text-center">Java + Vue3 全栈项目</h2>
         
         {/* 项目列表 */}
         <div className="max-w-3xl mx-auto space-y-4">
