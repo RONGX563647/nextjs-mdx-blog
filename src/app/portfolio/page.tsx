@@ -1,6 +1,17 @@
-import { Button } from '@/components/ui/button'
-import { ExternalLink, Github, Database, Server, Code, TestTube } from 'lucide-react'
-import Link from 'next/link'
+/**
+ * 项目页面组件
+ * 
+ * 功能：
+ * - 显示项目经历介绍
+ * - 显示 3D 项目轮播
+ * - 显示项目详情预览
+ * - 响应式布局支持
+ * - 使用提取的子组件
+ * 
+ * @returns 项目页面内容
+ */
+import { ProjectCarousel } from '@/components/portfolio/ProjectCarousel'
+import { ProjectCard } from '@/components/portfolio/ProjectCard'
 
 export default function Portfolio() {
   const projects = [
@@ -164,144 +175,38 @@ export default function Portfolio() {
 
   return (
     <div>
-      {/* Portfolio Hero */}
       <section className="py-20">
         <div className="container mx-auto px-4">
           <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-6">项目经历</h1>
-          <p className="text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-3xl">
+          <p className="text-xl text-muted-foreground mb-8 max-w-3xl">
             以下是我参与开发的代表性项目，展示了我的技术能力和实践经验。
           </p>
         </div>
       </section>
 
-      {/* 3D Carousel Portfolio */}
       <section className="py-16 border-t border-border bg-muted/30">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-bold mb-12 text-center">我的项目</h2>
           
-          {/* 3D Carousel Container */}
-          <div className="relative overflow-hidden py-10">
-            <div className="flex justify-center perspective-1000">
-              <div className="carousel-container relative w-full max-w-6xl">
-                <div className="carousel-wrapper flex transition-transform duration-700 ease-in-out hover:duration-1000" style={{ transform: 'translateZ(-200px)' }}>
-                  {projects.map((project, index) => (
-                    <div 
-                      key={project.id} 
-                      className="carousel-item relative flex-shrink-0 w-full md:w-1/2 lg:w-1/3 p-4"
-                      style={{
-                        transformStyle: 'preserve-3d',
-                        transition: 'transform 0.5s ease'
-                      }}
-                    >
-                      <div 
-                        className="project-card bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-4 hover:rotate-y-5 group"
-                        style={{ height: '100%' }}
-                      >
-                        {/* Project Header with Icon */}
-                        <div className="bg-primary p-6">
-                          <div className="flex justify-between items-center">
-                            <h2 className="text-2xl font-bold text-primary-foreground">{project.title}</h2>
-                            <div className="bg-primary-foreground/20 backdrop-blur-sm p-3 rounded-full">
-                              <Code size={24} className="text-primary-foreground" />
-                            </div>
-                          </div>
-                          <p className="text-primary-foreground/80 mt-2">{project.date}</p>
-                        </div>
-                        
-                        {/* Project Content */}
-                        <div className="p-6">
-                          <p className="text-gray-600 dark:text-gray-300 mb-6">
-                            {project.description}
-                          </p>
-                          
-                          {/* Project Skills */}
-                          <div className="flex flex-wrap gap-2 mb-6">
-                            {project.skills.slice(0, 6).map((skill, skillIndex) => (
-                              <span key={skillIndex} className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm group-hover:scale-105 transition-transform">
-                                {skill}
-                              </span>
-                            ))}
-                            {project.skills.length > 6 && (
-                              <span className="px-3 py-1 bg-muted text-muted-foreground rounded-full text-sm group-hover:scale-105 transition-transform">
-                                +{project.skills.length - 6} 更多
-                              </span>
-                            )}
-                          </div>
-                          
-                          {/* Project Responsibilities Preview */}
-                          <div className="mb-6">
-                            <h3 className="font-semibold text-lg mb-3">主要职责</h3>
-                            <ul className="space-y-2">
-                              {project.responsibilities.slice(0, 2).map((responsibility, respIndex) => (
-                                <li key={respIndex} className="flex items-start gap-2">
-                                  <div className="h-2 w-2 rounded-full bg-primary mt-2 flex-shrink-0"></div>
-                                  <span className="text-muted-foreground text-sm">{responsibility}</span>
-                                </li>
-                              ))}
-                              {project.responsibilities.length > 2 && (
-                                <li className="text-sm text-primary font-medium mt-2">
-                                  +{project.responsibilities.length - 2} 更多职责
-                                </li>
-                              )}
-                            </ul>
-                          </div>
-                          
-                          {/* Project Links */}
-                          <div className="flex gap-4">
-                            <Button asChild className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground group-hover:shadow-lg transition-all">
-                              <Link href={project.link} className="flex items-center justify-center gap-2">
-                                查看详情
-                                <ExternalLink size={16} />
-                              </Link>
-                            </Button>
-                            <Button asChild variant="secondary" className="group-hover:bg-secondary/80 transition-all">
-                              <a href="#" className="flex items-center gap-2">
-                                <Github size={16} />
-                              </a>
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
+          <ProjectCarousel projects={projects} />
         </div>
       </section>
 
-      {/* Project Details Preview */}
       <section className="py-16 border-t border-border">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-bold mb-12 text-center">项目详情预览</h2>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
             {projects.map((project) => (
-              <div key={project.id} className="bg-background border border-border rounded shadow-sm overflow-hidden hover:shadow-md transition-all duration-500">
-                <div className="p-6">
-                  <h3 className="text-2xl font-bold mb-4">{project.title}</h3>
-                  <p className="text-muted-foreground mb-6">{project.description}</p>
-                  
-                  <div className="space-y-4 mb-6">
-                    <h4 className="font-semibold text-lg">技术栈</h4>
-                    <div className="flex flex-wrap gap-2">
-                      {project.skills.map((skill, index) => (
-                        <span key={index} className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm">
-                          {skill}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                  
-                  <Button asChild className="w-full">
-                    <Link href={project.link} className="flex items-center justify-center gap-2">
-                      查看完整详情
-                      <ExternalLink size={16} />
-                    </Link>
-                  </Button>
-                </div>
-              </div>
+              <ProjectCard
+                key={project.id}
+                id={project.id}
+                title={project.title}
+                description={project.description}
+                date={project.date}
+                skills={project.skills}
+                category={project.id}
+              />
             ))}
           </div>
         </div>

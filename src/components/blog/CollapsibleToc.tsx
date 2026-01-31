@@ -1,7 +1,20 @@
+/**
+ * 可折叠目录组件
+ * 
+ * 功能：
+ * - 显示文章目录（标题列表）
+ * - 显示专栏文章列表
+ * - 支持折叠/展开功能
+ * - 响应式布局（桌面端显示，移动端隐藏）
+ * - 高亮当前活动标题
+ * 
+ * @param props 组件属性
+ */
 'use client'
 
 import { useState, useEffect } from 'react'
-import { List, ChevronLeft, ChevronRight, BookOpen, FileText, X, Menu } from 'lucide-react'
+import { List, ChevronLeft, ChevronRight, BookOpen, FileText } from 'lucide-react'
+import { useTocCollapsed, useTocSectionExpanded } from '@/hooks/useToc'
 
 interface Heading {
   id: string
@@ -31,41 +44,17 @@ interface CollapsibleTocProps {
 const TOC_STORAGE_KEY = 'blog-toc-collapsed'
 const SECTION_STORAGE_KEY = 'blog-toc-section'
 
-export function CollapsibleToc({ headings, activeId, onHeadingClick, articles, currentArticle, onArticleClick, onCollapseChange }: CollapsibleTocProps) {
-  const [isCollapsed, setIsCollapsed] = useState(true)
-  const [isSectionExpanded, setIsSectionExpanded] = useState(false)
-  const [isMounted, setIsMounted] = useState(false)
-
-  useEffect(() => {
-    setIsMounted(true)
-    const savedCollapsed = localStorage.getItem(TOC_STORAGE_KEY)
-    const savedSectionExpanded = localStorage.getItem(SECTION_STORAGE_KEY)
-    
-    if (savedCollapsed !== null) {
-      setIsCollapsed(savedCollapsed === 'true')
-    }
-    
-    if (savedSectionExpanded !== null) {
-      setIsSectionExpanded(savedSectionExpanded === 'true')
-    }
-  }, [])
-
-  const toggleCollapse = () => {
-    const newState = !isCollapsed
-    setIsCollapsed(newState)
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(TOC_STORAGE_KEY, String(newState))
-    }
-    onCollapseChange?.(newState)
-  }
-
-  const toggleSection = () => {
-    const newState = !isSectionExpanded
-    setIsSectionExpanded(newState)
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(SECTION_STORAGE_KEY, String(newState))
-    }
-  }
+export function CollapsibleToc({ 
+  headings, 
+  activeId, 
+  onHeadingClick, 
+  articles, 
+  currentArticle, 
+  onArticleClick, 
+  onCollapseChange 
+}: CollapsibleTocProps) {
+  const { isCollapsed, toggleCollapse } = useTocCollapsed(onCollapseChange)
+  const { isExpanded, toggleSection } = useTocSectionExpanded()
 
   return (
     <aside 
@@ -102,14 +91,14 @@ export function CollapsibleToc({ headings, activeId, onHeadingClick, articles, c
                     <button
                       onClick={toggleSection}
                       className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-                      title={isSectionExpanded ? "收起" : "展开"}
+                      title={isExpanded ? "收起" : "展开"}
                     >
-                      <ChevronRight className={`h-4 w-4 text-gray-600 dark:text-gray-400 transition-transform ${isSectionExpanded ? 'rotate-90' : ''}`} />
+                      <ChevronRight className={`h-4 w-4 text-gray-600 dark:text-gray-400 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
                     </button>
                   </div>
                 </div>
                 
-                {isSectionExpanded && articles && (
+                {isExpanded && articles && (
                   <div className="p-2 border-b border-gray-200 dark:border-gray-700">
                     <nav className="space-y-1">
                       {articles.map((article) => (
