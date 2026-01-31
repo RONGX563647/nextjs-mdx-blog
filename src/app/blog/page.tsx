@@ -1,8 +1,9 @@
 import { WEBSITE_HOST_URL } from '@/lib/constants'
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { BookOpen, ArrowRight, FileText } from 'lucide-react'
 import { getCategories, getArticles } from '@/lib/blog'
+import { BookOpen, ArrowRight, FileText } from 'lucide-react'
+import { BlogSearch } from './BlogSearch'
 
 const meta = {
   title: '博客专栏',
@@ -27,6 +28,15 @@ export const metadata: Metadata = {
   },
 }
 
+interface Article {
+  id: string
+  title: string
+  description?: string
+  category: string
+  categoryName: string
+  content: string
+}
+
 export default async function BlogPage() {
   const categories = await getCategories()
   
@@ -41,6 +51,22 @@ export default async function BlogPage() {
     })
   )
 
+  // 预加载所有文章数据
+  const allArticles: Article[] = []
+  for (const category of categories) {
+    const articles = await getArticles(category.id)
+    for (const article of articles) {
+      allArticles.push({
+        id: article.slug,
+        title: article.title,
+        description: article.description,
+        category: category.id,
+        categoryName: category.name,
+        content: article.content
+      })
+    }
+  }
+
   return (
     <div className="min-h-screen">
       <section className="py-24">
@@ -53,14 +79,25 @@ export default async function BlogPage() {
                   技术博客
                 </p>
               </div>
-              <h1 className="text-5xl md:text-6xl font-bold tracking-tighter mb-6">
-                技术博客专栏
-              </h1>
-              <p className="text-xl text-muted-foreground max-w-2xl">
-                深入学习编程技术，从基础到进阶，记录学习过程中的思考与总结
-              </p>
+              
+              {/* 标题和搜索框 */}
+              <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
+                <div className="flex-1">
+                  <h1 className="text-5xl md:text-6xl font-bold tracking-tighter mb-6">
+                    技术博客专栏
+                  </h1>
+                  <p className="text-xl text-muted-foreground max-w-2xl">
+                    深入学习编程技术，从基础到进阶，记录学习过程中的思考与总结
+                  </p>
+                </div>
+                
+                <div className="w-full md:w-64 lg:w-80">
+                  <BlogSearch articles={allArticles} />
+                </div>
+              </div>
             </div>
 
+            {/* 分类卡片 */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {categoriesWithCount.map((category, index) => (
                 <Link
@@ -114,3 +151,4 @@ export default async function BlogPage() {
     </div>
   )
 }
+
