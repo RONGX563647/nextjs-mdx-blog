@@ -266,9 +266,9 @@ export default function About() {
                       <p className="text-gray-600 dark:text-gray-300 text-sm mt-1">java + jdbc + swing</p>
                       <div className="mt-3 flex gap-2">
                         <Button asChild variant="secondary" size="sm">
-                          <a href="https://gitee.com" className="flex items-center gap-2">
+                          <a href="https://github.com/RONGX563647/bank" className="flex items-center gap-2">
                             <GitMerge size={12} />
-                            Gitee
+                            GitHub
                           </a>
                         </Button>
                       </div>
@@ -294,9 +294,9 @@ export default function About() {
                       <p className="text-gray-600 dark:text-gray-300">局域网聊天室</p>
                       <div className="mt-3 flex gap-2">
                         <Button asChild variant="secondary" size="sm">
-                          <a href="https://gitee.com" className="flex items-center gap-2">
+                          <a href="https://github.com/RONGX563647/NewChatRoom" className="flex items-center gap-2">
                             <GitMerge size={12} />
-                            Gitee
+                            GitHub
                           </a>
                         </Button>
                       </div>
