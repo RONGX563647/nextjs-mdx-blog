@@ -85,6 +85,8 @@ public void processData() {
 
 我画了一张异常分类图，贴在显示器旁：
 
+![image-20260201222213269](https://rongxpicture.oss-cn-beijing.aliyuncs.com/image-20260201222213269.png)
+
 text
 
 ```
@@ -139,6 +141,8 @@ public class PaymentService {
 **问题：** 如果步骤4（记录日志）失败，用户会被扣款但系统返回失败。
 
 **重构后（精确的异常处理）：**
+
+![image-20260201222256818](https://rongxpicture.oss-cn-beijing.aliyuncs.com/image-20260201222256818.png)
 
 java
 
@@ -399,7 +403,7 @@ String str = list.get(0);  // 不需要强制转换
 
 java
 
-```
+```java
 public class Cache {
     private Map<String, Object> storage = new HashMap<>();
     
@@ -458,7 +462,7 @@ TypedCache<Config> configCache = new TypedCache<>();
 
 java
 
-```
+```java
 public class TypeSafeContainer {
     // 核心：用Class对象作为key的一部分
     private Map<TypeKey<?>, Object> storage = new HashMap<>();
@@ -553,7 +557,7 @@ String wrong = container.get(String.class, "user1");  // 返回null或抛异常
 
 text
 
-```
+```java
 从数据结构的角度看：
 - 生产者（Producer）向外提供数据 → 使用 extends（上界）
 - 消费者（Consumer）消费外部数据 → 使用 super（下界）
@@ -567,7 +571,7 @@ text
 
 java
 
-```
+```java
 // 定义数据处理器接口
 @FunctionalInterface
 interface DataProcessor<T, R> {
@@ -627,11 +631,13 @@ System.out.println(result);  // 输出: 10
 
 ### 3.1 ArrayList的扩容陷阱：我让系统慢了10倍
 
+![image-20260201222350470](https://rongxpicture.oss-cn-beijing.aliyuncs.com/image-20260201222350470.png)
+
 **事故重现：**
 
 java
 
-```
+```java
 // 错误：频繁扩容
 public List<String> loadUserNames() {
     List<String> names = new ArrayList<>();  // 默认容量10
@@ -656,7 +662,7 @@ public List<String> loadUserNames() {
 
 java
 
-```
+```java
 // 方案1：预分配容量（如果知道大小）
 public List<String> loadUserNames() throws IOException {
     int lineCount = countLines("users.txt");
@@ -700,7 +706,7 @@ public List<String> loadUserNames() throws IOException {
 
 java
 
-```
+```java
 // 差：每次添加都检查容量
 for (int i = 0; i < 10000; i++) {
     list.add(data[i]);
@@ -719,7 +725,7 @@ Collections.addAll(list, data);
 
 java
 
-```
+```java
 List<String> list = new ArrayList<>(1000000);
 
 // 测试不同遍历方式的性能
@@ -772,7 +778,7 @@ public void benchmark() {
 
 java
 
-```
+```java
 // 错误：看似不可变，实际可以修改
 List<String> list = new ArrayList<>();
 list.add("a");
@@ -795,7 +801,7 @@ List<String> copy = List.copyOf(list);  // Java 10+
 
 java
 
-```
+```java
 List<Employee> employees = getEmployees();
 
 // 复杂排序：先按部门，再按薪资降序，再按入职时间
@@ -819,7 +825,7 @@ employees.sort(
 
 java
 
-```
+```java
 // 错误：部分同步
 List<String> list = Collections.synchronizedList(new ArrayList<>());
 
@@ -852,9 +858,11 @@ map.putIfAbsent("key", "value");  // 原子操作
 
 让我用一个真实项目展示异常、泛型和集合的综合应用：
 
+![image-20260201222420218](https://rongxpicture.oss-cn-beijing.aliyuncs.com/image-20260201222420218.png)
+
 java
 
-```
+```java
 // 需求：构建一个类型安全的数据库查询结果处理器
 
 // 1. 自定义异常体系

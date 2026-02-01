@@ -94,8 +94,8 @@ export default function ArticlePageClient({
       />
 
       <article className={`py-8 transition-all duration-500 ease-in-out ${isCollapsed ? 'lg:ml-[35px]' : 'lg:ml-[calc(26.66%+15px)]'}`}>
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto">
+        <div className="container mx-auto px-2 sm:px-4 md:px-6">
+          <div className="mx-auto max-w-[98%] sm:max-w-[95%] md:max-w-[90%] lg:max-w-4xl">
             <Link
               href={`/blog/${article.category}`}
               className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary mb-6 transition-colors"
