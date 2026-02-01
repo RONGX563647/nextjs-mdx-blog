@@ -22,7 +22,7 @@ interface ArticleContentProps {
 
 export function ArticleContent({ content }: ArticleContentProps) {
   return (
-    <div className="bg-background border border-border rounded shadow-sm p-6 md:p-8">
+    <div className="p-4">
       <div className="prose prose-lg dark:prose-invert max-w-none">
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
