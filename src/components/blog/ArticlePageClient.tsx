@@ -17,6 +17,7 @@ import { CollapsibleToc } from './CollapsibleToc'
 import { ArticleHeader } from './ArticleHeader'
 import { ArticleContent } from './ArticleContent'
 import { ArticleNavigation } from './ArticleNavigation'
+import { CommentSection } from './CommentSection'
 import { useArticleHeadings, useActiveHeading } from '@/hooks/useArticle'
 import { useTocCollapsed } from '@/hooks/useToc'
 
@@ -118,6 +119,11 @@ export default function ArticlePageClient({
               prevArticle={prevArticle}
               nextArticle={nextArticle}
               category={article.category}
+            />
+
+            <CommentSection 
+              articleTitle={article.title}
+              articleSlug={article.slug}
             />
           </div>
         </div>
