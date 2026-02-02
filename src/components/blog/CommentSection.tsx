@@ -39,7 +39,7 @@ export function CommentSection({ articleTitle, articleSlug }: CommentSectionProp
       script.setAttribute('data-reactions-enabled', '1')
       script.setAttribute('data-emit-metadata', '0')
       script.setAttribute('data-input-position', 'top')
-      script.setAttribute('data-theme', theme === 'dark' ? 'dark' : 'light')
+      script.setAttribute('data-theme', 'preferred_color_scheme')
       script.setAttribute('data-lang', 'zh-CN')
       script.setAttribute('data-loading', 'lazy')
       
@@ -97,10 +97,19 @@ export function CommentSection({ articleTitle, articleSlug }: CommentSectionProp
           </p>
           <ol className="text-left text-sm text-muted-foreground mb-6 space-y-2">
             <li>1. 访问 <a href="https://giscus.app" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">giscus.app</a></li>
-            <li>2. 按照指示安装 giscus GitHub App 到您的仓库</li>
-            <li>3. 配置评论分类和其他设置</li>
+            <li>2. 按照指示安装 giscus GitHub App 到您的仓库 (RONGX563647/nextjs-mdx-blog)</li>
+            <li>3. 配置评论分类为 "General"</li>
             <li>4. 复制生成的配置代码并更新本组件</li>
           </ol>
+          <div className="bg-background p-4 rounded-md text-left text-sm mb-6">
+            <h4 className="font-medium mb-2">当前配置：</h4>
+            <ul className="space-y-1 text-muted-foreground">
+              <li>仓库: RONGX563647/nextjs-mdx-blog</li>
+              <li>分类: General</li>
+              <li>映射方式: pathname</li>
+              <li>主题: preferred_color_scheme</li>
+            </ul>
+          </div>
           <a 
             href="https://github.com/giscus/giscus/issues/new" 
             target="_blank" 
@@ -118,6 +127,12 @@ export function CommentSection({ articleTitle, articleSlug }: CommentSectionProp
           />
           <div className="mt-4 text-sm text-muted-foreground">
             <p>使用 GitHub 账号登录后即可发表评论，支持 Markdown 格式。</p>
+            <p className="mt-2">如果评论系统无法加载，请确保：</p>
+            <ul className="list-disc list-inside mt-1 space-y-1">
+              <li>您的网络可以访问 GitHub</li>
+              <li>giscus GitHub App 已安装到仓库</li>
+              <li>仓库已启用 Discussions 功能</li>
+            </ul>
           </div>
         </>
       )}
