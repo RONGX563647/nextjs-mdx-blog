@@ -10,7 +10,7 @@
 
 java
 
-```
+```java
 // 需求：为每个用户推荐可能感兴趣的商品
 // 原来的实现 - 我称之为“俄罗斯套娃循环”
 public List<Product> recommendForUser(User user) {
@@ -83,7 +83,7 @@ public List<Product> recommendForUser(User user) {
 
 java
 
-```
+```java
 // HashSet的底层是HashMap，而HashMap的哈希算法是这样的：
 static final int hash(Object key) {
     int h;
@@ -126,7 +126,7 @@ public class Product {
 
 java
 
-```
+```java
 // 商品状态枚举
 public enum ProductStatus {
     DRAFT,      // 草稿
@@ -171,7 +171,7 @@ Set<ProductStatus> activeStatuses = EnumSet.range(
 
 java
 
-```
+```java
 // 需求：记录用户最近搜索的10个关键词，去重但保持时间顺序
 public class SearchHistory {
     private Set<String> history;
@@ -221,7 +221,7 @@ public class SearchHistory {
 
 java
 
-```
+```java
 // 场景：批量导入10万商品
 Map<String, Product> productMap = new HashMap<>();  // 默认容量16
 
@@ -253,7 +253,7 @@ Map<String, Product> productMap = HashMap.newHashMap(expectedSize);
 
 java
 
-```
+```java
 // 需求：实时统计不同价格区间的商品数
 // 价格区间：[0-100), [100-500), [500-1000), [1000-∞)
 
@@ -325,7 +325,7 @@ public class PriceRangeCounter {
 
 java
 
-```
+```java
 // 错误做法：synchronized方法
 public class StockManager {
     private Map<String, Integer> stockMap = new HashMap<>();
@@ -401,7 +401,7 @@ public class StockManager {
 
 java
 
-```
+```java
 // 第一步：提取核心逻辑 - "找出用户可能喜欢的商品"
 // 基于协同过滤：喜欢相同商品的人，可能喜欢其他商品
 
@@ -448,7 +448,7 @@ private boolean hasCommonProducts(User user, Set<Product> products) {
 
 java
 
-```
+```java
 public class ProductRecommender {
     // 预计算：商品 -> 购买过该商品的用户集合
     private Map<Product, Set<User>> productBuyerMap;
@@ -528,7 +528,7 @@ public class ProductRecommender {
 
 java
 
-```
+```java
 // 需求：从1000万条日志中，找出前10条ERROR级别的日志
 
 // 错误做法：全部加载到内存
@@ -562,7 +562,7 @@ try (Stream<String> lines = Files.lines(Paths.get("huge.log"), StandardCharsets.
 
 java
 
-```
+```java
 // 需求：计算商品价格的统计信息
 List<Product> products = getProductsFromDatabase();  // 100万商品
 
@@ -607,7 +607,7 @@ DoubleSummaryStatistics stats = products.parallelStream()
 
 java
 
-```
+```java
 // 需求：统计每个商品类目的价格分布
 public class CategoryStats {
     private String category;
@@ -717,7 +717,7 @@ private static class CategoryStatsAccumulator {
 
 java
 
-```
+```java
 // 需求：将用户按多个维度分群
 public class UserSegmenter {
     
@@ -756,7 +756,7 @@ public class UserSegmenter {
 
 java
 
-```
+```java
 public class RealTimeRecommendationEngine {
     // 核心数据结构
     private final ConcurrentHashMap<String, UserProfile> userProfiles;
