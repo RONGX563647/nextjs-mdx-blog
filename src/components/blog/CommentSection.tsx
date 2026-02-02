@@ -3,6 +3,15 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTheme } from 'next-themes'
 
+// 扩展Window接口，添加giscus属性
+declare global {
+  interface Window {
+    giscus?: {
+      setConfig: (config: { theme: string }) => void
+    }
+  }
+}
+
 interface CommentSectionProps {
   articleTitle: string
   articleSlug: string
@@ -35,7 +44,7 @@ export function CommentSection({ articleTitle, articleSlug }: CommentSectionProp
       script.setAttribute('data-loading', 'lazy')
       
       // 添加错误处理
-      script.onError = () => {
+      script.onerror = () => {
         setHasError(true)
         setIsLoaded(true)
       }
