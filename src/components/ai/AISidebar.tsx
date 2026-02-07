@@ -35,27 +35,20 @@ interface AISidebarProps {
 const SIDEBAR_WIDTH = 380
 
 // 代码块复制按钮组件
-function CodeBlock({ children, className }: { children: React.ReactNode; className?: string }) {
+function CodeBlock({ code, className }: { code: string; className?: string }) {
   const [copied, setCopied] = useState(false)
   
   const handleCopy = useCallback(async () => {
-    let codeText = ''
-    if (typeof children === 'string') {
-      codeText = children
-    } else if (Array.isArray(children)) {
-      codeText = children.map(child => typeof child === 'string' ? child : '').join('')
-    }
-    
-    if (!codeText.trim()) return
+    if (!code.trim()) return
     
     try {
-      await navigator.clipboard.writeText(codeText)
+      await navigator.clipboard.writeText(code)
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     } catch (err) {
       console.error('复制失败:', err)
     }
-  }, [children])
+  }, [code])
   
   return (
     <div className="relative group">
@@ -67,7 +60,7 @@ function CodeBlock({ children, className }: { children: React.ReactNode; classNa
         {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
       </button>
       <pre className={className}>
-        <code>{children}</code>
+        <code>{code}</code>
       </pre>
     </div>
   )
@@ -147,7 +140,22 @@ export function AISidebar({ isOpen, onClose, initialMessage }: AISidebarProps) {
   // ReactMarkdown 自定义组件 - 标题降级：h1->h4, h2->h5, h3->h6
   const markdownComponents = {
     pre: ({ children }: { children?: React.ReactNode }) => {
-      return <CodeBlock className="bg-muted/50 p-2 rounded overflow-x-auto my-1 text-[10px]">{children}</CodeBlock>
+      // 从children中提取代码文本
+      const extractText = (node: React.ReactNode): string => {
+        if (typeof node === 'string') return node
+        if (typeof node === 'number') return String(node)
+        if (Array.isArray(node)) return node.map(extractText).join('')
+        if (node && typeof node === 'object') {
+          // 检查是否是React元素
+          const element = node as any
+          if (element.props && element.props.children) {
+            return extractText(element.props.children)
+          }
+        }
+        return ''
+      }
+      const code = extractText(children)
+      return <CodeBlock code={code} className="bg-muted/50 p-2 rounded overflow-x-auto my-1 text-[10px]" />
     },
     code: ({ children, className, ...props }: { children?: React.ReactNode; className?: string; [key: string]: any }) => {
       const isInline = !className?.includes('language-')

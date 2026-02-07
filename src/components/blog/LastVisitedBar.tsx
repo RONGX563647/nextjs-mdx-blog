@@ -29,12 +29,24 @@ export function LastVisitedBar({ className = '' }: LastVisitedBarProps) {
     return () => window.removeEventListener('storage', handleStorageChange)
   }, [])
 
-  // 如果没有数据或还未挂载，返回占位div
+  // 如果没有数据或还未挂载，返回与有数据时相同结构的占位符
   if (!mounted || !lastVisited) {
     return (
       <div className={`bg-muted/50 border-b border-border py-3 px-4 transition-all duration-300 ${className}`}>
         <div className="container mx-auto max-w-6xl">
-          <div className="flex items-center gap-3 h-10"></div>
+          <div className="flex items-center gap-3">
+            <Clock className="h-4 w-4 text-muted-foreground flex-shrink-0 opacity-0" />
+            <div className="flex-1 min-w-0">
+              <p className="text-xs text-muted-foreground mb-1 opacity-0">上次浏览</p>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium truncate opacity-0">占位符</span>
+              </div>
+            </div>
+            <span className="text-sm flex items-center gap-1 opacity-0">
+              继续阅读
+              <ArrowLeft className="h-3 w-3 rotate-180" />
+            </span>
+          </div>
         </div>
       </div>
     )

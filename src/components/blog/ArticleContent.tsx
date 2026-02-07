@@ -9,7 +9,7 @@
  * 
  * @param content Markdown 内容字符串
  */
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import rehypeHighlight from 'rehype-highlight'
@@ -25,15 +25,15 @@ interface ArticleContentProps {
 // 自定义代码块组件，添加复制功能
 function CodeBlock({ node, inline, className, children, ...props }: any) {
   const [copied, setCopied] = useState(false)
+  const codeRef = useRef<HTMLPreElement>(null)
   
   // 检查是否是代码块（不是内联代码）
   if (!inline && className && className.includes('language-')) {
-    // 提取代码内容
-    const codeContent = children[0] || ''
-    
     // 复制代码到剪贴板
     const handleCopy = async () => {
       try {
+        // 直接从DOM获取文本内容
+        const codeContent = codeRef.current?.textContent || ''
         await navigator.clipboard.writeText(codeContent)
         setCopied(true)
         // 2秒后重置复制状态
@@ -54,7 +54,7 @@ function CodeBlock({ node, inline, className, children, ...props }: any) {
           {copied ? <Check size={16} /> : <Copy size={16} />}
         </button>
         {/* 原始代码块 */}
-        <pre className={className} {...props}>
+        <pre ref={codeRef} className={className} {...props}>
           <code className={className}>
             {children}
           </code>
