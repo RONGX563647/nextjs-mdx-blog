@@ -4,13 +4,14 @@
  * 功能：
  * - 显示上一篇文章链接
  * - 显示下一篇文章链接
+ * - 当读到专栏最后一篇文章时，显示下一专栏链接
  * - 响应式布局支持
  * - 处理没有上一页/下一页的情况
  * 
  * @param props 组件属性
  */
 import Link from 'next/link'
-import { ArrowLeft, ArrowRight } from 'lucide-react'
+import { ArrowLeft, ArrowRight, FolderOpen } from 'lucide-react'
 
 interface ArticleNavigationProps {
   prevArticle?: {
@@ -24,9 +25,17 @@ interface ArticleNavigationProps {
     category: string
   }
   category: string
+  isNextCategory?: boolean
+  nextCategoryName?: string
 }
 
-export function ArticleNavigation({ prevArticle, nextArticle, category }: ArticleNavigationProps) {
+export function ArticleNavigation({ 
+  prevArticle, 
+  nextArticle, 
+  category,
+  isNextCategory,
+  nextCategoryName
+}: ArticleNavigationProps) {
   return (
     <div className="mt-8 bg-background border border-border rounded shadow-sm p-6">
       <div className="flex flex-col md:flex-row justify-between gap-4">
@@ -50,11 +59,22 @@ export function ArticleNavigation({ prevArticle, nextArticle, category }: Articl
         
         {nextArticle ? (
           <Link 
-            href={`/blog/${category}/${nextArticle.slug}`}
+            href={`/blog/${nextArticle.category}/${nextArticle.slug}`}
             className="flex items-center justify-end gap-2 text-muted-foreground hover:text-primary transition-colors"
           >
             <div className="text-right">
-              <div className="text-xs text-muted-foreground">下一页</div>
+              <div className="text-xs text-muted-foreground flex items-center justify-end gap-1">
+                {isNextCategory && (
+                  <>
+                    <FolderOpen className="h-3 w-3" />
+                    <span>下一专栏</span>
+                    {nextCategoryName && (
+                      <span className="text-primary">({nextCategoryName})</span>
+                    )}
+                  </>
+                )}
+                {!isNextCategory && <span>下一页</span>}
+              </div>
               <div className="font-medium">{nextArticle.title}</div>
             </div>
             <ArrowRight className="h-4 w-4" />

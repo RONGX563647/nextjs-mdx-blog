@@ -77,7 +77,7 @@ export default async function BlogPage() {
       
       <section className="py-24 relative overflow-hidden">
         {/* 背景图片 - 宽度与页面一致，长度等比例放大 */}
-        <div className="absolute top-[-5px] left-0 right-0 pointer-events-none w-full" style={{ opacity: 0.8 }}>
+        <div className="absolute top-[-5px] left-0 right-0 pointer-events-none w-full" style={{ opacity: 0.1 }}>
           <img src="https://rongxpicture.oss-cn-beijing.aliyuncs.com/image-20260207210813997.png" alt="背景" className="w-full h-auto" />
         </div>
         <div className="container mx-auto px-4">

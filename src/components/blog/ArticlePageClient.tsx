@@ -54,6 +54,8 @@ interface ArticlePageProps {
     slug: string
     category: string
   }
+  isNextCategory?: boolean
+  nextCategoryName?: string
 }
 
 export default function ArticlePageClient({ 
@@ -62,7 +64,9 @@ export default function ArticlePageClient({
   prevArticle, 
   nextArticle, 
   articles, 
-  currentArticle 
+  currentArticle,
+  isNextCategory,
+  nextCategoryName
 }: ArticlePageProps) {
   const headings = useArticleHeadings()
   const activeId = useActiveHeading()
@@ -149,6 +153,8 @@ export default function ArticlePageClient({
               prevArticle={prevArticle}
               nextArticle={nextArticle}
               category={article.category}
+              isNextCategory={isNextCategory}
+              nextCategoryName={nextCategoryName}
             />
 
             <CommentSection 

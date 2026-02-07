@@ -69,13 +69,32 @@ export default async function ArticlePage({ params }: PageProps) {
   
   let prevArticle = null
   let nextArticle = null
+  let isNextCategory = false
+  let nextCategoryName = ''
   
   if (currentIndex > 0) {
     prevArticle = articles[currentIndex - 1]
   }
   
   if (currentIndex < articles.length - 1) {
+    // 当前专栏还有下一篇文章
     nextArticle = articles[currentIndex + 1]
+  } else {
+    // 当前专栏的最后一篇文章，获取下一个专栏的第一篇文章
+    const allCategories = await getCategories()
+    const currentCategoryIndex = allCategories.findIndex(c => c.id === decodedCategory)
+    
+    if (currentCategoryIndex < allCategories.length - 1) {
+      // 还有下一个专栏
+      const nextCategory = allCategories[currentCategoryIndex + 1]
+      const nextCategoryArticles = await getArticles(nextCategory.id)
+      
+      if (nextCategoryArticles.length > 0) {
+        nextArticle = nextCategoryArticles[0]
+        isNextCategory = true
+        nextCategoryName = nextCategory.name
+      }
+    }
   }
 
   return <ArticlePageClient 
@@ -85,5 +104,7 @@ export default async function ArticlePage({ params }: PageProps) {
     nextArticle={nextArticle ? { slug: nextArticle.slug, title: nextArticle.title, category: nextArticle.category } : undefined}
     articles={articles}
     currentArticle={{ slug: decodedSlug, category: decodedCategory }}
+    isNextCategory={isNextCategory}
+    nextCategoryName={nextCategoryName}
   />
 }
