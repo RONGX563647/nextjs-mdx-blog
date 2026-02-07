@@ -6,6 +6,7 @@
  * - 包含目录、头部、内容、导航
  * - 响应式布局支持
  * - 使用自定义 Hooks 管理状态
+ * - 集成AI助手功能（通过全局AI助手）
  * 
  * @param props 组件属性
  */
@@ -22,6 +23,7 @@ import { CommentSection } from './CommentSection'
 import { useArticleHeadings, useActiveHeading } from '@/hooks/useArticle'
 import { useTocCollapsed } from '@/hooks/useToc'
 import { storeLastVisitedArticle } from '@/utils/lastVisited'
+import { TextSelectionHandler } from './TextSelectionHandler'
 
 interface ArticlePageProps {
   article: {
@@ -109,6 +111,9 @@ export default function ArticlePageClient({
 
   return (
     <div className="min-h-screen">
+      {/* 文本选择和右键菜单处理 - 使用全局AI助手 */}
+      <TextSelectionHandler />
+
       <CollapsibleToc 
         headings={headings}
         activeId={activeId}

@@ -16,7 +16,7 @@ import { Analytics } from '@vercel/analytics/next' // Vercel分析工具
 import type { Metadata } from 'next' // Next.js元数据类型
 import Link from 'next/link' // Next.js链接组件
 import { Github } from 'lucide-react' // GitHub图标
-import { AIAssistant } from '@/components/ai/AIAssistant'
+import { AIAssistant, AIAssistantProvider } from '@/components/ai/AIAssistant'
 import { HeaderWithDoubleClick } from '@/components/HeaderWithDoubleClick' // Header with double-click functionality
 import './global.css' // 全局样式
 
@@ -82,39 +82,41 @@ export default function RootLayout({
     <html lang="zh-CN" suppressHydrationWarning={true}>
       <body className="min-h-screen flex flex-col bg-background">
         <ThemeProvider attribute="class" defaultTheme="system">
-          <CustomCursor />
-          
-          {/* Header with double-click logo functionality */}
-          <HeaderWithDoubleClick />
-          
-          <main className="flex-1">
-            <Container>
-              <PageTransition>{children}</PageTransition>
-            </Container>
-          </main>
-          
-          <AIAssistant />
-          
-          <footer className="py-16 border-t border-border">
-            <Container>
-              <div className="flex flex-col md:flex-row justify-between items-start gap-8">
-                <div>
-                  <p className="text-sm text-muted-foreground mb-2">
-                    © {new Date().getFullYear()} RONGX
-                  </p>
-                  <p className="text-xs text-muted-foreground/70">
-                    构建高质量的全栈应用
-                  </p>
+          <AIAssistantProvider>
+            <CustomCursor />
+            
+            {/* Header with double-click logo functionality */}
+            <HeaderWithDoubleClick />
+            
+            <main className="flex-1">
+              <Container>
+                <PageTransition>{children}</PageTransition>
+              </Container>
+            </main>
+            
+            <AIAssistant />
+            
+            <footer className="py-16 border-t border-border">
+              <Container>
+                <div className="flex flex-col md:flex-row justify-between items-start gap-8">
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      © {new Date().getFullYear()} RONGX
+                    </p>
+                    <p className="text-xs text-muted-foreground/70">
+                      构建高质量的全栈应用
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-8">
+                    <Link className="link text-sm" href="/">首页</Link>
+                    <Link className="link text-sm" href="/about">关于</Link>
+                    <Link className="link text-sm" href="/portfolio">项目</Link>
+                    <Link className="link text-sm" href="/blog">博客</Link>
+                  </div>
                 </div>
-                <div className="flex items-center gap-8">
-                  <Link className="link text-sm" href="/">首页</Link>
-                  <Link className="link text-sm" href="/about">关于</Link>
-                  <Link className="link text-sm" href="/portfolio">项目</Link>
-                  <Link className="link text-sm" href="/blog">博客</Link>
-                </div>
-              </div>
-            </Container>
-          </footer>
+              </Container>
+            </footer>
+          </AIAssistantProvider>
         </ThemeProvider>
         
         <Analytics />

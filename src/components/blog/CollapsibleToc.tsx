@@ -181,9 +181,9 @@ export function CollapsibleToc({
                   </div>
                   {headings.length > 0 ? (
                     <nav className="space-y-1">
-                      {headings.map((heading) => (
+                      {headings.map((heading, index) => (
                         <button
-                          key={heading.id}
+                          key={`${heading.id}-${index}`}
                           onClick={() => onHeadingClick(heading.id)}
                           className={`block w-full text-left px-3 py-2 rounded-md transition-all duration-200 text-sm ${
                             activeId === heading.id

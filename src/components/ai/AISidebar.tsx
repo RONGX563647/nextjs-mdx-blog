@@ -6,8 +6,10 @@
  * - 包含标题栏、关闭按钮、消息区域、输入区域
  * - 支持响应式设计（桌面端 350-400px，移动端全屏）
  * - 集成 AI 交互逻辑和对话历史记录
- * - 支持 Markdown 渲染
+ * - 支持 Markdown 渲染（标题降级显示）
  * - 半透明背景、圆角边框、自动伸缩
+ * - 支持初始消息自动发送
+ * - 全部加载完成后自动滚动
  * 
  * @param props 组件属性
  * @returns 侧边栏组件
@@ -17,27 +19,66 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Send, Maximize2, Minimize2 } from 'lucide-react'
+import { X, Send, Maximize2, Minimize2, Copy, Check } from 'lucide-react'
 import { useAIChat } from '@/hooks/ai/useAIChat'
 import { useChatHistory } from '@/hooks/ai/useChatHistory'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import rehypeHighlight from 'rehype-highlight'
-import rehypeSlug from 'rehype-slug'
-import rehypeAutolinkHeadings from 'rehype-autolink-headings'
 import 'highlight.js/styles/github-dark.css'
 
 interface AISidebarProps {
   isOpen: boolean
   onClose: () => void
+  initialMessage?: string
 }
 
 const SIDEBAR_WIDTH = 380
 
-export function AISidebar({ isOpen, onClose }: AISidebarProps) {
+// 代码块复制按钮组件
+function CodeBlock({ children, className }: { children: React.ReactNode; className?: string }) {
+  const [copied, setCopied] = useState(false)
+  
+  const handleCopy = useCallback(async () => {
+    let codeText = ''
+    if (typeof children === 'string') {
+      codeText = children
+    } else if (Array.isArray(children)) {
+      codeText = children.map(child => typeof child === 'string' ? child : '').join('')
+    }
+    
+    if (!codeText.trim()) return
+    
+    try {
+      await navigator.clipboard.writeText(codeText)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch (err) {
+      console.error('复制失败:', err)
+    }
+  }, [children])
+  
+  return (
+    <div className="relative group">
+      <button
+        onClick={handleCopy}
+        className="absolute top-1 right-1 p-1 rounded bg-muted/80 hover:bg-muted text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity z-10"
+        title="复制代码"
+      >
+        {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+      </button>
+      <pre className={className}>
+        <code>{children}</code>
+      </pre>
+    </div>
+  )
+}
+
+export function AISidebar({ isOpen, onClose, initialMessage }: AISidebarProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const [isExpanded, setIsExpanded] = useState(true)
+  const hasProcessedInitialMessage = useRef(false)
+  const prevMessagesLength = useRef(0)
   
   const { 
     messages, 
@@ -53,6 +94,24 @@ export function AISidebar({ isOpen, onClose }: AISidebarProps) {
     history, 
     saveHistory 
   } = useChatHistory()
+
+  // 处理初始消息 - 只处理一次
+  useEffect(() => {
+    if (initialMessage && isOpen && !hasProcessedInitialMessage.current) {
+      hasProcessedInitialMessage.current = true
+      // 延迟发送，确保侧边栏动画完成
+      setTimeout(() => {
+        aiHandleSendMessage(initialMessage)
+      }, 300)
+    }
+  }, [initialMessage, isOpen, aiHandleSendMessage])
+
+  // 当侧边栏关闭时重置标记
+  useEffect(() => {
+    if (!isOpen) {
+      hasProcessedInitialMessage.current = false
+    }
+  }, [isOpen])
 
   const handleClearHistory = useCallback(() => {
     clearMessages()
@@ -70,15 +129,53 @@ export function AISidebar({ isOpen, onClose }: AISidebarProps) {
     }
   }, [messages, saveHistory, history])
 
+  // 自动滚动 - 只在消息完全加载后滚动（消息数量增加且不在加载中）
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
+    // 只有当消息数量增加且不在加载中时才滚动
+    if (messages.length > prevMessagesLength.current && !isLoading && !isStreaming) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    }
+    prevMessagesLength.current = messages.length
+  }, [messages, isLoading, isStreaming])
 
   useEffect(() => {
     if (isOpen && textareaRef.current) {
       textareaRef.current.focus()
     }
   }, [isOpen])
+
+  // ReactMarkdown 自定义组件 - 标题降级：h1->h4, h2->h5, h3->h6
+  const markdownComponents = {
+    pre: ({ children }: { children?: React.ReactNode }) => {
+      return <CodeBlock className="bg-muted/50 p-2 rounded overflow-x-auto my-1 text-[10px]">{children}</CodeBlock>
+    },
+    code: ({ children, className, ...props }: { children?: React.ReactNode; className?: string; [key: string]: any }) => {
+      const isInline = !className?.includes('language-')
+      if (isInline) {
+        return <code className="bg-muted/50 px-1 py-0.5 rounded text-[10px]" {...props}>{children}</code>
+      }
+      return <code className={className} {...props}>{children}</code>
+    },
+    // 标题降级：h1->h4, h2->h5, h3->h6
+    h1: ({ children, ...props }: { children?: React.ReactNode; [key: string]: any }) => (
+      <h4 className="text-xs font-bold mt-2 mb-1" {...props}>{children}</h4>
+    ),
+    h2: ({ children, ...props }: { children?: React.ReactNode; [key: string]: any }) => (
+      <h5 className="text-xs font-semibold mt-2 mb-1" {...props}>{children}</h5>
+    ),
+    h3: ({ children, ...props }: { children?: React.ReactNode; [key: string]: any }) => (
+      <h6 className="text-xs font-medium mt-1 mb-1" {...props}>{children}</h6>
+    ),
+    h4: ({ children, ...props }: { children?: React.ReactNode; [key: string]: any }) => (
+      <h6 className="text-xs font-medium mt-1 mb-0.5" {...props}>{children}</h6>
+    ),
+    h5: ({ children, ...props }: { children?: React.ReactNode; [key: string]: any }) => (
+      <h6 className="text-xs font-medium mt-1 mb-0.5" {...props}>{children}</h6>
+    ),
+    h6: ({ children, ...props }: { children?: React.ReactNode; [key: string]: any }) => (
+      <h6 className="text-xs font-medium mt-1 mb-0.5" {...props}>{children}</h6>
+    ),
+  }
 
   return (
     <AnimatePresence>
@@ -157,28 +254,16 @@ export function AISidebar({ isOpen, onClose }: AISidebarProps) {
                           : 'bg-muted/80'
                       }`}>
                         {message.role === 'assistant' ? (
-                          <div className="prose prose-sm dark:prose-invert max-w-none">
+                          <div className="prose prose-xs dark:prose-invert max-w-none [&_*]:text-xs [&_p]:m-0 [&_p]:mb-1 [&_ul]:m-0 [&_ul]:mb-1 [&_ol]:m-0 [&_ol]:mb-1 [&_li]:m-0 [&_code]:text-[10px] [&_pre]:text-[10px]">
                             <ReactMarkdown
                               remarkPlugins={[remarkGfm]}
-                              rehypePlugins={[
-                                rehypeHighlight,
-                                rehypeSlug,
-                                [
-                                  rehypeAutolinkHeadings,
-                                  {
-                                    behavior: 'wrap',
-                                    properties: {
-                                      className: ['anchor-link'],
-                                    },
-                                  },
-                                ],
-                              ]}
+                              components={markdownComponents}
                             >
                               {message.content}
                             </ReactMarkdown>
                           </div>
                         ) : (
-                          <p className="text-sm leading-relaxed text-foreground whitespace-pre-wrap break-words">
+                          <p className="text-xs leading-relaxed text-foreground whitespace-pre-wrap break-words">
                             {message.content}
                           </p>
                         )}
