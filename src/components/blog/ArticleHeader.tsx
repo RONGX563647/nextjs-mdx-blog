@@ -20,6 +20,30 @@ interface ArticleHeaderProps {
 }
 
 export function ArticleHeader({ title, category, categoryName, date, content }: ArticleHeaderProps) {
+  // 计算阅读时间
+  const calculateReadingTime = (text?: string) => {
+    if (!text) return 1 // 默认1分钟
+    
+    // 中文平均阅读速度：每分钟300个汉字
+    // 英文平均阅读速度：每分钟200个单词
+    
+    // 计算中文字符数
+    const chineseChars = (text.match(/[\u4e00-\u9fa5]/g) || []).length
+    
+    // 计算英文字符数（排除空格和标点）
+    const englishChars = (text.match(/[a-zA-Z]/g) || []).length
+    
+    // 计算单词数（假设平均每个单词5个字母）
+    const englishWords = Math.ceil(englishChars / 5)
+    
+    // 计算总阅读时间（分钟）
+    const chineseTime = chineseChars / 300
+    const englishTime = englishWords / 200
+    const totalTime = chineseTime + englishTime
+    
+    return Math.max(1, Math.ceil(totalTime)) // 最少1分钟
+  }
+
   // 下载文章为Markdown文件
   const handleDownload = () => {
     if (!content) return
@@ -50,6 +74,9 @@ ${date ? `**日期:** ${date}
       URL.revokeObjectURL(url)
     }, 100)
   }
+
+  // 计算阅读时间
+  const readingTime = calculateReadingTime(content)
 
   return (
     <header className="mb-8">
@@ -89,7 +116,8 @@ ${date ? `**日期:** ${date}
         )}
         
         <div className="flex items-center gap-1">
-          <span>大约 24 分钟</span>
+          <BookOpen className="h-4 w-4" />
+          <span>大约 {readingTime} 分钟</span>
         </div>
       </div>
     </header>

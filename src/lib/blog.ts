@@ -22,6 +22,9 @@ export async function getCategories(): Promise<Category[]> {
   try {
     const categories = await fs.promises.readdir(MD_DIR)
     
+    // 修仙体系排序优先级
+    const cultivationOrder = ['引气', '筑基', '金丹', '元婴', '化神', '合体']
+    
     return categories
       .filter((item) => {
         const itemPath = path.join(MD_DIR, item)
@@ -40,7 +43,27 @@ export async function getCategories(): Promise<Category[]> {
           name: folder,
         }
       })
-      .sort((a, b) => a.name.localeCompare(b.name))
+      .sort((a, b) => {
+        // 提取修仙等级
+        const getCultivationLevel = (name: string) => {
+          for (const level of cultivationOrder) {
+            if (name.includes(level)) {
+              return cultivationOrder.indexOf(level)
+            }
+          }
+          return cultivationOrder.length // 不在排序中的放在最后
+        }
+        
+        const levelA = getCultivationLevel(a.name)
+        const levelB = getCultivationLevel(b.name)
+        
+        if (levelA !== levelB) {
+          return levelA - levelB
+        }
+        
+        // 同一等级内按名称排序
+        return a.name.localeCompare(b.name)
+      })
   } catch (error) {
     console.error('Error reading categories:', error)
     return []

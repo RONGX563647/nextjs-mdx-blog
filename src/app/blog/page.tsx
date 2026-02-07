@@ -5,6 +5,9 @@ import { getCategories, getArticles } from '@/lib/blog'
 import { BookOpen, ArrowRight, FileText } from 'lucide-react'
 import { BlogSearch } from './BlogSearch'
 
+// 导入客户端组件
+import LastVisitedBarWrapper from '@/components/blog/LastVisitedBarWrapper'
+
 const meta = {
   title: '博客专栏',
   description: '技术博客专栏，分享Java、前端、后端等技术知识',
@@ -69,43 +72,42 @@ export default async function BlogPage() {
 
   return (
     <div className="min-h-screen">
-      <section className="py-24">
+      {/* 上次浏览文章横条导航 - 使用动态导入避免hydration不匹配 */}
+      <LastVisitedBarWrapper />
+      
+      <section className="py-24 relative overflow-hidden">
+        {/* 背景图片 - 宽度与页面一致，长度等比例放大 */}
+        <div className="absolute top-[-5px] left-0 right-0 opacity-10 pointer-events-none w-full">
+          <img src="https://rongxpicture.oss-cn-beijing.aliyuncs.com/image-20260207210813997.png" alt="背景" className="w-full h-auto" />
+        </div>
         <div className="container mx-auto px-4">
           <div className="max-w-6xl mx-auto">
             <div className="mb-20">
               <div className="flex items-center gap-4 mb-6">
                 <div className="w-16 h-1 bg-primary"></div>
-                <p className="text-sm font-semibold tracking-widest uppercase text-primary">
-                  技术博客
-                </p>
+                <p className="text-sm font-semibold tracking-widest uppercase text-primary">技术博客</p>
               </div>
               
               {/* 标题和搜索框 */}
               <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
                 <div className="flex-1">
-                  <h1 className="text-5xl md:text-6xl font-bold tracking-tighter mb-6">
-                    技术博客专栏
-                  </h1>
-                  <p className="text-xl text-muted-foreground max-w-2xl">
-                    深入学习编程技术，从基础到进阶，记录学习过程中的思考与总结
-                  </p>
+                  <h1 className="text-5xl md:text-6xl font-bold tracking-tighter mb-6">技术博客专栏</h1>
+                  <p className="text-xl text-muted-foreground max-w-2xl">深入学习编程技术，从基础到进阶，记录学习过程中的思考与总结</p>
                 </div>
                 
                 <div className="w-full md:w-64 lg:w-80">
-                  <BlogSearch articles={allArticles} />
+                  <BlogSearch key="blog-search" articles={allArticles} />
                 </div>
               </div>
             </div>
 
             {/* 分类卡片 */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {categoriesWithCount.map((category, index) => (
+              {categoriesWithCount.map((category) => (
                 <Link
                   key={category.id}
                   href={`/blog/${category.id}`}
-                  className={`group block p-8 border border-border hover:border-primary transition-all duration-300 ${
-                    index === 0 ? 'md:col-span-2 lg:col-span-1' : ''
-                  }`}
+                  className="group block p-8 border border-border hover:border-primary transition-all duration-300"
                 >
                   <div className="flex items-start justify-between mb-6">
                     <div className="p-3 bg-primary/10 group-hover:bg-primary/20 transition-colors">
@@ -114,13 +116,9 @@ export default async function BlogPage() {
                     <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
                   </div>
                   
-                  <h2 className="text-2xl font-bold mb-3 group-hover:text-primary transition-colors">
-                    {category.name}
-                  </h2>
+                  <h2 className="text-2xl font-bold mb-3 group-hover:text-primary transition-colors">{category.name}</h2>
                   
-                  <p className="text-muted-foreground mb-6 line-clamp-3 leading-relaxed">
-                    {category.description || '探索相关知识体系，掌握核心技能'}
-                  </p>
+                  <p className="text-muted-foreground mb-6 line-clamp-3 leading-relaxed">{category.description || '探索相关知识体系，掌握核心技能'}</p>
                   
                   <div className="flex items-center gap-4 text-sm text-muted-foreground">
                     <div className="flex items-center gap-2">
@@ -140,9 +138,7 @@ export default async function BlogPage() {
             {categoriesWithCount.length === 0 && (
               <div className="text-center py-24">
                 <BookOpen className="h-20 w-20 text-muted-foreground/30 mx-auto mb-6" />
-                <p className="text-muted-foreground text-xl">
-                  暂无专栏内容
-                </p>
+                <p className="text-muted-foreground text-xl">暂无专栏内容</p>
               </div>
             )}
           </div>

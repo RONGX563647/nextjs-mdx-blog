@@ -11,6 +11,7 @@
  */
 'use client'
 
+import { useEffect } from 'react'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import { CollapsibleToc } from './CollapsibleToc'
@@ -20,6 +21,7 @@ import { ArticleNavigation } from './ArticleNavigation'
 import { CommentSection } from './CommentSection'
 import { useArticleHeadings, useActiveHeading } from '@/hooks/useArticle'
 import { useTocCollapsed } from '@/hooks/useToc'
+import { storeLastVisitedArticle } from '@/utils/lastVisited'
 
 interface ArticlePageProps {
   article: {
@@ -64,6 +66,18 @@ export default function ArticlePageClient({
   const activeId = useActiveHeading()
   const { isCollapsed, toggleCollapse } = useTocCollapsed()
 
+  // 当活动章节变化时，存储上次浏览的文章信息
+  useEffect(() => {
+    const activeHeading = headings.find(heading => heading.id === activeId)
+    storeLastVisitedArticle({
+      category: article.category,
+      slug: article.slug,
+      title: article.title,
+      sectionId: activeId,
+      sectionTitle: activeHeading?.text
+    })
+  }, [article, activeId, headings])
+
   const scrollToHeading = (id: string) => {
     const element = document.getElementById(id)
     if (element) {
@@ -77,6 +91,17 @@ export default function ArticlePageClient({
       })
     }
   }
+
+  // 页面加载时，如果URL中包含章节ID，自动滚动到对应的章节
+  useEffect(() => {
+    const hash = window.location.hash.substring(1)
+    if (hash) {
+      // 延迟执行，确保DOM已经渲染完成
+      setTimeout(() => {
+        scrollToHeading(hash)
+      }, 100)
+    }
+  }, [])
 
   const handleArticleClick = (slug: string) => {
     window.location.href = `/blog/${article.category}/${slug}`
