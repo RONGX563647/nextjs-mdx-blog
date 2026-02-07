@@ -102,7 +102,7 @@ export default async function BlogPage() {
             </div>
 
             {/* 分类卡片 */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" style={{ marginTop: '224px' }}>
               {categoriesWithCount.map((category) => (
                 <Link
                   key={category.id}
