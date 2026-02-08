@@ -42,7 +42,7 @@ export function ResumeDownloadButton() {
   const handleDownload = useCallback(() => {
     // 触发简历下载
     const link = document.createElement('a')
-    link.href = '/resume.pdf'
+    link.href = '/1.pdf'
     link.download = '刘荣显-全栈开发工程师.pdf'
     document.body.appendChild(link)
     link.click()
