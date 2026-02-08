@@ -6,6 +6,7 @@ import { getCategories, getArticles, getCategoryFromId } from '@/lib/blog'
 import { notFound } from 'next/navigation'
 import { ArticleDownloadButton } from '@/components/blog/ArticleDownloadButton'
 import { ArticleCoverImage } from '@/components/blog/ArticleCoverImage'
+import { EnhancedBilibiliPlayer } from '@/components/video/EnhancedBilibiliPlayer'
 
 interface PageProps {
   params: Promise<{ category: string }>
@@ -36,6 +37,18 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 }
 
+// 专栏视频配置
+const categoryVideos: Record<string, { bvid: string; title: string }> = {
+  '引气・Java 气海初拓': {
+    bvid: 'BV17F411T7Ao',
+    title: '黑马程序员Java零基础视频教程',
+  },
+  '筑基・Web 道途启关': {
+    bvid: 'BV1yGydYEE3H',
+    title: 'AI+JavaWeb开发入门，Tlias教学管理系统项目实战',
+  },
+}
+
 export default async function CategoryPage({ params, searchParams }: PageProps) {
   const { category } = await params
   const { page = '1' } = await searchParams
@@ -61,6 +74,9 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
   const endIndex = startIndex + itemsPerPage
   const paginatedArticles = articles.slice(startIndex, endIndex)
 
+  // 获取当前专栏的视频配置
+  const videoConfig = categoryVideos[decodedCategory]
+
   return (
     <div className="min-h-screen">
       <section className="py-20">
@@ -75,23 +91,45 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
             </Link>
 
             <div className="mb-12">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="p-3 bg-primary/10 rounded-lg">
-                  <BookOpen className="h-6 w-6 text-primary" />
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 bg-primary/10 rounded-lg">
+                    <BookOpen className="h-6 w-6 text-primary" />
+                  </div>
+                  <div>
+                    <h1 className="text-3xl md:text-4xl font-bold tracking-tight">
+                      {categoryName}
+                    </h1>
+                    <p className="text-muted-foreground mt-1">
+                      共 {articles.length} 篇文章
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h1 className="text-3xl md:text-4xl font-bold tracking-tight">
-                    {categoryName}
-                  </h1>
-                  <p className="text-muted-foreground mt-1">
-                    共 {articles.length} 篇文章
-                  </p>
-                </div>
+                {/* 视频教程按钮 */}
+                {videoConfig && (
+                  <div className="hidden sm:block">
+                    <EnhancedBilibiliPlayer 
+                      bvid={videoConfig.bvid} 
+                      title={videoConfig.title}
+                      totalEpisodes={200}
+                    />
+                  </div>
+                )}
               </div>
               {currentCategory.description && (
-                <p className="text-muted-foreground ml-12">
+                <p className="text-muted-foreground mt-4">
                   {currentCategory.description}
                 </p>
+              )}
+              {/* 移动端视频按钮 */}
+              {videoConfig && (
+                <div className="sm:hidden mt-4">
+                  <EnhancedBilibiliPlayer 
+                    bvid={videoConfig.bvid} 
+                    title={videoConfig.title}
+                    totalEpisodes={200}
+                  />
+                </div>
               )}
             </div>
 

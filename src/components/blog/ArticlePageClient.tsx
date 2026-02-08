@@ -20,6 +20,7 @@ import { ArticleHeader } from './ArticleHeader'
 import { ArticleContent } from './ArticleContent'
 import { ArticleNavigation } from './ArticleNavigation'
 import { CommentSection } from './CommentSection'
+import { ArticleQuiz } from './ArticleQuiz'
 import { useArticleHeadings, useActiveHeading } from '@/hooks/useArticle'
 import { useTocCollapsed } from '@/hooks/useToc'
 import { storeLastVisitedArticle } from '@/utils/lastVisited'
@@ -161,6 +162,11 @@ export default function ArticlePageClient({
               nextCategoryName={nextCategoryName}
               isPrevCategory={isPrevCategory}
               prevCategoryName={prevCategoryName}
+            />
+
+            <ArticleQuiz 
+              articleContent={article.content}
+              articleTitle={article.title}
             />
 
             <CommentSection 
