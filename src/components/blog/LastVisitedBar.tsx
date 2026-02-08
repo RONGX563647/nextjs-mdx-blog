@@ -11,9 +11,11 @@ interface LastVisitedBarProps {
 
 export function LastVisitedBar({ className = '' }: LastVisitedBarProps) {
   const [lastVisited, setLastVisited] = useState<ReturnType<typeof getLastVisitedArticle>>(null)
+  const [isClient, setIsClient] = useState(false)
 
   // 只在客户端初始化数据
   useEffect(() => {
+    setIsClient(true)
     setLastVisited(getLastVisitedArticle())
   }, [])
 
@@ -27,7 +29,30 @@ export function LastVisitedBar({ className = '' }: LastVisitedBarProps) {
     return () => window.removeEventListener('storage', handleStorageChange)
   }, [])
 
-  // 服务器端和客户端初始渲染都返回相同的结构
+  // 服务器端渲染时返回占位符，保持结构一致
+  if (!isClient) {
+    return (
+      <div className={`bg-muted/50 border-b border-border py-3 px-4 transition-all duration-300 ${className}`}>
+        <div className="container mx-auto max-w-6xl">
+          <div className="flex items-center gap-3">
+            <Clock className="h-4 w-4 text-muted-foreground flex-shrink-0 opacity-0" />
+            <div className="flex-1 min-w-0">
+              <p className="text-xs text-muted-foreground mb-1 opacity-0">上次浏览</p>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium truncate opacity-0">占位符</span>
+              </div>
+            </div>
+            <span className="text-sm flex items-center gap-1 opacity-0">
+              继续阅读
+              <ArrowLeft className="h-3 w-3 rotate-180" />
+            </span>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // 客户端渲染
   const hasData = lastVisited !== null
 
   return (
