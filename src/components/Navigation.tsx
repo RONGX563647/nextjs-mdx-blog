@@ -13,6 +13,7 @@ import { Download, Menu, X } from 'lucide-react' // 下载图标、菜单图标�
 import { Button } from '@/components/ui/button' // 按钮组件
 import { usePathname } from 'next/navigation' // 获取当前路径的钩子
 import { useState } from 'react' // React状态管理
+import { ResumeDownloadModal } from '@/components/resume/ResumeDownloadModal' // 简历下载验证模态框
 
 /**
  * 导航栏组件
@@ -23,6 +24,18 @@ export function Navigation() {
   const pathname = usePathname()
   // 移动端菜单状态管理
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  // 简历下载模态框状态
+  const [isResumeModalOpen, setIsResumeModalOpen] = useState(false)
+
+  // 处理简历下载
+  const handleDownload = () => {
+    const link = document.createElement('a')
+    link.href = '/resume.pdf' // 简历文件路径
+    link.download = '刘荣显-全栈开发工程师.pdf'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
 
   return (
     <>
@@ -52,14 +65,13 @@ export function Navigation() {
         >
           博客
         </Link>
-        <a 
-          href="/1.pdf" 
-          download 
+        <button 
+          onClick={() => setIsResumeModalOpen(true)}
           className="px-4 py-2 hover:text-primary transition-colors flex items-center gap-2"
         >
           <Download size={20} />
           简历
-        </a>
+        </button>
       </nav>
       
       {/* 移动端菜单按钮 */}
@@ -106,19 +118,26 @@ export function Navigation() {
             >
               博客
             </Link>
-            <a 
-              href="/1.pdf" 
-              download 
-              className="px-4 py-3 hover:text-primary transition-colors flex items-center gap-2"
-              onClick={() => setMobileMenuOpen(false)}
+            <button 
+              onClick={() => {
+                setMobileMenuOpen(false)
+                setIsResumeModalOpen(true)
+              }}
+              className="px-4 py-3 hover:text-primary transition-colors flex items-center gap-2 text-left"
             >
               <Download size={20} />
               简历
-            </a>
+            </button>
           </div>
         </div>
       )}
 
+      {/* 简历下载验证模态框 */}
+      <ResumeDownloadModal 
+        isOpen={isResumeModalOpen} 
+        onClose={() => setIsResumeModalOpen(false)} 
+        onDownload={handleDownload}
+      />
     </>
   )
 }

@@ -71,9 +71,28 @@ export default async function ArticlePage({ params }: PageProps) {
   let nextArticle = null
   let isNextCategory = false
   let nextCategoryName = ''
+  let isPrevCategory = false
+  let prevCategoryName = ''
   
   if (currentIndex > 0) {
+    // 当前专栏还有上一篇文章
     prevArticle = articles[currentIndex - 1]
+  } else {
+    // 当前专栏的第一篇文章，获取上一个专栏的最后一篇文章
+    const allCategories = await getCategories()
+    const currentCategoryIndex = allCategories.findIndex(c => c.id === decodedCategory)
+    
+    if (currentCategoryIndex > 0) {
+      // 还有上一个专栏
+      const prevCategory = allCategories[currentCategoryIndex - 1]
+      const prevCategoryArticles = await getArticles(prevCategory.id)
+      
+      if (prevCategoryArticles.length > 0) {
+        prevArticle = prevCategoryArticles[prevCategoryArticles.length - 1]
+        isPrevCategory = true
+        prevCategoryName = prevCategory.name
+      }
+    }
   }
   
   if (currentIndex < articles.length - 1) {
@@ -106,5 +125,7 @@ export default async function ArticlePage({ params }: PageProps) {
     currentArticle={{ slug: decodedSlug, category: decodedCategory }}
     isNextCategory={isNextCategory}
     nextCategoryName={nextCategoryName}
+    isPrevCategory={isPrevCategory}
+    prevCategoryName={prevCategoryName}
   />
 }

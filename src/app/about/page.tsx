@@ -7,8 +7,9 @@
 import { WEBSITE_HOST_URL } from '@/lib/constants' // 网站主机URL
 import type { Metadata } from 'next' // Next.js元数据类型
 import { Button } from '@/components/ui/button' // 按钮组件
-import { Github, GitMerge, Linkedin, Mail, Phone, MapPin, Award } from 'lucide-react' // 图标组件
+import { Github, GitMerge, Linkedin, Mail, Phone, MapPin, Award, Download } from 'lucide-react' // 图标组件
 import Link from 'next/link' // Next.js链接组件
+import { ResumeDownloadButton } from '@/components/resume/ResumeDownloadButton' // 简历下载按钮组件
 
 // 页面元数据
 const meta = {
@@ -56,12 +57,7 @@ export default function About() {
           
           {/* 社交链接 */}
           <div className="flex flex-wrap gap-4 mb-12">
-            <Button asChild variant="secondary" className="bg-gradient-to-r from-blue-600/10 to-purple-600/10 hover:from-blue-600/20 hover:to-purple-600/20 border-blue-600/30">
-              <a href="mailto:lrx563647@qq.com" className="flex items-center gap-2">
-                <Mail size={18} />
-                发送邮件
-              </a>
-            </Button>
+            <ResumeDownloadButton />
             <Button asChild variant="secondary" className="bg-gradient-to-r from-gray-800/10 to-gray-600/10 hover:from-gray-800/20 hover:to-gray-600/20 border-gray-600/30">
               <a href="https://github.com/RONGX563647" className="flex items-center gap-2">
                 <Github size={18} />
@@ -504,12 +500,7 @@ export default function About() {
       <section className="py-16 border-t border-gray-200 dark:border-gray-700">
         <h2 className="text-2xl font-semibold mb-10">联系方式</h2>
         <div className="flex flex-wrap gap-4">
-          <Button asChild variant="secondary">
-            <a href="mailto:lrx563647@qq.com" className="flex items-center gap-2">
-              <Mail size={16} />
-              发送邮件
-            </a>
-          </Button>
+          <ResumeDownloadButton />
           <Button asChild variant="secondary">
             <a href="https://github.com/RONGX563647" className="flex items-center gap-2">
               <Github size={16} />

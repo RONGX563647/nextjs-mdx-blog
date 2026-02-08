@@ -4,6 +4,7 @@
  * 功能：
  * - 显示上一篇文章链接
  * - 显示下一篇文章链接
+ * - 当读到专栏第一篇文章时，显示上一专栏链接
  * - 当读到专栏最后一篇文章时，显示下一专栏链接
  * - 响应式布局支持
  * - 处理没有上一页/下一页的情况
@@ -27,6 +28,8 @@ interface ArticleNavigationProps {
   category: string
   isNextCategory?: boolean
   nextCategoryName?: string
+  isPrevCategory?: boolean
+  prevCategoryName?: string
 }
 
 export function ArticleNavigation({ 
@@ -34,19 +37,32 @@ export function ArticleNavigation({
   nextArticle, 
   category,
   isNextCategory,
-  nextCategoryName
+  nextCategoryName,
+  isPrevCategory,
+  prevCategoryName
 }: ArticleNavigationProps) {
   return (
     <div className="mt-8 bg-background border border-border rounded shadow-sm p-6">
       <div className="flex flex-col md:flex-row justify-between gap-4">
         {prevArticle ? (
           <Link 
-            href={`/blog/${category}/${prevArticle.slug}`}
+            href={`/blog/${prevArticle.category}/${prevArticle.slug}`}
             className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
             <div>
-              <div className="text-xs text-muted-foreground">上一页</div>
+              <div className="text-xs text-muted-foreground flex items-center gap-1">
+                {isPrevCategory && (
+                  <>
+                    <FolderOpen className="h-3 w-3" />
+                    <span>上一专栏</span>
+                    {prevCategoryName && (
+                      <span className="text-primary">({prevCategoryName})</span>
+                    )}
+                  </>
+                )}
+                {!isPrevCategory && <span>上一页</span>}
+              </div>
               <div className="font-medium">{prevArticle.title}</div>
             </div>
           </Link>

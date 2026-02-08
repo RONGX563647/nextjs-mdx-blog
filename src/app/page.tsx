@@ -16,6 +16,7 @@ import { ScrollAnimation } from '@/components/ScrollAnimation' // 滚动动画�
 import { ThreeDCarousel } from '@/components/ThreeDCarousel' // 3D轮播图组件
 import { Github, Download, ExternalLink, Eye, BookOpen, ArrowRight } from 'lucide-react' // 图标组件
 import Link from 'next/link' // Next.js链接组件
+import { ResumeDownloadButton } from '@/components/resume/ResumeDownloadButton' // 简历下载按钮组件
 
 /**
  * 首页组件
@@ -50,23 +51,7 @@ export default function Home() {
                   <Button asChild variant="outline" className="text-base px-8 py-4 rounded border-2 border-border hover:border-primary hover:bg-primary/5">
                     <Link href="/portfolio">查看项目</Link>
                   </Button>
-                  <div className="relative group">
-                    <Button asChild variant="secondary" className="text-base px-8 py-4 rounded hover:bg-secondary/80">
-                      <a href="/1.pdf" download className="flex items-center gap-2">
-                        <Download size={18} />
-                        下载简历
-                      </a>
-                    </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="absolute -top-2 -right-2 bg-primary text-white hover:bg-primary/90 opacity-0 group-hover:opacity-100 transition-opacity w-6 h-6"
-                    >
-                      <a href="/1.pdf" target="_blank" rel="noopener noreferrer">
-                        <Eye size={12} />
-                      </a>
-                    </Button>
-                  </div>
+                  <ResumeDownloadButton />
                 </div>
               </div>
               <div className="flex-shrink-0">
