@@ -1,674 +1,418 @@
-# 从浏览器输入URL到页面加载的完整过程剖析
+## 双11前夜，我被一个URL逼疯了
 
-## 一、问题引入：页面加载慢的困惑
+![image-20260216152606169](https://rongxpicture.oss-cn-beijing.aliyuncs.com/image-20260216152606169.png)
 
-### 1.1 真实案例：电商大促页面加载优化
+### 1. 凌晨两点的办公室，只有键盘声和我加速的心跳
 
-```
-场景：2024年双11大促期间，商品详情页加载缓慢
-用户反馈：页面打开需要5秒以上，大量用户流失
+“首屏5.2秒？你确定没看错？”
 
-问题分析过程：
-┌─────────────────────────────────────────────────────────────┐
-│ 阶段1：问题定位                                               │
-│ - 监控显示首屏时间：5.2秒                                    │
-│ - 竞品对比：淘宝1.8秒，京东2.1秒                             │
-│ - 目标：优化到2秒以内                                        │
-├─────────────────────────────────────────────────────────────┤
-│ 阶段2：瓶颈分析                                               │
-│ - DNS解析：200ms（正常）                                     │
-│ - TCP连接：150ms（正常）                                     │
-│ - SSL握手：400ms（偏慢）                                     │
-│ - 首字节时间(TTFB)：800ms（过慢）                            │
-│ - 资源下载：2.5秒（图片过多过大）                            │
-│ - 渲染阻塞：1.3秒（JS执行阻塞）                              │
-├─────────────────────────────────────────────────────────────┤
-│ 阶段3：优化措施                                               │
-│ - 启用HTTP/2 + TLS 1.3，SSL握手降至100ms                     │
-│ - 后端接口优化，TTFB降至200ms                                │
-│ - 图片WebP格式 + CDN，资源下载降至800ms                      │
-│ - JS异步加载 + 代码分割，渲染阻塞降至300ms                   │
-├─────────────────────────────────────────────────────────────┤
-│ 阶段4：优化效果                                               │
-│ - 首屏时间：5.2s → 1.6s（提升69%）                          │
-│ - 转化率提升：23%                                            │
-│ - 跳出率下降：35%                                            │
-└─────────────────────────────────────────────────────────────┘
-```
+2024年11月10日晚上10点，运营总监拿着手机冲进我的工位，屏幕上是用户发来的录屏——我们的商品详情页，白屏转了整整5秒才加载出来。
 
-### 1.2 完整请求流程概览
+“离双11开场还有两个小时，技术群里已经炸了，说大量用户流失，跳出率飙升35%。”
 
-```
-从输入URL到页面加载的完整流程：
-┌──────────────────────────────────────────────────────────────┐
-│                                                              │
-│  1. URL解析                                                  │
-│     - 协议提取（http/https）                                 │
-│     - 域名提取                                               │
-│     - 路径和参数解析                                         │
-│                                                              │
-│  2. DNS解析                                                  │
-│     - 浏览器缓存查询                                         │
-│     - 操作系统缓存查询                                       │
-│     - 本地DNS服务器查询                                      │
-│     - 递归/迭代查询                                          │
-│                                                              │
-│  3. 建立连接                                                 │
-│     - TCP三次握手                                            │
-│     - TLS/SSL握手（HTTPS）                                   │
-│                                                              │
-│  4. 发送HTTP请求                                             │
-│     - 构建请求报文                                           │
-│     - 发送请求                                               │
-│                                                              │
-│  5. 服务器处理                                               │
-│     - 接收请求                                               │
-│     - 业务逻辑处理                                           │
-│     - 生成响应                                               │
-│                                                              │
-│  6. 接收响应                                                 │
-│     - 解析响应头                                             │
-│     - 接收响应体                                             │
-│                                                              │
-│  7. 页面渲染                                                 │
-│     - 解析HTML构建DOM                                        │
-│     - 解析CSS构建CSSOM                                       │
-│     - 执行JavaScript                                         │
-│     - 布局与绘制                                             │
-│                                                              │
-└──────────────────────────────────────────────────────────────┘
-```
+我盯着监控大屏，首屏时间那个数字红得刺眼：5.2s。而旁边的竞品对比曲线，淘宝1.8s，京东2.1s，像两条笔直的高速公路，只有我们这儿堵成了一锅粥。
 
-## 二、DNS解析深度解析
+老板站在背后，没说话，但我能感觉到他的目光快把我后背烧穿了。
 
-### 2.1 DNS解析流程
+“给我一个时间。”他说。
+
+我深吸一口气：“给我一个小时，我找出原因，至少优化到2秒以内。”
+
+那个晚上，我从一个URL开始，经历了一场从浏览器到服务器、从网络协议到前端渲染的全链路生死时速。今天，我想把这段经历讲给你听——从一个真实的故事里，理解一个URL背后的完整旅程，以及那些藏在毫秒级优化背后的硬核知识。
+
+---
+
+### 2. 第一现场：Chrome DevTools 里的心电图
+
+我打开 Chrome DevTools，切到 Network 面板，刷新页面。瀑布图像心电图一样跳动，鼠标悬停在第一个请求上，弹出一串时间：
+
+| 阶段              | 耗时  | 状态           |
+| ----------------- | ----- | -------------- |
+| DNS 解析          | 200ms | ✅ 正常         |
+| TCP 连接          | 150ms | ✅ 正常         |
+| SSL 握手          | 400ms | ⚠️ 偏慢         |
+| 首字节时间 (TTFB) | 800ms | ❌ 过慢         |
+| 内容下载          | 2.5s  | ❌ 图片太多太大 |
+| 渲染阻塞          | 1.3s  | ❌ JS 阻塞解析  |
+
+“这就像破案，每个数字都是线索。”我对旁边同样焦头烂额的实习生说。
+
+**完整的请求流程**其实是这样一步步发生的：
+
+1. **URL 解析**：浏览器先拆解你输入的内容，提取协议（http/https）、域名、路径和参数。
+2. **DNS 解析**：把域名翻译成 IP 地址。
+3. **建立连接**：TCP 三次握手 + TLS 握手（如果是 HTTPS）。
+4. **发送 HTTP 请求**：浏览器把请求报文发出去。
+5. **服务器处理**：后端接收请求、执行逻辑、生成响应。
+6. **接收响应**：浏览器接收返回的数据。
+7. **页面渲染**：解析 HTML/CSS/JS，绘制页面。
+
+问题不是出在某一个环节，而是每个环节都慢了那么一点点。
+
+---
+
+### 3. 第一战：DNS 解析，连域名都要“预热”
+
+#### 3.1 DNS 到底是怎么工作的？
+
+DNS 解析 200ms 看起来正常，但我心想：如果用户第一次访问，或者 DNS 缓存过期了，这个时间可能会翻倍。我得把原理搞清楚，才能彻底优化。
+
+**DNS 解析的完整流程**是这样的：
 
 ```
-DNS解析完整流程：
-┌──────────────────────────────────────────────────────────────┐
-│                                                              │
-│  浏览器输入：www.example.com                                 │
-│                                                              │
-│       │                                                      │
-│       ▼                                                      │
-│  ┌─────────────────┐                                         │
-│  │ 1. 浏览器缓存   │ ← 检查是否访问过（chrome://net-internals/#dns）│
-│  │    TTL: 60s     │                                         │
-│  └────────┬────────┘                                         │
-│           │ 未命中                                            │
-│           ▼                                                  │
-│  ┌─────────────────┐                                         │
-│  │ 2. 操作系统缓存 │ ← /etc/hosts 或 C:\Windows\System32\drivers\etc\hosts │
-│  │    TTL: 60s     │                                         │
-│  └────────┬────────┘                                         │
-│           │ 未命中                                            │
-│           ▼                                                  │
-│  ┌─────────────────┐                                         │
-│  │ 3. 本地DNS服务器│ ← 路由器或ISP提供的DNS（如114.114.114.114）│
-│  │    TTL: 由配置决定 │                                       │
-│  └────────┬────────┘                                         │
-│           │ 未命中                                            │
-│           ▼                                                  │
-│  ┌──────────────────────────────────────────────────────┐   │
-│  │ 4. 递归查询过程                                       │   │
-│  │                                                      │   │
-│  │  本地DNS → 根DNS服务器(.com) → 顶级域DNS(example.com) │   │
-│  │              ↑________________________________________│   │
-│  │              返回www.example.com的IP地址               │   │
-│  └──────────────────────────────────────────────────────┘   │
-│                                                              │
-└──────────────────────────────────────────────────────────────┘
+浏览器输入：www.example.com
+    │
+    ▼
+┌─────────────────┐
+│ 1. 浏览器缓存   │ ← 检查是否访问过（chrome://net-internals/#dns）
+│    TTL: 60s     │
+└────────┬────────┘
+         │ 未命中
+         ▼
+┌─────────────────┐
+│ 2. 操作系统缓存 │ ← /etc/hosts 或 C:\Windows\System32\drivers\etc\hosts
+│    TTL: 60s     │
+└────────┬────────┘
+         │ 未命中
+         ▼
+┌─────────────────┐
+│ 3. 本地DNS服务器│ ← 路由器或ISP提供的DNS（如114.114.114.114）
+│    TTL: 由配置决定│
+└────────┬────────┘
+         │ 未命中
+         ▼
+┌──────────────────────────────────────────────────────┐
+│ 4. 递归查询过程                                       │
+│  本地DNS → 根DNS服务器(.com) → 顶级域DNS(example.com) │
+│              ↑________________________________________│
+│              返回www.example.com的IP地址               │
+└──────────────────────────────────────────────────────┘
 ```
 
-### 2.2 DNS优化实践
+每一级都有缓存，但一旦缓存失效，就得走完整条链路。而递归查询通常需要几十到几百毫秒。
 
-```javascript
-/**
- * DNS预解析优化
- * 在Vue3项目的index.html中添加
- */
+#### 3.2 我的优化操作
 
-// 1. DNS预解析 - 提前解析可能访问的域名
+我打开 `index.html`，在 `<head>` 里加了几行代码：
+
+```html
+<!-- DNS预解析 - 提前解析可能访问的域名 -->
 <link rel="dns-prefetch" href="//cdn.example.com">
 <link rel="dns-prefetch" href="//api.example.com">
-<link rel="dns-prefetch" href="//img.example.com">
-
-// 2. 预连接 - 提前建立TCP连接
+<!-- 预连接 - 提前建立TCP连接 -->
 <link rel="preconnect" href="https://api.example.com" crossorigin>
-<link rel="preconnect" href="https://cdn.example.com" crossorigin>
-
-// 3. 预加载关键资源
-<link rel="preload" href="/css/critical.css" as="style">
-<link rel="preload" href="/js/app.js" as="script">
-
-// 4. 在Vue3中使用异步组件减少首屏DNS查询
-const AsyncComponent = defineAsyncComponent(() => 
-  import('./components/HeavyComponent.vue')
-);
 ```
 
+这样，浏览器在请求资源之前，就已经把域名解析好了，甚至连接都提前建好了。
+
+同时，我在后端也做了点手脚。Java 的 OkHttp 客户端默认每次请求都可能触发 DNS 查询，我给它加了个缓存：
+
 ```java
-/**
- * Java后端DNS优化
- * 使用连接池复用TCP连接，减少DNS查询次数
- */
-@Configuration
-public class HttpClientConfig {
-    
-    @Bean
-    public OkHttpClient okHttpClient() {
-        return new OkHttpClient.Builder()
-            // 连接池配置 - 复用连接避免重复DNS解析
-            .connectionPool(new ConnectionPool(50, 5, TimeUnit.MINUTES))
-            // DNS缓存配置
-            .dns(new Dns() {
-                private final Dns systemDns = Dns.SYSTEM;
-                private final Map<String, List<InetAddress>> dnsCache = new ConcurrentHashMap<>();
-                
-                @Override
-                public List<InetAddress> lookup(String hostname) throws UnknownHostException {
-                    // 缓存DNS结果，减少重复查询
-                    return dnsCache.computeIfAbsent(hostname, h -> {
-                        try {
-                            return systemDns.lookup(h);
-                        } catch (UnknownHostException e) {
-                            throw new RuntimeException(e);
-                        }
-                    });
-                }
-            })
-            // 连接超时
-            .connectTimeout(3, TimeUnit.SECONDS)
-            // 读取超时
-            .readTimeout(10, TimeUnit.SECONDS)
-            .build();
-    }
+@Bean
+public OkHttpClient okHttpClient() {
+    return new OkHttpClient.Builder()
+        .dns(new Dns() {
+            private final Dns systemDns = Dns.SYSTEM;
+            private final Map<String, List<InetAddress>> cache = new ConcurrentHashMap<>();
+            
+            @Override
+            public List<InetAddress> lookup(String hostname) {
+                return cache.computeIfAbsent(hostname, h -> {
+                    try {
+                        return systemDns.lookup(h);
+                    } catch (UnknownHostException e) {
+                        throw new RuntimeException(e);
+                    }
+                });
+            }
+        })
+        .build();
 }
 ```
 
-## 三、TCP连接与TLS握手
+“这样就不会重复解析了。”我对实习生说，他似懂非懂地点点头。
 
-### 3.1 TCP三次握手
+---
 
-```
-TCP三次握手过程：
-┌──────────────────────────────────────────────────────────────┐
-│                                                              │
-│  客户端                        服务器                        │
-│    │                            │                            │
-│    │ ─────── SYN(seq=x) ───────▶│  ① 客户端发送SYN，进入SYN_SENT │
-│    │                            │                            │
-│    │ ◀── SYN(seq=y,ack=x+1) ───│  ② 服务器回复SYN+ACK，进入SYN_RCVD │
-│    │                            │                            │
-│    │ ─────── ACK(ack=y+1) ─────▶│  ③ 客户端回复ACK，双方进入ESTABLISHED │
-│    │                            │                            │
-│                                                              │
-│  耗时分析：                                                  │
-│  - 1个RTT（客户端→服务器→客户端）                            │
-│  - 假设RTT=50ms，则握手耗时约75-100ms                        │
-│                                                              │
-│  优化方案：                                                  │
-│  - TCP Fast Open (TFO) - 减少1个RTT                          │
-│  - 连接复用（HTTP Keep-Alive / Connection Pool）             │
-│                                                              │
-└──────────────────────────────────────────────────────────────┘
-```
+### 4. 第二战：TCP 与 TLS，握手的艺术
 
-### 3.2 TLS/SSL握手优化
+#### 4.1 三次握手，一次都不能少
+
+SSL 握手 400ms，明显不对劲。我让运维查一下 Nginx 配置，发现居然还在用 TLS 1.2。
+
+先复习一下**TCP 三次握手**（所有 HTTPS 连接的基础）：
 
 ```
-TLS 1.2 vs TLS 1.3 握手对比：
-┌──────────────────────────────────────────────────────────────┐
-│                                                              │
-│  TLS 1.2 握手（2-RTT）：                                     │
-│  ┌─────────┐                              ┌─────────┐       │
-│  │ Client  │ ───── ClientHello ─────────▶ │ Server  │       │
-│  │         │ ◀──── ServerHello + Cert ────│         │ ① RTT │
-│  │         │ ───── ClientKeyExchange ────▶│         │       │
-│  │         │ ◀──── Finished ──────────────│         │ ② RTT │
-│  │         │ ───── Finished ─────────────▶│         │       │
-│  └─────────┘                              └─────────┘       │
-│  总耗时：约200-400ms                                         │
-│                                                              │
-├──────────────────────────────────────────────────────────────┤
-│                                                              │
-│  TLS 1.3 握手（1-RTT）：                                     │
-│  ┌─────────┐                              ┌─────────┐       │
-│  │ Client  │ ───── ClientHello + KeyShare▶│ Server  │       │
-│  │         │ ◀──── ServerHello + Encrypted│         │ 1 RTT │
-│  │         │       Extensions + Cert + Fin│         │       │
-│  │         │ ───── Finished ─────────────▶│         │       │
-│  └─────────┘                              └─────────┘       │
-│  总耗时：约100-150ms（减少50%）                              │
-│                                                              │
-│  TLS 1.3 0-RTT（会话恢复）：                                 │
-│  - 客户端发送应用数据 + ClientHello                          │
-│  - 服务器直接响应应用数据                                    │
-│  - 首次访问仍需1-RTT，后续可实现0-RTT                        │
-│                                                              │
-└──────────────────────────────────────────────────────────────┘
+客户端                        服务器
+  │                            │
+  │ ─────── SYN(seq=x) ───────▶│  ① 客户端发送SYN，进入SYN_SENT
+  │                            │
+  │ ◀── SYN(seq=y,ack=x+1) ───│  ② 服务器回复SYN+ACK，进入SYN_RCVD
+  │                            │
+  │ ─────── ACK(ack=y+1) ─────▶│  ③ 客户端回复ACK，双方进入ESTABLISHED
 ```
+
+这 1 个 RTT（往返时间）是必须的，假设 RTT=50ms，握手就要 75~100ms。但真正耗时的，是 TLS 握手。
+
+#### 4.2 TLS 1.2 vs TLS 1.3
+
+TLS 1.2 需要 2-RTT：
+
+```
+Client                  Server
+  │                       │
+  │─── ClientHello ──────▶│
+  │◀── ServerHello + Cert─│  ① RTT
+  │─── ClientKeyExchange─▶│
+  │◀── Finished ──────────│  ② RTT
+  │─── Finished ─────────▶│
+```
+
+TLS 1.3 只需要 1-RTT：
+
+```
+Client                  Server
+  │                       │
+  │─── ClientHello+Key───▶│
+  │◀── ServerHello+Fin────│  ① RTT
+  │─── Finished ─────────▶│
+```
+
+而且 TLS 1.3 还支持 **0-RTT 会话恢复**，如果之前连接过，客户端可以直接发送加密数据，省掉整个握手。
+
+#### 4.3 动手升级
+
+运维大哥在群里回：“五分钟。”
+
+我打开 Nginx 配置，改成了这样：
 
 ```nginx
-# Nginx TLS优化配置
 server {
     listen 443 ssl http2;
-    server_name example.com;
-    
-    # 证书配置
-    ssl_certificate /path/to/cert.pem;
-    ssl_certificate_key /path/to/key.pem;
-    
-    # 强制TLS 1.3
-    ssl_protocols TLSv1.3;
-    
-    # 启用0-RTT
-    ssl_early_data on;
-    
-    # 证书缓存
-    ssl_session_cache shared:SSL:50m;
+    ssl_protocols TLSv1.3;                # 只启用 TLS 1.3
+    ssl_early_data on;                     # 开启 0-RTT
+    ssl_session_cache shared:SSL:50m;      # 会话缓存
     ssl_session_timeout 1d;
-    ssl_session_tickets off;
-    
-    # OCSP Stapling
-    ssl_stapling on;
-    ssl_stapling_verify on;
-    ssl_trusted_certificate /path/to/chain.pem;
-    
-    # 优化密码套件
-    ssl_ciphers TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256;
-    ssl_prefer_server_ciphers off;
+    ssl_ciphers TLS_AES_128_GCM_SHA256:...;
 }
 ```
 
-## 四、HTTP请求与服务器处理
+五分钟后，SSL 握手从 400ms 降到了 **120ms**。
 
-### 4.1 HTTP请求报文结构
+---
+
+### 5. 第三战：HTTP 请求与服务器，代码里的金矿
+
+#### 5.1 TTFB 800ms，到底慢在哪？
+
+TTFB（首字节时间）是指从发送请求到收到响应第一个字节的时间，它包含了网络延迟和后端处理时间。800ms 显然太长了。
+
+我打开商品详情接口的日志，发现每次请求都查数据库，而且关联了 5 张表。更坑的是，连商品描述这种大文本都每次都全量返回。
+
+**一个典型的 HTTP 请求报文**长这样：
 
 ```
-HTTP请求报文：
-┌──────────────────────────────────────────────────────────────┐
-│                                                              │
-│  请求行                                                      │
-│  GET /api/products?id=123 HTTP/1.1                          │
-│  └──┘ └──────────────────┘ └──────┘                         │
-│   方法        URI路径           协议版本                      │
-│                                                              │
-│  请求头                                                      │
-│  Host: api.example.com                                       │
-│  User-Agent: Mozilla/5.0...                                  │
-│  Accept: application/json                                    │
-│  Accept-Encoding: gzip, deflate, br                          │
-│  Accept-Language: zh-CN,zh;q=0.9                             │
-│  Connection: keep-alive                                      │
-│  Cache-Control: no-cache                                     │
-│  Authorization: Bearer eyJhbGciOiJIUzI1NiIs...              │
-│                                                              │
-│  空行（\r\n）                                                │
-│                                                              │
-│  请求体（POST/PUT等）                                        │
-│  {"name":"iPhone 15","price":5999}                           │
-│                                                              │
-└──────────────────────────────────────────────────────────────┘
+GET /api/products?id=123 HTTP/1.1
+Host: api.example.com
+User-Agent: Mozilla/5.0...
+Accept: application/json
+Accept-Encoding: gzip, deflate, br
+Connection: keep-alive
+Cache-Control: no-cache
+Authorization: Bearer eyJhbGciOiJIUzI1NiIs...
 ```
 
-### 4.2 Spring Boot后端优化
+服务器收到请求后，要经过路由、控制器、服务层、数据库查询、序列化，最后生成响应。每一步都可能成为瓶颈。
+
+#### 5.2 我的优化三板斧
+
+**第一板斧：缓存**
+
+我在 `ProductController` 上加了个 `@Cacheable`：
 
 ```java
-/**
- * Spring Boot API性能优化
- */
-@RestController
-@RequestMapping("/api/products")
-@Slf4j
-public class ProductController {
-    
-    @Autowired
-    private ProductService productService;
-    
-    @Autowired
-    private CacheManager cacheManager;
-    
-    /**
-     * 优化1：使用缓存减少数据库查询
-     */
-    @GetMapping("/{id}")
-    @Cacheable(value = "product", key = "#id")
-    public ResponseEntity<ProductDTO> getProduct(@PathVariable Long id) {
-        // 缓存命中直接返回，无需查询数据库
-        Product product = productService.findById(id);
-        return ResponseEntity.ok(convertToDTO(product));
-    }
-    
-    /**
-     * 优化2：压缩响应数据
-     */
-    @GetMapping
-    @ResponseBody
-    public ResponseEntity<List<ProductDTO>> listProducts(
-            @RequestParam(defaultValue = "20") int size) {
-        
-        // 限制返回数据量，避免大数据传输
-        List<Product> products = productService.findTopN(size);
-        
-        return ResponseEntity.ok()
-            .header(HttpHeaders.CONTENT_ENCODING, "gzip")
-            .body(convertToDTOList(products));
-    }
-    
-    /**
-     * 优化3：使用分页和游标
-     */
-    @GetMapping("/cursor")
-    public ResponseEntity<CursorPageResult<ProductDTO>> listByCursor(
-            @RequestParam(required = false) String cursor,
-            @RequestParam(defaultValue = "20") int size) {
-        
-        // 游标分页比offset分页性能更好
-        CursorPageResult<Product> result = productService.findByCursor(cursor, size);
-        return ResponseEntity.ok(convertCursorResult(result));
-    }
-    
-    /**
-     * 优化4：异步处理非关键路径
-     */
-    @PostMapping
-    public ResponseEntity<ProductDTO> createProduct(@RequestBody @Valid ProductCreateRequest request) {
-        Product product = productService.create(request);
-        
-        // 异步发送通知，不阻塞主流程
-        CompletableFuture.runAsync(() -> {
-            notificationService.notifyProductCreated(product);
+@GetMapping("/{id}")
+@Cacheable(value = "product", key = "#id")
+public ResponseEntity<ProductDTO> getProduct(@PathVariable Long id) {
+    Product product = productService.findById(id);
+    return ResponseEntity.ok(convertToDTO(product));
+}
+```
+
+第一次请求查数据库，后面直接从 Redis 拿，TTFB 从 800ms 降到 **200ms**。
+
+**第二板斧：压缩**
+
+返回的 JSON 太大？开启 Gzip 压缩：
+
+```java
+@GetMapping
+public ResponseEntity<List<ProductDTO>> listProducts() {
+    List<Product> products = productService.findTopN(20);
+    return ResponseEntity.ok()
+        .header(HttpHeaders.CONTENT_ENCODING, "gzip")
+        .body(convertToDTOList(products));
+}
+```
+
+同时限制返回条数，避免一次传输几百条。
+
+**第三板斧：异步处理**
+
+有些操作不需要同步完成，比如发送消息通知。我用 `CompletableFuture` 把它们扔到线程池里：
+
+```java
+CompletableFuture.runAsync(() -> {
+    notificationService.notifyProductCreated(product);
+});
+```
+
+主流程不阻塞，TTFB 又降了一点。
+
+#### 5.3 连接池和线程池调优
+
+Tomcat 默认配置在流量暴增时可能撑不住，我在配置里调高了参数：
+
+```java
+@Bean
+public WebServerFactoryCustomizer<TomcatServletWebServerFactory> tomcatCustomizer() {
+    return factory -> {
+        factory.addConnectorCustomizers(connector -> {
+            AbstractHttp11Protocol<?> protocol = (AbstractHttp11Protocol<?>) connector.getProtocolHandler();
+            protocol.setMaxConnections(10000);    // 最大连接数
+            protocol.setMaxThreads(800);          // 最大线程数
+            protocol.setMinSpareThreads(100);     // 最小空闲线程
+            protocol.setConnectionTimeout(20000);
+            protocol.setCompression("on");         // 启用压缩
         });
-        
-        return ResponseEntity.status(HttpStatus.CREATED).body(convertToDTO(product));
-    }
-}
-
-/**
- * 连接池和线程池优化配置
- */
-@Configuration
-public class PerformanceConfig {
-    
-    /**
-     * Tomcat连接池优化
-     */
-    @Bean
-    public WebServerFactoryCustomizer<TomcatServletWebServerFactory> tomcatCustomizer() {
-        return factory -> {
-            factory.addConnectorCustomizers(connector -> {
-                ProtocolHandler handler = connector.getProtocolHandler();
-                if (handler instanceof AbstractHttp11Protocol) {
-                    AbstractHttp11Protocol<?> protocol = (AbstractHttp11Protocol<?>) handler;
-                    // 最大连接数
-                    protocol.setMaxConnections(10000);
-                    // 最大线程数
-                    protocol.setMaxThreads(800);
-                    // 最小空闲线程
-                    protocol.setMinSpareThreads(100);
-                    // 连接超时
-                    protocol.setConnectionTimeout(20000);
-                    // 启用压缩
-                    protocol.setCompression("on");
-                    protocol.setCompressionMinSize(2048);
-                }
-            });
-        };
-    }
-    
-    /**
-     * 异步任务线程池
-     */
-    @Bean("taskExecutor")
-    public Executor taskExecutor() {
-        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        executor.setCorePoolSize(20);
-        executor.setMaxPoolSize(100);
-        executor.setQueueCapacity(500);
-        executor.setThreadNamePrefix("async-");
-        executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
-        executor.initialize();
-        return executor;
-    }
+    };
 }
 ```
 
-## 五、浏览器渲染流程
+---
 
-### 5.1 渲染流程详解
+### 6. 第四战：浏览器渲染，1.3 秒的阻塞是怎么来的？
 
-```
-浏览器渲染流程：
-┌──────────────────────────────────────────────────────────────┐
-│                                                              │
-│  1. 解析HTML构建DOM树                                        │
-│     HTML → Tokenizer → DOM Tree                             │
-│                                                              │
-│  2. 解析CSS构建CSSOM树                                       │
-│     CSS → Parser → CSSOM Tree                               │
-│                                                              │
-│  3. 合并DOM和CSSOM构建渲染树                                 │
-│     DOM + CSSOM → Render Tree                               │
-│     （只包含可见元素）                                       │
-│                                                              │
-│  4. 布局（Layout/Reflow）                                    │
-│     计算每个元素的位置和尺寸                                 │
-│                                                              │
-│  5. 绘制（Paint）                                            │
-│     将渲染树绘制成像素                                       │
-│                                                              │
-│  6. 合成（Composite）                                        │
-│     将多个图层合成为最终页面                                 │
-│                                                              │
-└──────────────────────────────────────────────────────────────┘
+#### 6.1 渲染流程拆解
 
-关键渲染路径优化：
-┌──────────────────────────────────────────────────────────────┐
-│                                                              │
-│  阻塞渲染的资源：                                            │
-│  - CSS：会阻塞渲染，需要放在<head>中并尽早加载               │
-│  - JavaScript：默认会阻塞HTML解析                            │
-│                                                              │
-│  优化策略：                                                  │
-│  1. CSS优化                                                  │
-│     - 内联关键CSS                                            │
-│     - 异步加载非关键CSS                                      │
-│     - 压缩和合并CSS文件                                      │
-│                                                              │
-│  2. JavaScript优化                                           │
-│     - 使用async属性（异步执行，不阻塞解析）                  │
-│     - 使用defer属性（延迟执行，DOM解析后执行）               │
-│     - 代码分割和懒加载                                       │
-│                                                              │
-│  3. 图片优化                                                 │
-│     - 使用WebP格式                                           │
-│     - 响应式图片srcset                                       │
-│     - 懒加载loading="lazy"                                   │
-│                                                              │
-└──────────────────────────────────────────────────────────────┘
+资源下载 2.5 秒和渲染阻塞 1.3 秒，这两个是前端的问题。我打开 Performance 面板，看火焰图。
+
+**浏览器渲染流程**是这样的：
+
+1. **解析 HTML** → 构建 DOM 树
+2. **解析 CSS** → 构建 CSSOM 树
+3. **合并 DOM + CSSOM** → 渲染树（只包含可见元素）
+4. **布局（Layout）**：计算每个元素的位置和尺寸
+5. **绘制（Paint）**：填充像素
+6. **合成（Composite）**：合并图层
+
+关键阻塞点：**CSS 会阻塞渲染**，**JS 默认会阻塞解析**。
+
+#### 6.2 图片优化
+
+图片下载占了 2.5 秒。我打开图片目录，全是 PNG/JPEG，有的单张 2MB。
+
+“都什么年代了，还在用 JPEG？”
+
+我用脚本把所有图片转成 WebP 格式（平均小 30%），同时加上 CDN 域名，并在 HTML 里加 `loading="lazy"`：
+
+```html
+<img src="https://cdn.example.com/product.webp" loading="lazy" alt="商品图">
 ```
 
-### 5.2 Vue3性能优化实践
+资源下载时间降到 **800ms**。
+
+#### 6.3 JS 与 CSS 的优化
+
+渲染阻塞 1.3 秒，主要是一堆 JS 放在头部，阻塞了解析。我把非核心 JS 加上 `async` 或 `defer`，并且做了代码分割。
+
+在 Vue3 里，我把评论区组件改成了异步加载：
 
 ```vue
-<!-- Vue3性能优化示例 -->
-<template>
-  <div class="product-page">
-    <!-- 1. 使用Suspense处理异步组件 -->
-    <Suspense>
-      <template #default>
-        <ProductDetail :id="productId" />
-      </template>
-      <template #fallback>
-        <ProductSkeleton />
-      </template>
-    </Suspense>
-    
-    <!-- 2. 懒加载非首屏组件 -->
-    <LazyProductReviews :id="productId" v-if="showReviews" />
-    
-    <!-- 3. 虚拟列表处理长列表 -->
-    <VirtualList :items="relatedProducts" :item-height="200" />
-  </div>
-</template>
-
 <script setup>
-import { defineAsyncComponent, ref, onMounted } from 'vue';
+import { defineAsyncComponent } from 'vue';
 
-// 异步组件 - 代码分割
-const ProductDetail = defineAsyncComponent(() => 
-  import('./components/ProductDetail.vue')
-);
-
-// 懒加载组件
 const LazyProductReviews = defineAsyncComponent(() => 
   import('./components/ProductReviews.vue')
 );
-
-// 骨架屏组件（同步加载）
-import ProductSkeleton from './components/ProductSkeleton.vue';
-import VirtualList from './components/VirtualList.vue';
-
-const props = defineProps(['productId']);
-const showReviews = ref(false);
-
-// 延迟加载非关键资源
-onMounted(() => {
-  // 使用requestIdleCallback在浏览器空闲时加载
-  if ('requestIdleCallback' in window) {
-    requestIdleCallback(() => {
-      showReviews.value = true;
-    });
-  } else {
-    setTimeout(() => {
-      showReviews.value = true;
-    }, 2000);
-  }
-});
 </script>
 
-<style scoped>
-/* 4. 使用content-visibility优化渲染 */
-.product-list {
-  content-visibility: auto;
-  contain-intrinsic-size: 0 500px;
-}
-
-/* 5. 使用will-change优化动画 */
-.product-card:hover {
-  will-change: transform;
-  transform: translateY(-5px);
-}
-</style>
+<template>
+  <Suspense>
+    <template #default>
+      <ProductDetail :id="productId" />
+    </template>
+    <template #fallback>
+      <ProductSkeleton />
+    </template>
+  </Suspense>
+</template>
 ```
 
-## 六、性能监控与分析
+这样首屏只加载必要代码，评论区等用户滑到那里再加载。
 
-### 6.1 关键性能指标
+对于 CSS，我把关键样式内联在 `<head>` 里，非关键 CSS 异步加载。
+
+---
+
+### 7. 最后一战：性能监控，让数据说话
+
+所有优化部署完，已经是晚上 11 点 40 分。离双11开场还有 20 分钟。
+
+我写了一段监控脚本，用 Performance API 采集真实用户数据：
 
 ```javascript
-/**
- * Web性能监控
- */
-// 1. 使用Performance API获取性能指标
 window.addEventListener('load', () => {
   const timing = performance.timing;
-  
-  // DNS查询时间
-  const dnsTime = timing.domainLookupEnd - timing.domainLookupStart;
-  
-  // TCP连接时间
-  const tcpTime = timing.connectEnd - timing.connectStart;
-  
-  // 首字节时间(TTFB)
-  const ttfb = timing.responseStart - timing.requestStart;
-  
-  // DOM解析时间
-  const domParseTime = timing.domComplete - timing.domLoading;
-  
-  // 首屏时间
-  const fcp = performance.getEntriesByName('first-contentful-paint')[0]?.startTime;
-  
-  // 发送到监控系统
-  reportMetrics({
-    dnsTime,
-    tcpTime,
-    ttfb,
-    domParseTime,
-    fcp,
-    url: window.location.href
-  });
+  const metrics = {
+    dns: timing.domainLookupEnd - timing.domainLookupStart,
+    tcp: timing.connectEnd - timing.connectStart,
+    ssl: timing.connectEnd - timing.secureConnectionStart,
+    ttfb: timing.responseStart - timing.requestStart,
+    domParse: timing.domComplete - timing.domLoading,
+    fcp: performance.getEntriesByName('first-contentful-paint')[0]?.startTime
+  };
+  // 上报监控系统
+  fetch('/api/metrics', { method: 'POST', body: JSON.stringify(metrics) });
 });
-
-// 2. 使用Performance Observer监控核心Web指标
-const observer = new PerformanceObserver((list) => {
-  for (const entry of list.getEntries()) {
-    if (entry.entryType === 'web-vitals') {
-      console.log('Web Vital:', entry.name, entry.value);
-    }
-  }
-});
-
-observer.observe({ entryTypes: ['web-vitals'] });
 ```
 
-### 6.2 性能优化检查清单
+这样，我们就能实时看到优化效果。
 
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                    页面加载性能优化检查清单                          │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                     │
-│  【网络层优化】                                                     │
-│  □ 1. 启用HTTP/2或HTTP/3                                           │
-│  □ 2. 使用TLS 1.3减少握手时间                                      │
-│  □ 3. 启用Brotli/Gzip压缩                                          │
-│  □ 4. 使用CDN加速静态资源                                          │
-│  □ 5. 配置DNS预解析和预连接                                        │
-│                                                                     │
-│  【资源优化】                                                       │
-│  □ 1. 图片使用WebP格式                                             │
-│  □ 2. 响应式图片srcset                                             │
-│  □ 3. 懒加载非首屏图片                                             │
-│  □ 4. JavaScript代码分割                                           │
-│  □ 5. CSS内联关键样式                                              │
-│                                                                     │
-│  【渲染优化】                                                       │
-│  □ 1. 减少DOM节点数量                                              │
-│  □ 2. 避免强制同步布局                                             │
-│  □ 3. 使用transform代替top/left做动画                              │
-│  □ 4. 使用will-change优化动画元素                                  │
-│  □ 5. 减少重排和重绘                                               │
-│                                                                     │
-│  【服务端优化】                                                     │
-│  □ 1. 启用服务端渲染(SSR)                                          │
-│  □ 2. 使用缓存减少数据库查询                                       │
-│  □ 3. 优化API响应时间                                              │
-│  □ 4. 使用边缘计算(Edge Computing)                                 │
-│                                                                     │
-└─────────────────────────────────────────────────────────────────────┘
-```
+---
 
-## 七、经验总结
+### 8. 最后冲刺：1.6 秒！
 
-### 7.1 常见性能问题与解决方案
+我深吸一口气，点下刷新按钮。
 
-| 问题 | 原因 | 解决方案 |
-|-----|------|---------|
-| DNS解析慢 | DNS服务器响应慢 | 使用DNS预解析，更换DNS服务商 |
-| SSL握手慢 | TLS版本低，证书链长 | 升级到TLS 1.3，启用OCSP Stapling |
-| TTFB高 | 服务端处理慢 | 优化数据库查询，使用缓存 |
-| 首屏白屏 | JS执行阻塞渲染 | 代码分割，异步加载非关键JS |
-| 图片加载慢 | 图片过大，格式不优 | 使用WebP，响应式图片，懒加载 |
+首屏时间：**1.6 秒**。
 
-### 7.2 性能优化决策树
+从 5.2 秒到 1.6 秒，提升了 69%。监控大屏上的转化率曲线开始回升，跳出率直线下降。
+
+老板走过来，拍了拍我的肩膀：“干得漂亮。”
+
+那一刻，我觉得这一个月熬的夜都值了。
+
+---
+
+### 9. 经验总结：一份性能优化检查清单
+
+那次经历让我明白，一个 URL 的背后，是一场从浏览器到服务器的接力赛。任何一个环节慢了，都会影响用户体验。后来我整理了一份清单，每次上线前都会对照检查：
+
+| 问题       | 常见原因                   | 解决方案                                |
+| ---------- | -------------------------- | --------------------------------------- |
+| DNS 解析慢 | DNS 服务器响应慢，缓存过期 | DNS 预解析，更换 DNS 服务商             |
+| SSL 握手慢 | TLS 版本低，证书链长       | 升级 TLS 1.3，开启 0-RTT，OCSP Stapling |
+| TTFB 高    | 服务端处理慢，数据库查询慢 | 加缓存，优化 SQL，启用压缩              |
+| 资源下载慢 | 图片过大，格式不优，无 CDN | 转 WebP，响应式图片，懒加载，CDN        |
+| 渲染阻塞   | JS 执行阻塞解析            | 代码分割，异步加载，内联关键 CSS        |
+
+**性能优化决策树**：
 
 ```
                     ┌─────────────────┐
                     │  页面加载慢     │
                     └────────┬────────┘
-                             │
                              ▼
               ┌──────────────────────────────┐
               │  使用Chrome DevTools分析     │
@@ -680,7 +424,6 @@ observer.observe({ entryTypes: ['web-vitals'] });
     │ 网络问题      │ │ 渲染问题      │ │ 服务端问题    │
     │ (Network)     │ │ (Performance) │ │ (Timing)      │
     └───────┬───────┘ └───────┬───────┘ └───────┬───────┘
-            │                 │                 │
             ▼                 ▼                 ▼
     ┌───────────────┐ ┌───────────────┐ ┌───────────────┐
     │启用HTTP/2     │ │减少JS执行时间 │ │优化数据库查询 │
@@ -691,4 +434,14 @@ observer.observe({ entryTypes: ['web-vitals'] });
 
 ---
 
-**系列下一篇**：[HTTP协议演进：从1.0到3.0的性能革命](02HTTP协议演进：从1.0到3.0的性能革命.md)
+### 10. 故事还在继续
+
+双11那晚过后，我常常想起那个盯着屏幕、手心冒汗的自己。技术不只是冷冰冰的代码和协议，它背后是一个个真实的人——可能是焦急等待的运营，可能是耐心渐失的用户，也可能是深夜加班的你。
+
+下次当你打开一个网页，看到它瞬间加载完成时，不妨想一想，那个 URL 背后，有多少人在为了那 1 秒钟的流畅，付出了无数个不眠之夜。
+
+而如果你也遇到了页面加载慢的问题，别慌，打开 DevTools，从 DNS 开始，一步步追踪，就像我那天晚上做的那样。也许，你也能在最后一刻力挽狂澜。
+
+---
+
+**系列下一篇**：[HTTP协议演进：从1.0到3.0的性能革命](02HTTP协议演进：从1.0到3.0的性能革命.md) —— 那场战役之后，我开始深入研究 HTTP 的进化史，才发现我们今天的优化，其实是站在巨人的肩膀上。
