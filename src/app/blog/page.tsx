@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { getCategories, getArticles } from '@/lib/blog'
 import { BookOpen, ArrowRight, FileText } from 'lucide-react'
 import { BlogSearch } from './BlogSearch'
+import { FeishuEmbed } from '@/components/blog/FeishuEmbed'
 
 // 导入客户端组件
 import LastVisitedBarWrapper from '@/components/blog/LastVisitedBarWrapper'
@@ -95,8 +96,9 @@ export default async function BlogPage() {
                   <p className="text-xl text-muted-foreground max-w-2xl">深入学习编程技术，从基础到进阶，记录学习过程中的思考与总结</p>
                 </div>
                 
-                <div className="w-full md:w-64 lg:w-80">
+                <div className="w-full md:w-64 lg:w-80 flex flex-col gap-3">
                   <BlogSearch key="blog-search" articles={allArticles} />
+                  <FeishuEmbed />
                 </div>
               </div>
             </div>
