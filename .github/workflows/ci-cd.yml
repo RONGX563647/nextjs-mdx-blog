@@ -1,0 +1,41 @@
+name: CI/CD
+# 支持push、PR、手动触发
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch: # 支持手动触发部署
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      # 检出代码
+      - uses: actions/checkout@v4
+      
+      # 设置Node.js环境
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.10.0'
+          cache: 'npm' # 缓存npm依赖
+      
+      # 安装依赖（使用--legacy-peer-deps解决ESLint版本冲突）
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
+      
+      # 运行构建
+      - name: Build project
+        run: npm run build
+      
+      # 仅在main分支部署
+      - name: Deploy to Vercel
+        if: github.ref == 'refs/heads/main'
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-args: '--prod'
+          working-directory: .
