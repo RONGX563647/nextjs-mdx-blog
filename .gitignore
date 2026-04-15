@@ -44,3 +44,10 @@ next-env.d.ts
 public/md/.obsidian/
 public/md/.obsidian/workspace.json
 public/md/.obsidian/plugins/obsidian-git/data.json
+
+# CMake build files in md folder
+public/md/**/build/
+public/md/**/CMakeFiles/
+public/md/**/*.cmake
+public/md/**/CMakeCache.txt
+public/md/**/Makefile

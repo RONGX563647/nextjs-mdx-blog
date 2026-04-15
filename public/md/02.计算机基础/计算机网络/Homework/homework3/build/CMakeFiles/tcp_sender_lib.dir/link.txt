@@ -1,2 +1,0 @@
-/usr/bin/ar qc libtcp_sender_lib.a CMakeFiles/tcp_sender_lib.dir/tcp_sender.c.o
-/usr/bin/ranlib libtcp_sender_lib.a

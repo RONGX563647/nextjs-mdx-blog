@@ -1,1 +1,0 @@
-/usr/bin/cc  -Wall -Wextra -pedantic -arch arm64 -Wl,-search_paths_first -Wl,-headerpad_max_install_names CMakeFiles/tcp_sender_test.dir/tcp_sender_test.c.o -o tcp_sender_test  libtcp_sender_lib.a
