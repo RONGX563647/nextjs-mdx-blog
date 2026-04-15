@@ -51,3 +51,6 @@ public/md/**/CMakeFiles/
 public/md/**/*.cmake
 public/md/**/CMakeCache.txt
 public/md/**/Makefile
+
+# Large PDF files (use external hosting instead)
+public/md/**/*.pdf
