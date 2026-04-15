@@ -1,0 +1,23 @@
+{
+  "id": "conv-1776254221161-qfjjevj1y",
+  "providerId": "claude",
+  "title": "Implement this plan:",
+  "titleGenerationStatus": "failed",
+  "createdAt": 1776254221180,
+  "updatedAt": 1776261330447,
+  "lastResponseAt": 1776261330447,
+  "sessionId": "6d8d9596-734a-4dc9-bcc6-f44c2bfe0ff2",
+  "providerState": {
+    "providerSessionId": "6d8d9596-734a-4dc9-bcc6-f44c2bfe0ff2"
+  },
+  "usage": {
+    "model": "glm-5",
+    "inputTokens": 0,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 0,
+    "contextWindow": 200000,
+    "contextTokens": 0,
+    "percentage": 0,
+    "contextWindowIsAuthoritative": true
+  }
+}

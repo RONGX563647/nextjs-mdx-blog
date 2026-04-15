@@ -1,0 +1,41 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git mv *)",
+      "Bash(git add *)",
+      "Bash(rm -f \".git/index.lock\")",
+      "Bash(mv \"01.编程语言/Java/基础/尚硅谷JavaSE笔记\"/* \"01.编程语言/Java/基础/\")",
+      "Bash(mv \"01.编程语言/Go/基础入门/阶段一 GO语言基础入门和并发编程\"/* \"01.编程语言/Go/基础入门/\")",
+      "Bash(mv \"02.计算机基础/计算机网络/B 计算机网络\"/* \"02.计算机基础/计算机网络/\")",
+      "Bash(mv \"02.计算机基础/数据库/B数据库\"/* \"02.计算机基础/数据库/\")",
+      "Bash(mv \"02.计算机基础/计算机组成原理/B 计算机组成原理\"/* \"02.计算机基础/计算机组成原理/\")",
+      "Bash(mv \"01.编程语言/Java/API/API\"/* \"01.编程语言/Java/API/\")",
+      "Bash(mv \"01.编程语言/Java/源码分析/JAVA 源码\"/* \"01.编程语言/Java/源码分析/\")",
+      "Bash(mv \"01.编程语言/Java/编程思想/Java编程思想\"/* \"01.编程语言/Java/编程思想/\")",
+      "Bash(mv \"01.编程语言/Java/功能模版/功能模版\"/* \"01.编程语言/Java/功能模版/\")",
+      "Bash(mv \"01.编程语言/Java/问答/问答\"/* \"01.编程语言/Java/问答/\")",
+      "Bash(mv \"01.编程语言/Go/标准库/GO标准库阅读\"/* \"01.编程语言/Go/标准库/\")",
+      "Bash(mv \"01.编程语言/Go/碎片化笔记/碎片化\"/* \"01.编程语言/Go/碎片化笔记/\")",
+      "Bash(mv \"01.编程语言/Go/学习路线/GO学习路线\"/* \"01.编程语言/Go/学习路线/\")",
+      "Bash(mv \"01.编程语言/Go/微服务/基础/阶段二微服务基础\"/* \"01.编程语言/Go/微服务/基础/\")",
+      "Bash(mv \"01.编程语言/Go/微服务/GO-zero/GO zero\"/* \"01.编程语言/Go/微服务/GO-zero/\")",
+      "Bash(mv \"01.编程语言/Python/爬虫/D python爬虫\"/* \"01.编程语言/Python/爬虫/\")",
+      "Bash(mv \"01.编程语言/Python/建模/D python建模\"/* \"01.编程语言/Python/建模/\")",
+      "Bash(mv \"03.前端开发/HTML-CSS/HTML&CSS\"/* \"03.前端开发/HTML-CSS/\")",
+      "Bash(mv \"03.前端开发/JavaScript/Java Web\"/* \"03.前端开发/JavaScript/\")",
+      "Bash(mv \"03.前端开发/Vue/VUE\"/* \"03.前端开发/Vue/\")",
+      "Bash(mv \"03.前端开发/MIT课程/MIT6.962 2025 web.lab\"/* \"03.前端开发/MIT课程/\")",
+      "Bash(mv \"04.算法数据结构/黑马算法笔记/黑马算法笔记\"/* \"04.算法数据结构/黑马算法笔记/\")",
+      "Bash(mv \"04.算法数据结构/leetcode每日一题/leetcode每日一题\"/* \"04.算法数据结构/leetcode每日一题/\")",
+      "Bash(mv \"04.算法数据结构/算法模板库/算法模板库\"/* \"04.算法数据结构/算法模板库/\")",
+      "Bash(mv \"05.项目实战/Java项目/瑞吉外卖/瑞吉外卖\"/* \"05.项目实战/Java项目/瑞吉外卖/\")",
+      "Bash(mv \"05.项目实战/Java项目/小兔鲜儿/小兔鲜儿\"/* \"05.项目实战/Java项目/小兔鲜儿/\")",
+      "Bash(mv \"05.项目实战/Java项目/个人博客/个人博客系统\"/* \"05.项目实战/Java项目/个人博客/\")",
+      "Bash(mv \"05.项目实战/Java项目/架构师/架构师\"/* \"05.项目实战/Java项目/架构师/\")",
+      "Bash(mv \"05.项目实战/Go项目/IM通讯系统/IM通讯系统\"/* \"05.项目实战/Go项目/IM通讯系统/\")",
+      "Bash(cd \"00.随笔记录/随笔\" && for f in *.md; do echo \"=== $f ===\" && head -3 \"$f\" && stat -c \"%Y\" \"$f\" 2>/dev/null || stat -f \"%m\" \"$f\" 2>/dev/null; done)",
+      "Bash(cd \"00.随笔记录/随笔\"\n\n# 创建映射并重命名\n# 时间戳格式: 1747966356 等\n\n# #1.md - 1776256459 -> 需要检查这是否合理\n# 先用文件修改时间作为参考\n\nfor f in *.md; do\n    # 获取文件的修改时间（Unix时间戳）\n    timestamp=$\\(stat -c \"%Y\" \"$f\" 2>/dev/null || stat -f \"%m\" \"$f\" 2>/dev/null\\)\n    # 转换为日期格式 YYYY-MM-DD\n    date=$\\(date -d \"@$timestamp\" \"+%Y-%m-%d\" 2>/dev/null || date -r \"$timestamp\" \"+%Y-%m-%d\" 2>/dev/null\\)\n    # 从文件名提取编号\n    num=$\\(echo \"$f\" | sed 's/^#//' | sed 's/^@//' | sed 's/.md$//' | sed 's/ .*//'\\)\n    echo \"$f -> $date 学习日志 Day${num}.md\"\ndone)",
+      "Bash(cd \"E:/NOTE\" && for f in \"00.随笔记录/随笔\"/*.md; do\n    fname=$\\(basename \"$f\"\\)\n    # 从git log获取最后修改日期（如果不是今天修改的）\n    gitdate=$\\(git log --format=\"%ai\" --name-only -- \"$f\" | grep \"^20\" | head -1 | cut -d' ' -f1\\)\n    if [ -n \"$gitdate\" ]; then\n        echo \"$fname -> $gitdate\"\n    else\n        # 检查文件名中是否有日期（如 #172 1121.md）\n        date_in_name=$\\(echo \"$fname\" | grep -oE '[0-9]{4}' | tail -1\\)\n        if [ -n \"$date_in_name\" ]; then\n            # 0911 格式表示 月日，需要转换为 2025-09-11\n            month=$\\(echo \"$date_in_name\" | cut -c1-2\\)\n            day=$\\(echo \"$date_in_name\" | cut -c3-4\\)\n            echo \"$fname -> 2025-${month}-${day} \\(from filename\\)\"\n        else\n            echo \"$fname -> \\(no date found\\)\"\n        fi\n    fi\ndone)"
+    ]
+  }
+}
