@@ -41,3 +41,6 @@ next-env.d.ts
 .vscode/
 .trae/
 
+public/md/.obsidian/
+public/md/.obsidian/workspace.json
+public/md/.obsidian/plugins/obsidian-git/data.json

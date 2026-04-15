@@ -13,7 +13,7 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "00.随笔记录/学习建议/100项技术挑战.md",
+                "file": "00.随笔记录/阶段小结/$1.md",
                 "mode": "source",
                 "source": false,
                 "backlinks": true,
@@ -28,7 +28,7 @@
                 }
               },
               "icon": "lucide-file",
-              "title": "100项技术挑战"
+              "title": "$1"
             }
           }
         ]
@@ -201,11 +201,13 @@
       "command-palette:打开命令面板": false,
       "bases:新建数据库": false,
       "obsidian-excalidraw-plugin:新建绘图文件": false,
-      "claudian:Open Claudian": false
+      "claudian:Open Claudian": false,
+      "obsidian-git:Open Git source control": false
     }
   },
   "active": "977b3af293b6d60f",
   "lastOpenFiles": [
+    "00.随笔记录/学习建议/100项技术挑战.md",
     "01.编程语言/新建文件夹",
     "06.软件开发/基本流程.md",
     "06.软件开发/想法/0.md",
@@ -237,7 +239,6 @@
     "05.项目实战/Go项目/内存缓存系统/minidistcache/cmake-build-debug/CMakeFiles/4.0.2/CompilerIdC",
     "05.项目实战/Go项目/内存缓存系统/minidistcache/cmake-build-debug/CMakeFiles/4.0.2/CMakeDetermineCompilerABI_C.bin",
     "05.项目实战/Go项目/内存缓存系统/minidistcache/cmake-build-debug/CMakeFiles/4.0.2/CMakeSystem.cmake",
-    "05.项目实战/Go项目/内存缓存系统/minidistcache/cmake-build-debug/CMakeFiles/4.0.2/CMakeCCompiler.cmake",
     "05.项目实战/Go项目/内存缓存系统/code.md",
     "05.项目实战/Go项目/内存缓存系统/README.md",
     "05.项目实战/Go项目/IM通讯系统/项目架构.md",
