@@ -41,9 +41,10 @@ next-env.d.ts
 .vscode/
 .trae/
 
+# Obsidian and Claude config files
 public/md/.obsidian/
-public/md/.obsidian/workspace.json
-public/md/.obsidian/plugins/obsidian-git/data.json
+public/md/.claude/
+public/md/.claudian/
 
 # CMake build files in md folder
 public/md/**/build/
