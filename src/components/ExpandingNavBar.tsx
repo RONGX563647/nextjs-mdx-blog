@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import { X, Plus, Trash2, Check, Edit } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { quickLinks, type QuickLink } from '@/data/projects'
 
 interface Site {
   id: string
@@ -15,33 +16,8 @@ interface ExpandingNavBarProps {
   onToggle: () => void
 }
 
-const defaultSites: Site[] = [
-  {
-    id: '1',
-    name: '本地服务器',
-    url: 'https://117.72.210.10:8888/home'
-  },
-  {
-    id: '2',
-    name: '面试鸭',
-    url: 'https://www.mianshiya.com/bank/1787463103423897602'
-  },
-  {
-    id: '3',
-    name: '小林coding',
-    url: 'https://xiaolincoding.com/'
-  },
-  {
-    id: '4',
-    name: 'Java笔记',
-    url: 'https://www.bookstack.cn/books/sdky-java-note'
-  },
-  {
-    id: '5',
-    name: 'LeetCode',
-    url: 'https://leetcode.cn/studyplan/top-100-liked/'
-  }
-]
+// 从数据源获取默认快捷链接
+const defaultSites: Site[] = quickLinks
 
 export function ExpandingNavBar({ isExpanded, onToggle }: ExpandingNavBarProps) {
   const [sites, setSites] = useState<Site[]>([])

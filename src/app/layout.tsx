@@ -1,124 +1,101 @@
 /**
  * 根布局组件
  * 定义了整个网站的基本结构，包括头部、主体和底部
- * 包含了主题切换、自定义光标、导航栏等全局组件
  */
 
-// 导入必要的组件和工具
-import { ThemeProvider } from '@/app/providers' // 主题提供者，用于管理网站主题
-import { Container } from '@/components/Container' // 容器组件，提供统一的布局宽度
-import { CustomCursor } from '@/components/CustomCursor' // 自定义光标效果
-import { Navigation } from '@/components/Navigation' // 导航栏组件
-import { PageTransition } from '@/components/PageTransition' // 页面过渡动画
-import ThemeSwitch from '@/components/ThemeSwitch' // 主题切换按钮
-import { WEBSITE_HOST_URL } from '@/lib/constants' // 网站主机URL
-import { Analytics } from '@vercel/analytics/next' // Vercel分析工具
-import type { Metadata } from 'next' // Next.js元数据类型
-import Link from 'next/link' // Next.js链接组件
-import { Github } from 'lucide-react' // GitHub图标
+import { ThemeProvider } from '@/app/providers'
+import { Container } from '@/components/Container'
+import { CustomCursor } from '@/components/CustomCursor'
+import { Navigation } from '@/components/Navigation'
+import { PageTransition } from '@/components/PageTransition'
+import ThemeSwitch from '@/components/ThemeSwitch'
+import { WEBSITE_HOST_URL } from '@/lib/constants'
+import { Analytics } from '@vercel/analytics/next'
+import type { Metadata } from 'next'
+import Link from 'next/link'
 import { AIAssistant, AIAssistantProvider } from '@/components/ai/AIAssistant'
-import { HeaderWithDoubleClick } from '@/components/HeaderWithDoubleClick' // Header with double-click functionality
-import './global.css' // 全局样式
+import { HeaderWithDoubleClick } from '@/components/HeaderWithDoubleClick'
+import { siteConfig } from '@/data/site'
+import './global.css'
 
-// 网站基本元数据
 const meta = {
-  title: 'RONGX', // 网站标题
-  description: '基于 Next.js 15 + TypeScript + Tailwind CSS 构建的个人博客网站，融合了创意设计与技术展示。', // 网站描述
-  image: `${WEBSITE_HOST_URL}/og-image.png`, // 网站预览图
+  title: siteConfig.title,
+  description: siteConfig.description,
+  image: `${WEBSITE_HOST_URL}${siteConfig.ogImage}`,
 }
 
-/**
- * Next.js元数据配置
- * 用于SEO、社交媒体分享等
- */
 export const metadata: Metadata = {
   title: {
-    default: meta.title, // 默认标题
-    template: '%s | RONGX', // 标题模板，用于子页面
+    default: meta.title,
+    template: `%s | ${siteConfig.name}`,
   },
-  description: meta.description, // 网站描述
+  description: meta.description,
   openGraph: {
-    // OpenGraph配置，用于Facebook等社交媒体
     title: meta.title,
     description: meta.description,
     url: WEBSITE_HOST_URL,
     siteName: meta.title,
-    locale: 'zh-CN',
+    locale: siteConfig.locale,
     type: 'website',
-    images: [
-      {
-        url: meta.image,
-      },
-    ],
+    images: [{ url: meta.image }],
   },
   twitter: {
-    // Twitter卡片配置
     title: meta.title,
     description: meta.description,
     images: meta.image,
     card: 'summary_large_image',
   },
   alternates: {
-    canonical: WEBSITE_HOST_URL, // 规范URL
+    canonical: WEBSITE_HOST_URL,
   },
   icons: {
-    // 网站图标
-    icon: '/1.png',
-    shortcut: '/1.png',
-    apple: '/1.png',
+    icon: siteConfig.favicon,
+    shortcut: siteConfig.favicon,
+    apple: siteConfig.favicon,
   },
 }
 
-/**
- * 根布局组件
- * @param children 子组件，即页面内容
- */
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
   return (
-    <html lang="zh-CN" suppressHydrationWarning={true}>
+    <html lang={siteConfig.language} suppressHydrationWarning={true}>
       <body className="min-h-screen flex flex-col bg-background">
         <ThemeProvider attribute="class" defaultTheme="system">
           <AIAssistantProvider>
             <CustomCursor />
-            
-            {/* Header with double-click logo functionality */}
             <HeaderWithDoubleClick />
-            
             <main className="flex-1">
               <Container>
                 <PageTransition>{children}</PageTransition>
               </Container>
             </main>
-            
             <AIAssistant />
-            
             <footer className="py-16 border-t border-border">
               <Container>
                 <div className="flex flex-col md:flex-row justify-between items-start gap-8">
                   <div>
                     <p className="text-sm text-muted-foreground mb-2">
-                      © {new Date().getFullYear()} RONGX
+                      © {new Date().getFullYear()} {siteConfig.footer.copyright}
                     </p>
                     <p className="text-xs text-muted-foreground/70">
-                      构建高质量的全栈应用
+                      {siteConfig.footer.slogan}
                     </p>
                   </div>
                   <div className="flex items-center gap-8">
-                    <Link className="link text-sm" href="/">首页</Link>
-                    <Link className="link text-sm" href="/about">关于</Link>
-                    <Link className="link text-sm" href="/portfolio">项目</Link>
-                    <Link className="link text-sm" href="/blog">博客</Link>
+                    {siteConfig.nav.map((item) => (
+                      <Link key={item.href} className="link text-sm" href={item.href}>
+                        {item.label}
+                      </Link>
+                    ))}
                   </div>
                 </div>
               </Container>
             </footer>
           </AIAssistantProvider>
         </ThemeProvider>
-        
         <Analytics />
       </body>
     </html>

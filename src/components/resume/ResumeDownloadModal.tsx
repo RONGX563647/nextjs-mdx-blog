@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { X, Download } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { createPortal } from 'react-dom'
+import { resumeQuestions } from '@/data/projects'
 
 interface ResumeDownloadModalProps {
   isOpen: boolean
@@ -20,35 +21,16 @@ interface Question {
   correctAnswer: string
 }
 
-const questions: Question[] = [
-  {
-    id: 1,
-    text: '贵公司招聘岗位与我技术栈匹配吗',
-    options: [
-      { value: 'yes', label: '是' },
-      { value: 'no', label: '否' },
-    ],
-    correctAnswer: 'yes',
-  },
-  {
-    id: 2,
-    text: '贵公司团队氛围融洽吗？',
-    options: [
-      { value: 'yes', label: '是' },
-      { value: 'no', label: '否' },
-    ],
-    correctAnswer: 'yes',
-  },
-  {
-    id: 3,
-    text: '贵公司工作节奏快吗',
-    options: [
-      { value: 'yes', label: '是' },
-      { value: 'no', label: '否' },
-    ],
-    correctAnswer: 'no',
-  },
-]
+// 从数据源转换问题格式
+const questions: Question[] = resumeQuestions.map(q => ({
+  id: q.id,
+  text: q.question,
+  options: q.options.map(opt => ({
+    value: opt === q.options[0] ? 'yes' : 'no',
+    label: opt,
+  })),
+  correctAnswer: q.correctAnswer,
+}))
 
 export function ResumeDownloadModal({ isOpen, onClose, onSuccess, onError }: ResumeDownloadModalProps) {
   const [answers, setAnswers] = useState<Record<number, string>>({})

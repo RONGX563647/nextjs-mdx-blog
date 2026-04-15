@@ -15,6 +15,8 @@ import { usePathname } from 'next/navigation' // 获取当前路径的钩子
 import { useState, useEffect, useCallback } from 'react' // React状态管理
 import { ResumeDownloadModal } from '@/components/resume/ResumeDownloadModal' // 简历下载验证模态框
 import { ErrorAlertModal, getErrorRecord, clearErrorRecord } from '@/components/resume/ErrorAlertModal' // 错误弹窗
+import { siteConfig } from '@/data/site'
+import { profileConfig } from '@/data/profile'
 
 // localStorage key for success record
 const SUCCESS_RECORD_KEY = 'resume_download_success_record'
@@ -57,8 +59,8 @@ export function Navigation() {
   // 处理简历下载
   const handleDownload = useCallback(() => {
     const link = document.createElement('a')
-    link.href = '/1.pdf'
-    link.download = '刘荣显-全栈开发工程师.pdf'
+    link.href = profileConfig.resume.pdfPath
+    link.download = profileConfig.resume.fileName
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
@@ -133,30 +135,15 @@ export function Navigation() {
     <>
       {/* 桌面端导航栏 */}
       <nav className="hidden md:flex items-center gap-2 text-base">
-        <Link 
-          href="/" 
-          className={`px-4 py-2 transition-all duration-300 ${pathname === '/' ? 'text-primary font-bold' : 'hover:text-primary'}`}
-        >
-          首页
-        </Link>
-        <Link 
-          href="/about" 
-          className={`px-4 py-2 transition-all duration-300 ${pathname === '/about' ? 'text-primary font-bold' : 'hover:text-primary'}`}
-        >
-          关于
-        </Link>
-        <Link 
-          href="/portfolio" 
-          className={`px-4 py-2 transition-all duration-300 ${pathname === '/portfolio' ? 'text-primary font-bold' : 'hover:text-primary'}`}
-        >
-          项目
-        </Link>
-        <Link 
-          href="/blog" 
-          className={`px-4 py-2 transition-all duration-300 ${pathname === '/blog' ? 'text-primary font-bold' : 'hover:text-primary'}`}
-        >
-          博客
-        </Link>
+        {siteConfig.nav.map((item) => (
+          <Link 
+            key={item.href}
+            href={item.href} 
+            className={`px-4 py-2 transition-all duration-300 ${pathname === item.href ? 'text-primary font-bold' : 'hover:text-primary'}`}
+          >
+            {item.label}
+          </Link>
+        ))}
         <button 
           onClick={handleResumeClick}
           className="px-4 py-2 hover:text-primary transition-colors flex items-center gap-2"
@@ -182,34 +169,16 @@ export function Navigation() {
       {mobileMenuOpen && (
         <div className="md:hidden absolute top-full left-0 right-0 bg-background border-b border-border z-50">
           <div className="flex flex-col p-4 gap-2">
-            <Link 
-              href="/" 
-              className={`px-4 py-3 transition-all duration-300 ${pathname === '/' ? 'text-primary font-bold' : 'hover:text-primary'}`}
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              首页
-            </Link>
-            <Link 
-              href="/about" 
-              className={`px-4 py-3 transition-all duration-300 ${pathname === '/about' ? 'text-primary font-bold' : 'hover:text-primary'}`}
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              关于
-            </Link>
-            <Link 
-              href="/portfolio" 
-              className={`px-4 py-3 transition-all duration-300 ${pathname === '/portfolio' ? 'text-primary font-bold' : 'hover:text-primary'}`}
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              项目
-            </Link>
-            <Link 
-              href="/blog" 
-              className={`px-4 py-3 transition-all duration-300 ${pathname === '/blog' ? 'text-primary font-bold' : 'hover:text-primary'}`}
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              博客
-            </Link>
+            {siteConfig.nav.map((item) => (
+              <Link 
+                key={item.href}
+                href={item.href} 
+                className={`px-4 py-3 transition-all duration-300 ${pathname === item.href ? 'text-primary font-bold' : 'hover:text-primary'}`}
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                {item.label}
+              </Link>
+            ))}
             <button 
               onClick={handleResumeClick}
               className="px-4 py-3 hover:text-primary transition-colors flex items-center gap-2 text-left"

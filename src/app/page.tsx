@@ -3,27 +3,23 @@
  * 展示个人介绍、精选项目和项目展示
  */
 
-// 标记为客户端组件
 'use client'
 
-// 导入必要的组件和工具
-import { Button } from '@/components/ui/button' // 按钮组件
-import { EasterEgg } from '@/components/EasterEgg' // 彩蛋组件
-import { GlassCard } from '@/components/GlassCard' // 玻璃态卡片组件
-import { Hero3DBackground } from '@/components/Hero3DBackground' // 3D背景组件
-import { MouseParallax } from '@/components/MouseParallax' // 鼠标视差效果组件
-import { ScrollAnimation } from '@/components/ScrollAnimation' // 滚动动画组件
-import { ThreeDCarousel } from '@/components/ThreeDCarousel' // 3D轮播图组件
-import { Github, Download, ExternalLink, Eye, BookOpen, ArrowRight } from 'lucide-react' // 图标组件
-import Link from 'next/link' // Next.js链接组件
-import { ResumeDownloadButton } from '@/components/resume/ResumeDownloadButton' // 简历下载按钮组件
+import { Button } from '@/components/ui/button'
+import { EasterEgg } from '@/components/EasterEgg'
+import { GlassCard } from '@/components/GlassCard'
+import { Hero3DBackground } from '@/components/Hero3DBackground'
+import { MouseParallax } from '@/components/MouseParallax'
+import { ScrollAnimation } from '@/components/ScrollAnimation'
+import { ThreeDCarousel } from '@/components/ThreeDCarousel'
+import { BookOpen, ExternalLink, ArrowRight } from 'lucide-react'
+import Link from 'next/link'
+import { ResumeDownloadButton } from '@/components/resume/ResumeDownloadButton'
+import { profileConfig } from '@/data/profile'
+import { featuredProjects } from '@/data/projects'
+import { siteConfig } from '@/data/site'
 
-/**
- * 首页组件
- * @returns 首页内容
- */
 export default function Home() {
-
   return (
     <div>
       <section className="py-32 relative">
@@ -32,17 +28,17 @@ export default function Home() {
             <div className="flex flex-col lg:flex-row items-center gap-16">
               <div className="flex-1 text-left">
                 <p className="text-sm font-semibold tracking-widest uppercase mb-4 text-primary">
-                  全栈开发工程师
+                  {profileConfig.title}
                 </p>
                 <h1 className="font-bold tracking-tighter mb-8">
-                  <span className="text-5xl md:text-6xl lg:text-7xl block mb-2">你好，我是</span>
-                  <span className="text-6xl md:text-7xl lg:text-8xl text-primary">RONGX</span>
+                  <span className="text-5xl md:text-6xl lg:text-7xl block mb-2">{profileConfig.greeting}</span>
+                  <span className="text-6xl md:text-7xl lg:text-8xl text-primary">{profileConfig.name}</span>
                 </h1>
                 <p className="text-xl md:text-2xl text-muted-foreground mb-6 max-w-lg">
-                  专注于 Java 后端和 Vue3 前端开发，致力于构建高质量的全栈应用
+                  {profileConfig.bio}
                 </p>
                 <p className="text-base text-muted-foreground/80 mb-10 max-w-md">
-                  从基础到进阶，记录学习过程中的思考与总结，分享技术见解与实践经验
+                  {profileConfig.subBio}
                 </p>
                 <div className="flex flex-wrap gap-4">
                   <Button asChild className="bg-primary hover:bg-primary/90 text-white text-base px-8 py-4 rounded">
@@ -56,7 +52,7 @@ export default function Home() {
               </div>
               <div className="flex-shrink-0">
                 <div className="w-64 h-64 sm:w-72 sm:h-72 md:w-80 md:h-80 lg:w-96 lg:h-96 border-4 border-border p-6">
-                  <img src="/1.png" alt="RONGX Logo" className="w-full h-full object-contain" />
+                  <img src={siteConfig.avatar} alt={`${profileConfig.name} Logo`} className="w-full h-full object-contain" />
                 </div>
               </div>
             </div>
@@ -77,58 +73,33 @@ export default function Home() {
           </p>
         </ScrollAnimation>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <ScrollAnimation delay={0.2}>
-            <div className="p-6 border border-border hover:border-primary transition-colors">
-              <div className="flex items-start justify-between mb-4">
-                <div className="p-2 bg-primary/10">
-                  <BookOpen className="h-5 w-5 text-primary" />
+          {featuredProjects.map((project, index) => (
+            <ScrollAnimation key={project.id} delay={0.2 * (index + 1)}>
+              <div className="p-6 border border-border hover:border-primary transition-colors">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="p-2 bg-primary/10">
+                    <BookOpen className="h-5 w-5 text-primary" />
+                  </div>
+                  <ExternalLink className="h-5 w-5 text-muted-foreground" />
                 </div>
-                <ExternalLink className="h-5 w-5 text-muted-foreground" />
-              </div>
-              <h3 className="text-xl font-bold mb-3">福师畅聊 - 全栈开发</h3>
-              <p className="text-muted-foreground mb-5 leading-relaxed">
-                基于 Spring Boot、Netty、Redis 开发的即时通讯应用，负责全栈开发工作
-              </p>
-              <div className="flex flex-wrap gap-2 mb-5">
-                <span className="px-3 py-1 bg-primary/10 text-primary text-xs font-medium">Spring Boot</span>
-                <span className="px-3 py-1 bg-primary/10 text-primary text-xs font-medium">Netty</span>
-                <span className="px-3 py-1 bg-primary/10 text-primary text-xs font-medium">Redis</span>
-                <span className="px-3 py-1 bg-primary/10 text-primary text-xs font-medium">Vue3</span>
-              </div>
-              <Button asChild variant="ghost" className="text-primary px-0 hover:bg-transparent">
-                <a href="/portfolio/福师畅聊" className="flex items-center gap-2 font-medium">
-                  查看详情
-                  <ArrowRight size={16} />
-                </a>
-              </Button>
-            </div>
-          </ScrollAnimation>
-          <ScrollAnimation delay={0.4}>
-            <div className="p-6 border border-border hover:border-primary transition-colors">
-              <div className="flex items-start justify-between mb-4">
-                <div className="p-2 bg-primary/10">
-                  <BookOpen className="h-5 w-5 text-primary" />
+                <h3 className="text-xl font-bold mb-3">{project.title}</h3>
+                <p className="text-muted-foreground mb-5 leading-relaxed">
+                  {project.description}
+                </p>
+                <div className="flex flex-wrap gap-2 mb-5">
+                  {(project.featuredSkills || project.skills.slice(0, 4)).map((skill) => (
+                    <span key={skill} className="px-3 py-1 bg-primary/10 text-primary text-xs font-medium">{skill}</span>
+                  ))}
                 </div>
-                <ExternalLink className="h-5 w-5 text-muted-foreground" />
+                <Button asChild variant="ghost" className="text-primary px-0 hover:bg-transparent">
+                  <a href={`/portfolio/${project.id}`} className="flex items-center gap-2 font-medium">
+                    查看详情
+                    <ArrowRight size={16} />
+                  </a>
+                </Button>
               </div>
-              <h3 className="text-xl font-bold mb-3">师大云学 - 全栈开发</h3>
-              <p className="text-muted-foreground mb-5 leading-relaxed">
-                基于 Spring Cloud Alibaba 开发的在线教育平台，负责全栈开发工作
-              </p>
-              <div className="flex flex-wrap gap-2 mb-5">
-                <span className="px-3 py-1 bg-primary/10 text-primary text-xs font-medium">Spring Cloud</span>
-                <span className="px-3 py-1 bg-primary/10 text-primary text-xs font-medium">MySQL</span>
-                <span className="px-3 py-1 bg-primary/10 text-primary text-xs font-medium">RabbitMQ</span>
-                <span className="px-3 py-1 bg-primary/10 text-primary text-xs font-medium">Vue3</span>
-              </div>
-              <Button asChild variant="ghost" className="text-primary px-0 hover:bg-transparent">
-                <a href="/portfolio/师大云学" className="flex items-center gap-2 font-medium">
-                  查看详情
-                  <ArrowRight size={16} />
-                </a>
-              </Button>
-            </div>
-          </ScrollAnimation>
+            </ScrollAnimation>
+          ))}
         </div>
       </section>
 

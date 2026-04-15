@@ -2,86 +2,20 @@
  * 3D 轮播组件
  * 
  * 功能：
- * - 显示Java + Vue3全栈项目列表的进度条动画
- * - 支持自定义项目数据
+ * - 显示项目列表的进度条动画
+ * - 支持自定义项目数据，默认从数据源获取
  * - 每个项目有独立的进度条动画
  * - 支持进度条闪烁效果
- * 
- * @returns 3D 轮播组件内容
  */
 
-// 标记为客户端组件
 'use client'
 
-// 导入 React 核心库和钩子
 import React, { useState, useEffect } from 'react'
+import { carouselProjects, carouselTitle, type CarouselProject } from '@/data/projects'
 
-/**
- * 项目接口
- * 定义项目数据结构
- */
-interface Project {
-  id: string              // 项目唯一标识
-  title: string           // 项目标题
-  description: string     // 项目描述
-  color: string          // 进度条颜色
-  link: string           // 项目链接
-  targetProgress: number  // 目标进度百分比
-}
-
-/**
- * 3D 轮播组件属性接口
- */
 interface ThreeDCarouselProps {
-  projects?: Project[]    // 可选的项目列表，默认使用内置项目
+  projects?: CarouselProject[]
 }
-
-/**
- * 默认项目数据
- * 提供一组默认项目用于演示
- */
-const defaultProjects: Project[] = [
-  {
-    id: '1',
-    title: '企业级后台管理系统',
-    description: 'Vue3 + Spring Boot + MyBatis Plus',
-    color: '#3b82f6',  // 蓝色
-    link: '#',
-    targetProgress: 95
-  },
-  {
-    id: '2',
-    title: '在线教育平台',
-    description: 'Vue3 + Java + MySQL + Redis',
-    color: '#8b5cf6',  // 紫色
-    link: '#',
-    targetProgress: 88
-  },
-  {
-    id: '3',
-    title: '电商商城系统',
-    description: 'Vue3 + Spring Cloud + Nacos',
-    color: '#ec4899',  // 粉色
-    link: '#',
-    targetProgress: 82
-  },
-  {
-    id: '4',
-    title: '智能客服系统',
-    description: 'Vue3 + Java + WebSocket + AI',
-    color: '#10b981',  // 绿色
-    link: '#',
-    targetProgress: 75
-  },
-  {
-    id: '5',
-    title: '数据分析可视化平台',
-    description: 'Vue3 + Java + ECharts + Kafka',
-    color: '#f59e0b',  // 橙色
-    link: '#',
-    targetProgress: 68
-  }
-]
 
 /**
  * 进度条项组件
@@ -95,7 +29,7 @@ const defaultProjects: Project[] = [
  * @param props 组件属性
  * @returns 进度条项内容
  */
-function ProgressBarItem({ project, delay }: { project: Project; delay: number }) {
+function ProgressBarItem({ project, delay }: { project: CarouselProject; delay: number }) {
   // 进度状态，从 0 开始
   const [progress, setProgress] = useState(0)
 
@@ -186,12 +120,12 @@ function ProgressBarItem({ project, delay }: { project: Project; delay: number }
  * @param props 组件属性
  * @returns 3D 轮播组件内容
  */
-export function ThreeDCarousel({ projects = defaultProjects }: ThreeDCarouselProps) {
+export function ThreeDCarousel({ projects = carouselProjects }: ThreeDCarouselProps) {
   return (
     <div className="w-full py-12">
       <div className="container mx-auto px-4">
         {/* 标题 */}
-        <h2 className="text-3xl font-bold mb-8 text-center">Java + Vue3 全栈项目</h2>
+        <h2 className="text-3xl font-bold mb-8 text-center">{carouselTitle}</h2>
         
         {/* 项目列表 */}
         <div className="max-w-3xl mx-auto space-y-4">

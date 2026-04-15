@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Download } from 'lucide-react'
 import { ResumeDownloadModal } from './ResumeDownloadModal'
 import { ErrorAlertModal, getErrorRecord, clearErrorRecord } from './ErrorAlertModal'
+import { profileConfig } from '@/data/profile'
 
 // localStorage key for success record
 const SUCCESS_RECORD_KEY = 'resume_download_success_record'
@@ -42,8 +43,8 @@ export function ResumeDownloadButton() {
   const handleDownload = useCallback(() => {
     // 触发简历下载
     const link = document.createElement('a')
-    link.href = '/1.pdf'
-    link.download = '刘荣显-全栈开发工程师.pdf'
+    link.href = profileConfig.resume.pdfPath
+    link.download = profileConfig.resume.fileName
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)

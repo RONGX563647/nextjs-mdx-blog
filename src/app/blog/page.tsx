@@ -5,6 +5,7 @@ import { getCategories, getArticles } from '@/lib/blog'
 import { BookOpen, ArrowRight, FileText } from 'lucide-react'
 import { BlogSearch } from './BlogSearch'
 import { FeishuEmbed } from '@/components/blog/FeishuEmbed'
+import { siteConfig } from '@/data/site'
 
 // 导入客户端组件
 import LastVisitedBarWrapper from '@/components/blog/LastVisitedBarWrapper'
@@ -79,7 +80,7 @@ export default async function BlogPage() {
       <section className="py-24 relative overflow-hidden">
         {/* 背景图片 - 宽度与页面一致，长度等比例放大 */}
         <div className="absolute top-[-5px] left-0 right-0 pointer-events-none w-full" style={{ opacity: 0.1 }}>
-          <img src="https://rongxpicture.oss-cn-beijing.aliyuncs.com/image-20260207210813997.png" alt="背景" className="w-full h-auto" />
+          <img src={siteConfig.blogBgImage} alt="背景" className="w-full h-auto" />
         </div>
         <div className="container mx-auto px-4">
           <div className="max-w-6xl mx-auto">

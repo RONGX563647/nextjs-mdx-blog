@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useTheme } from 'next-themes'
+import { giscusConfig } from '@/data/projects'
 
 // 扩展Window接口，添加giscus属性
 declare global {
@@ -30,17 +31,17 @@ export function CommentSection({ articleTitle, articleSlug }: CommentSectionProp
       script.src = 'https://giscus.app/client.js'
       script.async = true
       script.crossOrigin = 'anonymous'
-      script.setAttribute('data-repo', 'RONGX563647/nextjs-mdx-blog')
-      script.setAttribute('data-repo-id', 'R_kgDOQ80jjw')
-      script.setAttribute('data-category', 'General')
-      script.setAttribute('data-category-id', 'DIC_kwDOQ80jj84C1v-M')
+      script.setAttribute('data-repo', giscusConfig.repo)
+      script.setAttribute('data-repo-id', giscusConfig.repoId)
+      script.setAttribute('data-category', giscusConfig.category)
+      script.setAttribute('data-category-id', giscusConfig.categoryId)
       script.setAttribute('data-mapping', 'pathname')
       script.setAttribute('data-strict', '0')
       script.setAttribute('data-reactions-enabled', '1')
       script.setAttribute('data-emit-metadata', '0')
       script.setAttribute('data-input-position', 'top')
       script.setAttribute('data-theme', 'preferred_color_scheme')
-      script.setAttribute('data-lang', 'zh-CN')
+      script.setAttribute('data-lang', giscusConfig.lang)
       script.setAttribute('data-loading', 'lazy')
       
       // 添加错误处理
@@ -97,15 +98,15 @@ export function CommentSection({ articleTitle, articleSlug }: CommentSectionProp
           </p>
           <ol className="text-left text-sm text-muted-foreground mb-6 space-y-2">
             <li>1. 访问 <a href="https://giscus.app" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">giscus.app</a></li>
-            <li>2. 按照指示安装 giscus GitHub App 到您的仓库 (RONGX563647/nextjs-mdx-blog)</li>
+            <li>2. 按照指示安装 giscus GitHub App 到您的仓库 ({giscusConfig.repo})</li>
             <li>3. 配置评论分类为 "General"</li>
             <li>4. 复制生成的配置代码并更新本组件</li>
           </ol>
           <div className="bg-background p-4 rounded-md text-left text-sm mb-6">
             <h4 className="font-medium mb-2">当前配置：</h4>
             <ul className="space-y-1 text-muted-foreground">
-              <li>仓库: RONGX563647/nextjs-mdx-blog</li>
-              <li>分类: General</li>
+              <li>仓库: {giscusConfig.repo}</li>
+              <li>分类: {giscusConfig.category}</li>
               <li>映射方式: pathname</li>
               <li>主题: preferred_color_scheme</li>
             </ul>
