@@ -55,3 +55,5 @@ public/md/**/Makefile
 
 # Large PDF files (use external hosting instead)
 public/md/**/*.pdf
+
+.trae/*

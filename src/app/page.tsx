@@ -1,8 +1,3 @@
-/**
- * 首页组件
- * 展示个人介绍、精选项目和项目展示
- */
-
 'use client'
 
 import { Button } from '@/components/ui/button'
@@ -15,11 +10,50 @@ import { ThreeDCarousel } from '@/components/ThreeDCarousel'
 import { BookOpen, ExternalLink, ArrowRight } from 'lucide-react'
 import Link from 'next/link'
 import { ResumeDownloadButton } from '@/components/resume/ResumeDownloadButton'
-import { profileConfig } from '@/data/profile'
+import { useProfile, useProjects, useCarouselProjects, useSiteConfig } from '@/hooks/useConfig'
 import { featuredProjects } from '@/data/projects'
-import { siteConfig } from '@/data/site'
+
+function LoadingSkeleton() {
+  return (
+    <div className="animate-pulse">
+      <div className="h-8 bg-muted rounded w-32 mb-4"></div>
+      <div className="h-16 bg-muted rounded w-64 mb-8"></div>
+      <div className="h-24 bg-muted rounded w-full max-w-lg mb-6"></div>
+      <div className="h-16 bg-muted rounded w-48"></div>
+    </div>
+  )
+}
 
 export default function Home() {
+  const { profile, loading: profileLoading } = useProfile()
+  const { projects, loading: projectsLoading } = useProjects()
+  const { carouselProjects, loading: carouselLoading } = useCarouselProjects()
+  const { siteConfig, loading: siteLoading } = useSiteConfig()
+  
+  const isLoading = profileLoading || projectsLoading || carouselLoading || siteLoading
+  
+  const displayProfile = profile || {
+    nickname: 'RONGX',
+    title: '全栈开发工程师',
+    greeting: '你好，我是',
+    bio: '专注于 Java 后端和 Vue3 前端开发，致力于构建高质量的全栈应用',
+    sub_bio: '从基础到进阶，记录学习过程中的思考与总结，分享技术见解与实践经验',
+  }
+  
+  const displaySiteConfig = siteConfig || {
+    avatar: '/1.png',
+  }
+  
+  const displayFeaturedProjects = projects.length > 0 
+    ? projects.slice(0, 3).map(p => ({
+        id: p.id,
+        title: p.name,
+        description: p.background,
+        skills: p.tech_stack.split(',').map(s => s.trim()),
+        featuredSkills: p.tech_stack.split(',').slice(0, 4).map(s => s.trim()),
+      }))
+    : featuredProjects
+  
   return (
     <div>
       <section className="py-32 relative">
@@ -27,19 +61,25 @@ export default function Home() {
           <ScrollAnimation>
             <div className="flex flex-col lg:flex-row items-center gap-16">
               <div className="flex-1 text-left">
-                <p className="text-sm font-semibold tracking-widest uppercase mb-4 text-primary">
-                  {profileConfig.title}
-                </p>
-                <h1 className="font-bold tracking-tighter mb-8">
-                  <span className="text-5xl md:text-6xl lg:text-7xl block mb-2">{profileConfig.greeting}</span>
-                  <span className="text-6xl md:text-7xl lg:text-8xl text-primary">{profileConfig.name}</span>
-                </h1>
-                <p className="text-xl md:text-2xl text-muted-foreground mb-6 max-w-lg">
-                  {profileConfig.bio}
-                </p>
-                <p className="text-base text-muted-foreground/80 mb-10 max-w-md">
-                  {profileConfig.subBio}
-                </p>
+                {isLoading ? (
+                  <LoadingSkeleton />
+                ) : (
+                  <>
+                    <p className="text-sm font-semibold tracking-widest uppercase mb-4 text-primary">
+                      {displayProfile.title}
+                    </p>
+                    <h1 className="font-bold tracking-tighter mb-8">
+                      <span className="text-5xl md:text-6xl lg:text-7xl block mb-2">{displayProfile.greeting}</span>
+                      <span className="text-6xl md:text-7xl lg:text-8xl text-primary">{displayProfile.nickname}</span>
+                    </h1>
+                    <p className="text-xl md:text-2xl text-muted-foreground mb-6 max-w-lg">
+                      {displayProfile.bio}
+                    </p>
+                    <p className="text-base text-muted-foreground/80 mb-10 max-w-md">
+                      {displayProfile.sub_bio}
+                    </p>
+                  </>
+                )}
                 <div className="flex flex-wrap gap-4">
                   <Button asChild className="bg-primary hover:bg-primary/90 text-white text-base px-8 py-4 rounded">
                     <Link href="/about">了解更多 →</Link>
@@ -52,7 +92,7 @@ export default function Home() {
               </div>
               <div className="flex-shrink-0">
                 <div className="w-64 h-64 sm:w-72 sm:h-72 md:w-80 md:h-80 lg:w-96 lg:h-96 border-4 border-border p-6">
-                  <img src={siteConfig.avatar} alt={`${profileConfig.name} Logo`} className="w-full h-full object-contain" />
+                  <img src={displaySiteConfig.avatar} alt={`${displayProfile.nickname} Logo`} className="w-full h-full object-contain" />
                 </div>
               </div>
             </div>
@@ -73,7 +113,7 @@ export default function Home() {
           </p>
         </ScrollAnimation>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {featuredProjects.map((project, index) => (
+          {displayFeaturedProjects.map((project, index) => (
             <ScrollAnimation key={project.id} delay={0.2 * (index + 1)}>
               <div className="p-6 border border-border hover:border-primary transition-colors">
                 <div className="flex items-start justify-between mb-4">
