@@ -57,3 +57,5 @@ public/md/**/Makefile
 public/md/**/*.pdf
 
 .trae/*
+
+/public/md/Filestore/
