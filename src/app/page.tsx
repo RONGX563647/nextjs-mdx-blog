@@ -91,9 +91,16 @@ export default function Home() {
                 </div>
               </div>
               <div className="flex-shrink-0">
-                <div className="w-64 h-64 sm:w-72 sm:h-72 md:w-80 md:h-80 lg:w-96 lg:h-96 border-4 border-border p-6">
-                  <img src={displaySiteConfig.avatar} alt={`${displayProfile.nickname} Logo`} className="w-full h-full object-contain" />
-                </div>
+                <Link href="/interview" className="block group cursor-pointer" title="点击进入面试演示">
+                  <div className="w-64 h-64 sm:w-72 sm:h-72 md:w-80 md:h-80 lg:w-96 lg:h-96 border-4 border-border p-6 group-hover:border-primary transition-colors duration-300 relative">
+                    <img src={displaySiteConfig.avatar} alt={`${displayProfile.nickname} Logo`} className="w-full h-full object-contain" />
+                    <div className="absolute inset-0 bg-primary/0 group-hover:bg-primary/5 transition-colors duration-300 rounded flex items-center justify-center">
+                      <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-sm text-primary font-medium">
+                        点击进入面试演示 →
+                      </span>
+                    </div>
+                  </div>
+                </Link>
               </div>
             </div>
           </ScrollAnimation>

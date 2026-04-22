@@ -1,0 +1,22 @@
+# Hutool 架构图目录
+
+请将以下两张架构图放置在此目录：
+
+1. **word-template-architecture.png** - Word 模板引擎架构图
+   - 展示 WordTemplate、TemplateRenderer、PictureRenderer、TableRenderer 等类的关系
+   - 建议尺寸：1200x800 或更大
+   - 格式：PNG（透明背景）或白色背景
+
+2. **pdf-util-methods.png** - PdfUtil 和 PdfWriter 方法展示
+   - 展示 PdfUtil 工具类和 PdfWriter 写入器的所有方法
+   - 建议尺寸：800x1200（竖向）
+   - 格式：PNG
+
+## 图片来源
+
+可以从以下来源获取：
+- IDE 类图导出（IntelliJ IDEA Diagram）
+- 截图工具截取
+- 绘图工具重新绘制（如 draw.io、Excalidraw）
+
+确保图片清晰可读，文字大小适中。

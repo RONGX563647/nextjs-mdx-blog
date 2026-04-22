@@ -83,13 +83,13 @@ export function ProjectCarousel({ projects }: ProjectCarouselProps) {
                     
                     <div className="flex gap-4">
                       <Button asChild className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground">
-                        <Link href={project.link} className="flex items-center justify-center gap-2">
+                        <Link href={`/portfolio/${project.id}`} className="flex items-center justify-center gap-2">
                           查看详情
                           <ExternalLink size={16} />
                         </Link>
                       </Button>
                       <Button asChild variant="secondary" className="hover:bg-secondary/80">
-                        <a href="#" className="flex items-center gap-2">
+                        <a href={project.link} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
                           <Github size={16} />
                         </a>
                       </Button>

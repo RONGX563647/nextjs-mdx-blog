@@ -1,20 +1,12 @@
 /**
  * 根布局组件
- * 定义了整个网站的基本结构，包括头部、主体和底部
+ * 定义了整个网站的基本结构
  */
 
 import { ThemeProvider } from '@/app/providers'
-import { Container } from '@/components/Container'
-import { CustomCursor } from '@/components/CustomCursor'
-import { Navigation } from '@/components/Navigation'
-import { PageTransition } from '@/components/PageTransition'
-import ThemeSwitch from '@/components/ThemeSwitch'
+import { GlobalComponents } from '@/components/GlobalComponents'
 import { WEBSITE_HOST_URL } from '@/lib/constants'
-import { Analytics } from '@vercel/analytics/next'
 import type { Metadata } from 'next'
-import Link from 'next/link'
-import { AIAssistant, AIAssistantProvider } from '@/components/ai/AIAssistant'
-import { HeaderWithDoubleClick } from '@/components/HeaderWithDoubleClick'
 import { siteConfig } from '@/data/site'
 import './global.css'
 
@@ -64,39 +56,8 @@ export default function RootLayout({
     <html lang={siteConfig.language} suppressHydrationWarning={true}>
       <body className="min-h-screen flex flex-col bg-background">
         <ThemeProvider attribute="class" defaultTheme="system">
-          <AIAssistantProvider>
-            <CustomCursor />
-            <HeaderWithDoubleClick />
-            <main className="flex-1">
-              <Container>
-                <PageTransition>{children}</PageTransition>
-              </Container>
-            </main>
-            <AIAssistant />
-            <footer className="py-16 border-t border-border">
-              <Container>
-                <div className="flex flex-col md:flex-row justify-between items-start gap-8">
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-2">
-                      © {new Date().getFullYear()} {siteConfig.footer.copyright}
-                    </p>
-                    <p className="text-xs text-muted-foreground/70">
-                      {siteConfig.footer.slogan}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-8">
-                    {siteConfig.nav.map((item) => (
-                      <Link key={item.href} className="link text-sm" href={item.href}>
-                        {item.label}
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              </Container>
-            </footer>
-          </AIAssistantProvider>
+          <GlobalComponents>{children}</GlobalComponents>
         </ThemeProvider>
-        <Analytics />
       </body>
     </html>
   )

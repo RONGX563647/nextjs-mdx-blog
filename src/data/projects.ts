@@ -22,168 +22,279 @@ export interface Project {
   challenges: ProjectChallenge[]
   achievements: string[]
   link: string
-  // 用于首页精选项目的简要技能标签
   featuredSkills?: string[]
 }
 
 export const projects: Project[] = [
   {
-    id: '福师畅聊',
-    title: '福师畅聊 - 全栈开发',
-    description: '基于 Spring Boot、Netty、Redis 开发的即时通讯应用，负责全栈开发工作，包括前端和后端。',
-    date: '2025.08-2025.10',
-    skills: ['Spring Boot', 'Netty', 'Redis', 'MySQL', 'MinIO', 'WebSocket', 'Vue 3', 'TypeScript', 'Vite', 'Docker', 'Nginx'],
-    featuredSkills: ['Spring Boot', 'Netty', 'Redis', 'Vue3'],
-    background: '福师畅聊是一款面向高校师生的即时通讯应用，旨在为校园用户提供便捷的沟通工具。项目需求包括支持私聊、群聊、离线消息、文件传输、语音视频通话等功能，同时需要保证系统的高并发性能和稳定性。作为全栈开发工程师，我负责从架构设计到功能实现的全流程开发工作。',
-    architecture: '项目采用前后端分离架构，后端基于 Spring Boot 框架，使用 Netty 实现高性能的实时消息推送，Redis 作为缓存和消息队列，MySQL 持久化存储用户数据和聊天记录，MinIO 处理文件存储。前端使用 Vue 3 + TypeScript 构建，通过 WebSocket 与后端保持实时连接，实现消息的即时推送和接收。',
+    id: '不二价',
+    title: '不二价 - 校园二手交易平台',
+    description:
+      '基于 Spring Cloud Alibaba 微服务架构的校园专属二手交易平台，集成 AI 智能服务模块，实现商品交易、营销、用户交互全业务闭环。',
+    date: '2026.02-至今',
+    skills: [
+      'Java 21',
+      'Spring Cloud Alibaba',
+      'Spring Security',
+      'JWT',
+      'Nacos',
+      'Sentinel',
+      'Redis',
+      'Seata',
+      'MySQL',
+      'Vue3',
+      'Element Plus',
+      'Spring AI Alibaba',
+      'WebSocket',
+      'OSS',
+    ],
+    featuredSkills: ['Spring Cloud', 'Spring AI', 'Vue3', 'Redis'],
+    background:
+      '不二价是一款面向高校学生的二手交易平台，旨在为校园用户提供安全、便捷的交易环境。项目需求包括校园身份认证、地理围栏校验、高并发秒杀、AI智能客服等功能，同时需要保证系统的安全性、高并发性能和可扩展性。作为全栈开发工程师，我负责从微服务架构设计到前后端全流程开发工作。',
+    architecture:
+      '项目采用 Spring Cloud Alibaba 微服务架构，拆分用户服务、商品服务、订单服务、支付服务、AI服务等核心服务。使用 Nacos 作为服务注册中心和配置中心，Sentinel 实现流量控制和熔断降级，Seata 保证分布式事务一致性，Redis 处理缓存和库存预扣。前端使用 Vue3 + Element Plus 构建用户端与管理端，集成 WebSocket 实现即时通讯，OSS 处理对象存储。',
     features: [
-      '实时消息推送：基于 Netty 长连接和 WebSocket，支持私聊、群聊的实时消息推送',
-      '离线消息处理：用户离线时消息存储到 Redis，上线后自动推送离线消息',
-      '文件传输：支持图片、文档等多种文件类型的上传和下载，使用 MinIO 对象存储',
-      '语音视频通话：集成 WebRTC 实现点对点的语音视频通话功能',
-      '好友管理：支持好友添加、删除、分组管理等功能',
-      '群组功能：支持创建群组、邀请成员、群组消息推送等功能',
-      '消息已读回执：实时显示消息的已读状态',
-      '用户设置：支持个人信息修改、隐私设置、通知设置等功能',
+      '校园身份认证：实现校园身份认证 + 地理围栏双重校验，保障校内专属交易安全',
+      '细粒度权限控制：JWT + RBAC 完成细粒度权限控制，支持多角色管理',
+      '高并发秒杀模块：Redis 库存预扣防超卖、Sentinel 限流熔断、Seata 分布式事务',
+      'AI智能服务：基于 Spring AI 搭建智能服务模块，实现商品图片自动分类、AI智能客服问答',
+      '即时通讯：集成 WebSocket 实现即时通讯，支持买卖双方实时沟通',
+      '对象存储：OSS 对象存储处理商品图片、用户头像等文件',
+      '商品交易全流程：支持商品发布、浏览、下单、支付、评价等完整交易链路',
+      '营销活动：支持优惠券、限时折扣、秒杀活动等营销功能',
     ],
     responsibilities: [
-      '设计并实现基于 Netty 的实时消息推送系统，支持私聊、群聊、离线消息等核心功能',
-      '开发 RESTful API 接口，实现用户认证、消息管理、好友关系等后端功能',
-      '构建 Vue 3 + TypeScript 前端应用，实现消息列表、聊天界面、用户设置等功能',
-      '集成 WebSocket 实现前后端实时通信，确保消息即时送达',
-      '设计 Redis 缓存策略，优化消息查询性能和系统响应速度',
-      '使用 Docker 容器化部署，配合 Nginx 实现负载均衡和 HTTPS 配置',
+      '基于 Spring Cloud Alibaba 设计并实现微服务架构，拆分核心服务',
+      '使用 Vue3 + Element Plus 搭建用户端与管理端前端界面',
+      '实现校园身份认证 + 地理围栏双重校验，保障交易安全',
+      '设计 JWT + RBAC 细粒度权限控制体系',
+      '开发高并发秒杀模块，使用 Redis 库存预扣、Sentinel 限流、Seata 分布式事务',
+      '基于 Spring AI Alibaba 搭建智能服务模块，实现图片分类和智能客服',
+      '集成 WebSocket 即时通讯和 OSS 对象存储',
     ],
     challenges: [
       {
-        challenge: '高并发消息推送性能优化',
-        solution: '使用 Netty 的 NIO 模式和线程池优化，结合 Redis 的 Pub/Sub 机制实现消息分发，通过连接池管理减少连接创建开销，最终支持 1000+ 并发连接，消息延迟控制在 100ms 以内',
+        challenge: '高并发秒杀防超卖',
+        solution:
+          '采用 Redis Lua 脚本实现库存原子扣减，Sentinel 进行限流熔断保护后端服务，Seata AT 模式保证分布式事务一致性，支撑校园峰值流量',
       },
       {
-        challenge: '离线消息存储和推送',
-        solution: '设计离线消息存储策略，用户离线时消息存储到 Redis Sorted Set，用户上线时通过定时任务批量推送，同时设置消息过期时间避免内存占用过大',
+        challenge: '校园交易安全保障',
+        solution:
+          '实现校园身份认证 + 地理围栏双重校验，结合 JWT + RBAC 完成细粒度权限控制，确保只有校内用户才能参与交易',
       },
       {
-        challenge: '前端性能优化',
-        solution: '使用 Vue 3 的 Composition API 和响应式系统优化，实现虚拟滚动减少 DOM 操作，使用 Web Worker 处理消息历史记录查询，最终将页面加载时间优化至 0.8 秒',
+        challenge: 'AI智能服务集成',
+        solution:
+          '基于 Spring AI Alibaba 搭建智能服务模块，实现商品图片自动分类和 AI 智能客服问答，提升平台自动化能力',
       },
       {
-        challenge: '消息可靠性保证',
-        solution: '实现消息确认机制，发送方收到接收方的确认后才标记为已送达，对于未确认的消息设置重试机制，确保消息送达率达到 100%',
+        challenge: '微服务架构稳定性',
+        solution:
+          '使用 Nacos 服务注册发现、Sentinel 流量控制、Seata 分布式事务，保证微服务架构的高可用和一致性',
       },
     ],
     achievements: [
-      '实现了支持 1000+ 并发连接的实时消息系统',
-      '前端页面加载速度优化至 0.8 秒，用户体验显著提升',
-      '系统稳定性达到 99.9%，消息送达率 100%',
-      '代码质量优秀，通过了团队代码审查，获得好评',
+      '完成校园专属二手交易平台全栈开发，支持完整交易链路',
+      '高并发秒杀模块支撑校园峰值流量，库存扣减准确率 100%',
+      'AI智能客服提升平台自动化能力，减少人工客服工作量',
+      '微服务架构稳定运行，服务可用性达到 99.9%',
     ],
-    link: '/portfolio/福师畅聊',
+    link: 'https://github.com/RONGX563647/FNUSALE',
   },
   {
-    id: '师大云学',
-    title: '师大云学 - 全栈开发',
-    description: '基于 Spring Cloud Alibaba 开发的在线教育平台，负责全栈开发工作，包括微服务架构设计和前端实现。',
-    date: '2025.07-2025.09',
-    skills: ['Spring Cloud Alibaba', 'Spring Boot', 'MySQL', 'Redis', 'RabbitMQ', 'React', 'TypeScript', 'Next.js', 'Jenkins', 'Kubernetes'],
-    featuredSkills: ['Spring Cloud', 'MySQL', 'RabbitMQ', 'Vue3'],
-    background: '师大云学是一个面向高校师生的在线教育平台，提供课程学习、在线考试、作业提交、成绩查询等功能。项目需要支持高并发访问，保证系统的稳定性和可扩展性。作为全栈开发工程师，我负责微服务架构设计、后端服务开发、前端应用实现以及 DevOps 流程搭建。',
-    architecture: '项目采用 Spring Cloud Alibaba 微服务架构，包含用户服务、课程服务、订单服务、支付服务、考试服务等核心微服务。使用 Nacos 作为服务注册中心和配置中心，Sentinel 实现流量控制和熔断降级，RabbitMQ 处理异步消息，Redis 作为缓存层。前端使用 React + TypeScript 构建，通过 RESTful API 与后端服务通信。',
+    id: '智能插座系统',
+    title: '智能插座系统 - IoT电力管理平台',
+    description:
+      '基于 Spring Boot 3 和 Java 21 LTS 开发的 IoT 智能插座管理系统，覆盖电力设备接入、用电数据采集、远程控制、权限管控、告警计费全业务链路。',
+    date: '2025.11-2026.02',
+    skills: [
+      'Spring Boot 3',
+      'Java 21 LTS',
+      'Spring Security',
+      'Spring Data JPA',
+      'JWT',
+      'MQTT',
+      'Guava',
+      'PostgreSQL',
+      'Redis',
+      'RabbitMQ',
+    ],
+    featuredSkills: ['Java 21', 'Spring Boot', 'IoT', 'Redis'],
+    background:
+      '智能插座系统是一款面向宿舍/办公场景的 IoT 电力管理平台，旨在实现智能用电管理、远程控制、告警通知、计费统计等功能。项目需要支持千级设备并发接入、实时数据采集、高并发数据处理，同时保证系统的安全性和稳定性。作为后端开发工程师，我负责从架构设计到核心功能实现的全流程开发工作。',
+    architecture:
+      '项目采用支持水平扩展的分层架构，后端基于 Spring Boot 3 和 Java 21 LTS，使用 Spring Security + JWT + RBAC 实现分布式无状态鉴权，MQTT 协议处理 IoT 设备通信，Redis 实现分布式令牌黑名单和多级缓存，RabbitMQ 处理异步消息削峰，PostgreSQL 持久化存储业务数据。',
     features: [
-      '课程管理：支持课程创建、编辑、发布、下架等全生命周期管理',
-      '在线学习：提供视频播放、课件下载、在线笔记等学习功能',
-      '作业系统：支持作业发布、提交、批改、成绩查询等功能',
-      '在线考试：支持题库管理、试卷生成、在线考试、自动阅卷等功能',
-      '订单支付：集成支付宝、微信支付，支持课程购买和订单管理',
-      '用户中心：支持个人信息管理、学习进度查看、证书下载等功能',
-      '消息通知：支持系统通知、课程提醒、考试提醒等消息推送',
-      '数据分析：提供学习数据统计、课程分析、用户行为分析等功能',
+      'IoT设备接入：支持千级电力设备并发接入与数据上报，基于 MQTT 协议',
+      '用电数据采集：实时采集设备用电数据，支持数据存储和统计分析',
+      '远程控制：支持设备远程开关、定时任务、用电策略配置',
+      '权限管控：分布式 JWT 无状态鉴权 + RBAC 细粒度权限模型',
+      '告警通知：设备异常告警、用电超限告警，支持多渠道通知',
+      '计费统计：用电账单自动生成，支持多种计费策略',
+      '统一限流：Guava 令牌桶单机兜底 + Redis+Lua 分布式滑动窗口限流',
+      '审计日志：基于 AOP 切面实现统一审计日志和全局异常治理',
     ],
     responsibilities: [
-      '基于 Spring Cloud Alibaba 设计并实现微服务架构，包括用户、课程、订单等核心服务',
-      '开发 RESTful API 接口，实现课程管理、订单处理、支付集成等功能',
-      '构建 React + TypeScript 前端应用，实现课程展示、购物车、支付流程等功能',
-      '集成 RabbitMQ 实现消息通知系统，确保异步任务的可靠执行',
-      '设计 Redis 缓存策略，优化课程查询和用户数据访问性能',
-      '配置 Jenkins CI/CD 流水线，实现自动化构建和部署',
+      '设计并实现支持水平扩展的分层架构，覆盖 IoT 全业务链路',
+      '落地分布式 JWT 无状态鉴权 + RBAC 细粒度权限模型',
+      'Redis 实现原子性 SETNX+EX 的分布式令牌黑名单',
+      'PBKDF2 加盐哈希加密 + 恒定时间比对防时序攻击',
+      '基于 AOP 切面实现统一限流、审计日志、全局异常治理',
+      'Redis 多级缓存优化数据层性能，接口响应耗时压缩至 50ms 以内',
+      'RabbitMQ 实现三大核心异步链路，系统吞吐提升 5 倍',
+      'Java 21 虚拟线程优化 IoT 高并发场景',
     ],
     challenges: [
       {
-        challenge: '微服务间通信优化',
-        solution: '使用 OpenFeign 实现服务间调用，配置合理的超时时间和重试策略，使用 Sentinel 实现熔断降级，避免服务雪崩，最终将服务间调用成功率提升至 99.9%',
+        challenge: 'IoT 高并发设备接入',
+        solution:
+          '落地 Java 21 虚拟线程优化 IoT 高并发场景，支撑千级设备并发接入与数据上报，大幅提升系统吞吐能力',
       },
       {
-        challenge: '高并发课程查询优化',
-        solution: '设计多级缓存策略，本地缓存 + Redis 缓存 + 数据库三级缓存，使用 Redis 集群保证高可用，最终将课程查询响应时间从 500ms 优化至 50ms',
+        challenge: '分布式鉴权与权限控制',
+        solution:
+          'Redis 实现原子性 SETNX+EX 的分布式令牌黑名单，替代本地 Map 支持多实例部署；PBKDF2 加盐哈希加密 + 恒定时间比对防时序攻击',
       },
       {
-        challenge: '支付流程可靠性保证',
-        solution: '实现支付状态机，确保支付流程的幂等性和最终一致性，使用消息队列处理支付回调，设置合理的重试机制，最终将支付成功率提升至 99.5%',
+        challenge: '数据层性能优化',
+        solution:
+          'Redis 多级缓存（L1 本地 Caffeine + L2 分布式 Redis）缓存热点设备/用电数据；JPA 批量操作、联合索引优化、流式分页降低数据库 IO，接口平均响应耗时压缩至 50ms 以内',
       },
       {
-        challenge: '前端性能优化',
-        solution: '使用 React 的虚拟 DOM 和 memo 优化渲染，实现路由懒加载和组件懒加载，使用 CDN 加速静态资源，最终将首屏加载时间优化至 1.2 秒',
+        challenge: '异步削峰填谷',
+        solution:
+          'RabbitMQ 实现设备遥测数据异步落库、告警消息异步推送、用电账单异步生成三大核心异步链路，削平 IoT 设备批量上报的流量峰值，系统吞吐提升 5 倍',
+      },
+      {
+        challenge: '统一限流与异常治理',
+        solution:
+          '基于 AOP 切面实现统一限流、审计日志、全局异常治理：Guava 令牌桶算法做单机兜底，Redis+Lua 脚本实现分布式滑动窗口限流，峰值 QPS 承载提升 300%',
       },
     ],
     achievements: [
-      '实现了日访问量 10 万+ 的高并发在线教育平台',
-      '课程加载速度提升 60%，用户停留时间增加 35%',
-      '微服务架构部署成功，服务可用性达到 99.95%',
-      'CI/CD 流水线搭建完成，部署时间从小时级缩短至分钟级',
+      '支撑千级 IoT 设备并发接入与数据上报',
+      '接口平均响应耗时压缩至 50ms 以内',
+      '系统吞吐提升 5 倍，峰值 QPS 承载提升 300%',
+      '全国大学生物联网设计竞赛东部赛区一等奖（A类赛事）',
     ],
-    link: '/portfolio/师大云学',
+    link: 'https://github.com/RONGX563647/dorm-power',
   },
   {
-    id: '个人博客系统',
-    title: '个人博客系统 - 全栈开发',
-    description: '基于 Next.js 13 App Router 和 TypeScript 开发的个人博客系统，支持 Markdown 文章、评论、标签管理等功能。',
-    date: '2025.05-2025.06',
-    skills: ['Next.js 13', 'React', 'TypeScript', 'Tailwind CSS', 'MongoDB', 'Prisma', 'NextAuth.js', 'Docker'],
-    background: '个人博客系统是一个用于分享技术文章和项目经验的平台，支持 Markdown 文章编写、代码高亮、图片上传、评论互动等功能。项目需要具备良好的 SEO 优化、快速的页面加载速度和优秀的用户体验。作为全栈开发工程师，我负责从前端架构到后端 API 的全流程开发。',
-    architecture: '项目采用 Next.js 13 App Router 架构，利用 React Server Components 和 Streaming 实现高性能渲染。后端使用 Next.js API Routes 构建 RESTful 接口，MongoDB 作为数据库，Prisma ORM 实现数据访问层，NextAuth.js 处理用户认证。前端使用 Tailwind CSS 实现响应式设计，支持深色模式和主题切换。',
+    id: 'LightSSM',
+    title: 'LightSSM - 轻量级 Web 框架',
+    description:
+      '自研轻量级 Java Web 框架，复刻 Spring 核心流程，实现 IoC/DI 容器、SpringMVC 核心、ORM 模块、AOP 切面能力。',
+    date: '2025.09-2025.11',
+    skills: [
+      'Java',
+      'IoC/DI',
+      'SpringMVC',
+      'ORM',
+      'AOP',
+      'JDK Proxy',
+      'CGLIB',
+      'XML解析',
+    ],
+    featuredSkills: ['Java', 'IoC/DI', 'SpringMVC', 'AOP'],
+    background:
+      'LightSSM 是一个自研的轻量级 Java Web 框架，旨在深入理解 Spring 框架的核心原理。项目通过复刻 Spring 的核心流程，实现 IoC/DI 容器、SpringMVC 核心组件、轻量级 ORM 模块和 AOP 切面能力，帮助开发者理解框架底层原理。',
+    architecture:
+      '框架采用模块化设计，IoC/DI 容器支持注解扫描和依赖注入，SpringMVC 模块实现 DispatcherServlet、HandlerMapping、HandlerAdapter、ViewResolver 核心组件，ORM 模块支持 XML SQL 映射和动态 SQL，AOP 模块基于 JDK/CGLIB 双代理实现通知织入。',
     features: [
-      '文章管理：支持 Markdown 文章的创建、编辑、发布、删除等全生命周期管理',
-      '代码高亮：集成 Prism.js 实现代码语法高亮，支持多种编程语言',
-      '图片上传：支持图片上传和压缩，使用本地存储或云存储服务',
-      '评论系统：支持文章评论、回复、点赞等功能，支持 Markdown 格式',
-      '标签分类：支持文章标签和分类管理，方便内容组织和检索',
-      '搜索功能：支持全文搜索和标签搜索，快速找到相关文章',
-      '用户认证：集成 NextAuth.js 实现用户登录、注册、权限管理等功能',
-      '主题切换：支持浅色模式和深色模式切换，提供更好的阅读体验',
+      'IoC/DI 容器：支持 @Component/@Autowired 注解扫描与依赖注入',
+      '三级缓存：基于三级缓存解决循环依赖问题',
+      'SpringMVC 核心：实现 DispatcherServlet、HandlerMapping、HandlerAdapter、ViewResolver',
+      'RESTful 接口：支持 @RequestMapping/@ResponseBody 开发 RESTful 接口',
+      'ORM 模块：支持 XML SQL 映射、动态 SQL 拼接、参数自动绑定与 ResultSet 映射',
+      'AOP 切面：基于 JDK/CGLIB 双代理实现 @Before/@After/@Around 通知织入',
     ],
     responsibilities: [
-      '设计并实现基于 Next.js 13 App Router 的前端架构，优化页面加载性能',
-      '开发 Markdown 编辑器，支持代码高亮、图片上传等功能',
-      '构建后端 API 接口，实现文章管理、评论系统、标签分类等功能',
-      '集成 NextAuth.js 实现用户认证和授权系统',
-      '使用 MongoDB 和 Prisma ORM 实现数据存储和查询',
-      '配置 Docker 容器化部署，确保开发环境一致性',
+      '设计并实现 IoC/DI 容器，支持注解扫描与依赖注入',
+      '基于三级缓存解决循环依赖问题',
+      '复刻 SpringMVC 核心流程，实现四大核心组件',
+      '实现轻量级 ORM 模块，支持 XML SQL 映射和动态 SQL',
+      '集成 AOP 切面能力，基于 JDK/CGLIB 双代理实现通知织入',
     ],
     challenges: [
       {
-        challenge: 'SEO 优化和页面性能',
-        solution: '使用 Next.js 13 的 Server Components 和 Streaming 优化页面加载，实现动态元标签和结构化数据，配置图片懒加载和代码分割，最终将 LCP 优化至 0.5 秒，Core Web Vitals 全部通过',
+        challenge: '循环依赖解决',
+        solution:
+          '基于三级缓存解决循环依赖问题，提前暴露引用对象，实现完整的依赖注入流程',
       },
       {
-        challenge: 'Markdown 编辑器开发',
-        solution: '集成 react-markdown 和 remark/rehype 插件实现 Markdown 渲染，使用 CodeMirror 开发编辑器，支持实时预览和语法高亮，最终提供流畅的写作体验',
+        challenge: 'SpringMVC 核心流程复刻',
+        solution:
+          '实现 DispatcherServlet、HandlerMapping、HandlerAdapter、ViewResolver 四大核心组件，完整复刻 SpringMVC 请求处理流程',
       },
       {
-        challenge: '图片上传和存储',
-        solution: '实现图片上传接口，使用 sharp 库进行图片压缩和格式转换，支持本地存储和云存储，配置 CDN 加速图片访问，最终将图片加载速度提升 70%',
+        challenge: '动态 SQL 实现',
+        solution:
+          '实现 XML SQL 映射和动态 SQL 拼接，支持参数自动绑定与 ResultSet 映射',
       },
       {
-        challenge: '评论系统性能优化',
-        solution: '使用 MongoDB 的索引优化查询性能，实现评论的分页加载和懒加载，使用 Redis 缓存热门文章的评论，最终将评论加载时间优化至 200ms',
+        challenge: 'AOP 双代理实现',
+        solution:
+          '基于 JDK 动态代理和 CGLIB 代理实现 @Before/@After/@Around 通知织入，支持接口和类两种代理方式',
       },
     ],
     achievements: [
-      '实现了支持 SEO 优化的个人博客系统，Google 搜索排名前 10',
-      '页面加载速度达到 0.5 秒，Core Web Vitals 全部通过',
-      'Markdown 编辑器用户体验优秀，支持实时预览',
-      '系统安全性良好，通过了基本的安全测试',
+      '完整复刻 Spring 核心流程，深入理解框架底层原理',
+      'IoC/DI 容器支持注解扫描和三级缓存解决循环依赖',
+      'SpringMVC 核心组件完整实现，支持 RESTful 接口开发',
+      'ORM 模块支持 XML SQL 映射和动态 SQL',
     ],
-    link: '/portfolio/个人博客系统',
+    link: 'https://github.com/rongx563647/mvc',
+  },
+  {
+    id: 'Hutool开源贡献',
+    title: 'Hutool - Java 工具包开源贡献',
+    description:
+      '向 Hutool（GVP 顶级开源项目）贡献代码，自研 Word 模板引擎和 PDF 生成工具，修复多项线上 bug。',
+    date: '2025.09-2025.11',
+    skills: ['Java', 'Word模板引擎', 'PDF生成', 'OFD', '开源贡献'],
+    featuredSkills: ['Java', '开源贡献', 'Word模板', 'PDF'],
+    background:
+      'Hutool 是一个 Java 工具包类库，GVP（Gitee Most Valuable Project）顶级开源项目。我向该项目贡献了 Word 模板引擎和 PDF 生成工具两个核心模块，并修复了多项线上 bug，提升了框架的稳定性和文档处理能力。',
+    architecture:
+      'Word 模板引擎支持文本/图片/表格占位符渲染，采用链式调用设计，支持自定义配置。PDF 生成工具基于 OFD 中间格式实现文档转换，支持文本/图片写入，完善文档处理能力。',
+    features: [
+      'Word 模板引擎：支持文本/图片/表格占位符渲染',
+      '链式调用：采用链式调用设计，简化 API 使用',
+      '自定义配置：支持自定义配置，灵活适配不同场景',
+      'PDF 生成工具：基于 OFD 中间格式实现文档转换',
+      '文本/图片写入：支持文本和图片写入 PDF 文档',
+      'Bug 修复：修复泛型类型转换、API 兼容性、编译异常等线上 bug',
+    ],
+    responsibilities: [
+      '自研 Word 模板引擎，支持文本/图片/表格占位符渲染、链式调用、自定义配置',
+      '新增 PDF 生成工具，基于 OFD 中间格式实现文档转换、文本/图片写入',
+      '修复泛型类型转换、API 兼容性、编译异常等线上 bug，提升框架稳定性',
+    ],
+    challenges: [
+      {
+        challenge: 'Word 模板引擎设计',
+        solution:
+          '设计支持文本/图片/表格占位符渲染的模板引擎，采用链式调用简化 API，支持自定义配置灵活适配不同场景',
+      },
+      {
+        challenge: 'PDF 生成工具实现',
+        solution:
+          '基于 OFD 中间格式实现文档转换，支持文本/图片写入，完善文档处理能力',
+      },
+      {
+        challenge: '线上 Bug 修复',
+        solution:
+          '修复泛型类型转换、API 兼容性、编译异常等线上 bug，提升框架稳定性',
+      },
+    ],
+    achievements: [
+      '自研 Word 模板引擎，大幅简化文档生成逻辑',
+      '新增 PDF 生成工具，完善文档处理能力',
+      '修复多项线上 bug，提升框架稳定性',
+      '贡献代码被合并到 Hutool 主分支（git hash: f12179c73a6bd16ec885443a6aba49fb27e32f03）',
+    ],
+    link: 'https://github.com/dromara/hutool',
   },
 ]
 
@@ -210,43 +321,35 @@ export const carouselTitle = 'Java + Vue3 全栈项目'
 export const carouselProjects: CarouselProject[] = [
   {
     id: '1',
-    title: '企业级后台管理系统',
-    description: 'Vue3 + Spring Boot + MyBatis Plus',
+    title: '不二价 - 校园二手交易平台',
+    description: 'Spring Cloud Alibaba + Spring AI + Vue3',
     color: '#3b82f6',
-    link: '#',
+    link: 'https://github.com/RONGX563647/FNUSALE',
     targetProgress: 95,
   },
   {
     id: '2',
-    title: '在线教育平台',
-    description: 'Vue3 + Java + MySQL + Redis',
+    title: '智能插座系统 - IoT电力管理',
+    description: 'Java 21 + Spring Boot 3 + MQTT + Redis',
     color: '#8b5cf6',
-    link: '#',
+    link: 'https://github.com/RONGX563647/dorm-power',
     targetProgress: 88,
   },
   {
     id: '3',
-    title: '电商商城系统',
-    description: 'Vue3 + Spring Cloud + Nacos',
+    title: 'LightSSM - 轻量级Web框架',
+    description: 'IoC/DI + SpringMVC + ORM + AOP',
     color: '#ec4899',
-    link: '#',
+    link: 'https://github.com/rongx563647/mvc',
     targetProgress: 82,
   },
   {
     id: '4',
-    title: '智能客服系统',
-    description: 'Vue3 + Java + WebSocket + AI',
+    title: 'Hutool - Java工具包开源贡献',
+    description: 'Word模板引擎 + PDF生成工具',
     color: '#10b981',
-    link: '#',
+    link: 'https://github.com/dromara/hutool',
     targetProgress: 75,
-  },
-  {
-    id: '5',
-    title: '数据分析可视化平台',
-    description: 'Vue3 + Java + ECharts + Kafka',
-    color: '#f59e0b',
-    link: '#',
-    targetProgress: 68,
   },
 ]
 
@@ -260,11 +363,19 @@ export interface QuickLink {
 }
 
 export const quickLinks: QuickLink[] = [
-  { id: '1', name: '本地服务器', url: 'https://117.72.210.10:8888/home' },
-  { id: '2', name: '面试鸭', url: 'https://www.mianshiya.com/bank/1787463103423897602' },
-  { id: '3', name: '小林coding', url: 'https://xiaolincoding.com/' },
-  { id: '4', name: 'Java笔记', url: 'https://www.bookstack.cn/books/sdky-java-note' },
-  { id: '5', name: 'LeetCode', url: 'https://leetcode.cn/studyplan/top-100-liked/' },
+  { id: '1', name: '个人主页', url: 'https://www.rongx.top' },
+  { id: '2', name: 'GitHub', url: 'https://github.com/rongx563647' },
+  {
+    id: '3',
+    name: '面试鸭',
+    url: 'https://www.mianshiya.com/bank/1787463103423897602',
+  },
+  { id: '4', name: '小林coding', url: 'https://xiaolincoding.com/' },
+  {
+    id: '5',
+    name: 'LeetCode',
+    url: 'https://leetcode.cn/studyplan/top-100-liked/',
+  },
 ]
 
 /**

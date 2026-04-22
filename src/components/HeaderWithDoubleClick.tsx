@@ -9,6 +9,7 @@ import Link from 'next/link'
 import { ExpandingNavBar } from '@/components/ExpandingNavBar'
 import { siteConfig } from '@/data/site'
 import { socialLinks } from '@/data/social'
+import { usePathname } from 'next/navigation'
 
 // CSDN SVG 图标
 function CsdnIcon() {
@@ -31,6 +32,12 @@ const socialIconMap: Record<string, React.ReactNode> = {
  */
 export function HeaderWithDoubleClick() {
   const [isNavBarExpanded, setIsNavBarExpanded] = useState(false)
+  const pathname = usePathname()
+  
+  // 面试路由完全隐藏
+  if (pathname === '/interview' || pathname?.startsWith('/interview/')) {
+    return null
+  }
 
   const toggleNavBar = () => {
     setIsNavBarExpanded(!isNavBarExpanded)
