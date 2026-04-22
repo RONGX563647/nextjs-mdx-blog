@@ -13,6 +13,7 @@ const projectDetails: Record<string, {
     type: 'painpoint' | 'solution' | 'architecture' | 'challenge' | 'achievement'
     content: string[]
     diagram?: string[]
+    images?: string[]
   }[]
 }> = {
   '不二价': {
@@ -474,12 +475,12 @@ export default function InterviewDetailPage() {
                       {section.images.map((imgSrc, imgIndex) => (
                         <div key={imgIndex} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
                           <div className="px-4 py-2 bg-gray-50 border-b border-gray-200">
-                            <span className="text-sm font-medium text-gray-700">{section.diagram[imgIndex] || `架构图 ${imgIndex + 1}`}</span>
+                            <span className="text-sm font-medium text-gray-700">{section.diagram?.[imgIndex] || `架构图 ${imgIndex + 1}`}</span>
                           </div>
                           <div className="p-4">
                             <img 
                               src={imgSrc} 
-                              alt={section.diagram[imgIndex] || `架构图 ${imgIndex + 1}`}
+                              alt={section.diagram?.[imgIndex] || `架构图 ${imgIndex + 1}`}
                               className="w-full h-auto rounded-lg shadow-lg"
                               loading="lazy"
                               onError={(e) => {
@@ -495,7 +496,7 @@ export default function InterviewDetailPage() {
                                 📷 图片尚未添加
                               </div>
                               <div className="text-yellow-600 text-sm mb-4">
-                                {section.diagram[imgIndex] || `架构图 ${imgIndex + 1}`}
+                                {section.diagram?.[imgIndex] || `架构图 ${imgIndex + 1}`}
                               </div>
                               <div className="text-yellow-500 text-xs">
                                 请将图片保存到 <code className="bg-yellow-100 px-2 py-1 rounded">public/images/hutool/</code> 目录
