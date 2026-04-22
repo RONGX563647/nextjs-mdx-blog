@@ -30,5 +30,6 @@ export const siteConfig = {
     { label: '关于', href: '/about' },
     { label: '项目', href: '/portfolio' },
     { label: '博客', href: '/blog' },
+    { label: 'PPT', href: '/ppt' },
   ],
 }

@@ -1,0 +1,2668 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>风电叶片间隙检测方案对比分析</title>
+    <style>
+        :root {
+            --white: #ffffff;
+            --light-bg: #faf8f5;
+            --orange-50: #fff8f0;
+            --orange-100: #ffecd9;
+            --orange-200: #ffd9b3;
+            --orange-300: #ffc58a;
+            --orange-400: #ffb066;
+            --orange-500: #f59e42;
+            --orange-600: #e08a2e;
+            --orange-700: #c97620;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --green-500: #22c55e;
+            --green-100: #dcfce7;
+            --red-500: #ef4444;
+            --red-100: #fee2e2;
+            --yellow-500: #eab308;
+            --yellow-100: #fef9c3;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            background: var(--light-bg);
+            overflow: hidden;
+            height: 100vh;
+            color: var(--gray-700);
+        }
+
+        .presentation {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+            padding: 60px 80px 80px;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            pointer-events: none;
+            background: var(--white);
+            overflow-y: auto;
+        }
+
+        .slide.active {
+            opacity: 1;
+            transform: translateX(0);
+            pointer-events: auto;
+            z-index: 1;
+        }
+
+        .slide.prev {
+            transform: translateX(-100%);
+        }
+
+        /* SVG 图标通用样式 */
+        .icon {
+            flex-shrink: 0;
+        }
+
+        .icon-orange { color: var(--orange-500); }
+        .icon-gray { color: var(--gray-400); }
+        .icon-green { color: var(--green-500); }
+        .icon-red { color: var(--red-500); }
+        .icon-yellow { color: var(--yellow-500); }
+
+        /* 封面页 */
+        .cover-slide {
+            background: linear-gradient(135deg, var(--white) 0%, var(--orange-50) 100%);
+        }
+
+        .cover-content {
+            text-align: center;
+            max-width: 900px;
+        }
+
+        .cover-icon {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 40px;
+            opacity: 0;
+            animation: scaleIn 0.8s ease 0.2s forwards;
+        }
+
+        .cover-title {
+            font-size: 2.8rem;
+            font-weight: 700;
+            color: var(--gray-800);
+            margin-bottom: 20px;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeInUp 0.8s ease 0.4s forwards;
+            letter-spacing: -0.5px;
+        }
+
+        .cover-subtitle {
+            font-size: 1.25rem;
+            color: var(--gray-500);
+            margin-bottom: 40px;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeInUp 0.8s ease 0.6s forwards;
+        }
+
+        .cover-divider {
+            width: 60px;
+            height: 3px;
+            background: var(--orange-400);
+            margin: 0 auto 30px;
+            opacity: 0;
+            animation: fadeInUp 0.8s ease 0.5s forwards;
+        }
+
+        .cover-comparison {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 40px;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeInUp 0.8s ease 0.8s forwards;
+        }
+
+        .cover-item {
+            text-align: center;
+        }
+
+        .cover-item-label {
+            font-size: 0.85rem;
+            color: var(--gray-400);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 8px;
+        }
+
+        .cover-item-name {
+            font-size: 1rem;
+            color: var(--gray-700);
+            font-weight: 500;
+        }
+
+        .cover-vs {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--orange-400);
+        }
+
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes scaleIn {
+            from {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        /* 通用标题 */
+        .slide-header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .section-label {
+            font-size: 0.8rem;
+            color: var(--orange-500);
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .slide-title {
+            font-size: 2rem;
+            color: var(--gray-800);
+            font-weight: 600;
+        }
+
+        .slide-title-line {
+            width: 40px;
+            height: 2px;
+            background: var(--orange-400);
+            margin: 15px auto 0;
+        }
+
+        /* 目录页 */
+        .toc-slide {
+            background: var(--white);
+        }
+
+        .toc-list {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            max-width: 900px;
+            width: 100%;
+        }
+
+        .toc-item {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            padding: 20px 25px;
+            background: var(--gray-50);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            opacity: 0;
+            transform: translateX(-20px);
+        }
+
+        .toc-item.visible {
+            animation: slideIn 0.5s ease forwards;
+        }
+
+        .toc-item:hover {
+            background: var(--orange-50);
+            transform: translateX(5px);
+        }
+
+        @keyframes slideIn {
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .toc-number {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--orange-400);
+            min-width: 40px;
+        }
+
+        .toc-text {
+            font-size: 0.95rem;
+            color: var(--gray-600);
+        }
+
+        /* 毫米波科普页样式 */
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 25px;
+            max-width: 1100px;
+            width: 100%;
+        }
+
+        .tech-card {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 16px;
+            padding: 28px;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        .tech-card.visible {
+            animation: fadeInUp 0.6s ease forwards;
+        }
+
+        .tech-card-title {
+            font-size: 1.1rem;
+            color: var(--gray-800);
+            font-weight: 600;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .tech-card-content {
+            font-size: 0.9rem;
+            color: var(--gray-600);
+            line-height: 1.8;
+        }
+
+        .tech-highlight {
+            color: var(--orange-600);
+            font-weight: 600;
+        }
+
+        .tech-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .tech-list li {
+            padding: 6px 0;
+            padding-left: 18px;
+            position: relative;
+        }
+
+        .tech-list li::before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            color: var(--orange-500);
+            font-weight: bold;
+        }
+
+        /* 频谱图样式 */
+        .spectrum-bar {
+            display: flex;
+            height: 30px;
+            border-radius: 8px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+
+        .spectrum-section {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            color: white;
+            font-weight: 600;
+        }
+
+        /* 技术栈样式 */
+        .techstack-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 25px;
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        .techstack-card {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 16px;
+            padding: 25px;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        .techstack-card.visible {
+            animation: fadeInUp 0.6s ease forwards;
+        }
+
+        .techstack-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--orange-50);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+
+        .techstack-title {
+            font-size: 1rem;
+            color: var(--gray-800);
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .techstack-list {
+            list-style: none;
+            padding: 0;
+            font-size: 0.85rem;
+            color: var(--gray-600);
+            line-height: 1.7;
+        }
+
+        .techstack-list li {
+            padding: 4px 0;
+            padding-left: 16px;
+            position: relative;
+        }
+
+        .techstack-list li::before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: var(--orange-500);
+        }
+
+        /* 工具提示样式 */
+        .tooltip-wrapper {
+            position: relative;
+            display: inline;
+            cursor: help;
+            border-bottom: 1px dashed var(--orange-400);
+            color: var(--orange-600);
+            font-weight: 500;
+        }
+
+        .tooltip-wrapper .tooltip-content {
+            visibility: hidden;
+            opacity: 0;
+            position: absolute;
+            bottom: 120%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--gray-800);
+            color: var(--white);
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            width: 250px;
+            z-index: 1000;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            pointer-events: none;
+            font-weight: 400;
+            color: var(--gray-100);
+        }
+
+        .tooltip-wrapper .tooltip-content::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 6px solid transparent;
+            border-top-color: var(--gray-800);
+        }
+
+        .tooltip-wrapper:hover .tooltip-content {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        /* 挑战与问题样式 */
+        .challenges-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 25px;
+            max-width: 1100px;
+            width: 100%;
+        }
+
+        .challenge-card {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 16px;
+            padding: 25px;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        .challenge-card.visible {
+            animation: fadeInUp 0.6s ease forwards;
+        }
+
+        .challenge-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .challenge-badge {
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-high {
+            background: var(--red-100);
+            color: var(--red-500);
+        }
+
+        .badge-medium {
+            background: var(--yellow-100);
+            color: var(--yellow-500);
+        }
+
+        .badge-low {
+            background: var(--green-100);
+            color: var(--green-500);
+        }
+
+        .challenge-title {
+            font-size: 1rem;
+            color: var(--gray-800);
+            font-weight: 600;
+        }
+
+        .challenge-desc {
+            font-size: 0.9rem;
+            color: var(--gray-600);
+            line-height: 1.7;
+            margin-bottom: 12px;
+        }
+
+        .challenge-solution {
+            font-size: 0.85rem;
+            color: var(--orange-600);
+            background: var(--orange-50);
+            padding: 10px 12px;
+            border-radius: 8px;
+            border-left: 3px solid var(--orange-400);
+        }
+
+        .challenge-solution strong {
+            color: var(--orange-700);
+        }
+
+        /* MVP落地方案样式 */
+        .mvp-layout {
+            max-width: 1100px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+
+        .mvp-section {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 16px;
+            padding: 28px;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        .mvp-section.visible {
+            animation: fadeInUp 0.6s ease forwards;
+        }
+
+        .mvp-section-title {
+            font-size: 1.1rem;
+            color: var(--gray-800);
+            font-weight: 600;
+            margin-bottom: 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .mvp-section-title .title-line {
+            width: 30px;
+            height: 2px;
+            background: var(--orange-400);
+        }
+
+        .mvp-content {
+            font-size: 0.9rem;
+            color: var(--gray-600);
+            line-height: 1.8;
+        }
+
+        .mvp-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .mvp-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 12px 15px;
+            background: var(--gray-50);
+            border-radius: 10px;
+        }
+
+        .mvp-item-icon {
+            width: 32px;
+            height: 32px;
+            background: var(--orange-50);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .mvp-item-text h5 {
+            font-size: 0.95rem;
+            color: var(--gray-800);
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .mvp-item-text p {
+            font-size: 0.85rem;
+            color: var(--gray-500);
+            line-height: 1.6;
+        }
+
+        /* 架构图样式 */
+        .arch-flow {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 15px;
+            background: var(--gray-50);
+            border-radius: 10px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+
+        .arch-node {
+            padding: 8px 14px;
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 8px;
+            font-size: 0.8rem;
+            color: var(--gray-700);
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        .arch-node.highlight {
+            border-color: var(--orange-300);
+            background: var(--orange-50);
+            color: var(--orange-700);
+        }
+
+        .arch-arrow {
+            color: var(--orange-400);
+            font-size: 0.9rem;
+        }
+
+        /* 时间线样式 */
+        .timeline {
+            display: flex;
+            gap: 0;
+            position: relative;
+            padding: 20px 0;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            top: 35px;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--gray-200);
+        }
+
+        .timeline-item {
+            flex: 1;
+            text-align: center;
+            position: relative;
+            padding: 0 10px;
+        }
+
+        .timeline-dot {
+            width: 16px;
+            height: 16px;
+            background: var(--orange-400);
+            border-radius: 50%;
+            margin: 0 auto 12px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .timeline-month {
+            font-size: 0.8rem;
+            color: var(--orange-600);
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .timeline-desc {
+            font-size: 0.75rem;
+            color: var(--gray-500);
+            line-height: 1.5;
+        }
+
+        /* 异物检测动画 */
+        .foreign-object-demo {
+            width: 100%;
+            height: 120px;
+            background: var(--gray-50);
+            border-radius: 10px;
+            margin-top: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .demo-radar-wave {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 8px;
+            height: 8px;
+            background: var(--orange-500);
+            border-radius: 50%;
+        }
+
+        .demo-radar-wave::before,
+        .demo-radar-wave::after {
+            content: '';
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 50%;
+            animation: demoWave 2s ease-out infinite;
+        }
+
+        .demo-radar-wave::before {
+            bottom: 0;
+            width: 8px;
+            height: 8px;
+            background: var(--orange-500);
+            animation-delay: 0s;
+        }
+
+        .demo-radar-wave::after {
+            bottom: 0;
+            width: 8px;
+            height: 8px;
+            background: var(--orange-500);
+            animation-delay: 0.7s;
+        }
+
+        @keyframes demoWave {
+            0% {
+                opacity: 1;
+                width: 8px;
+                height: 8px;
+            }
+            100% {
+                opacity: 0;
+                width: 100px;
+                height: 100px;
+                bottom: 50px;
+            }
+        }
+
+        .demo-object {
+            position: absolute;
+            top: 30px;
+            left: 30%;
+            width: 12px;
+            height: 12px;
+            background: var(--red-500);
+            border-radius: 3px;
+            animation: objectAppear 3s ease-in-out infinite;
+        }
+
+        .demo-object:nth-child(3) {
+            left: 60%;
+            top: 50px;
+            width: 8px;
+            height: 8px;
+            animation-delay: 1s;
+        }
+
+        @keyframes objectAppear {
+            0%, 100% { opacity: 0.3; transform: scale(0.8); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
+
+        /* 方案卡片 */
+        .solutions-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 25px;
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        .solution-card {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 16px;
+            padding: 30px 25px;
+            transition: all 0.3s ease;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        .solution-card.visible {
+            animation: fadeInUp 0.6s ease forwards;
+        }
+
+        .solution-card:hover {
+            border-color: var(--orange-200);
+            box-shadow: 0 10px 30px rgba(245, 158, 66, 0.1);
+        }
+
+        /* 风机示意图 */
+        .turbine-diagram {
+            width: 100%;
+            height: 180px;
+            background: var(--gray-50);
+            border-radius: 12px;
+            margin-bottom: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .turbine-svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* 雷达波动画 */
+        .radar-wave {
+            animation: radarPulse 2s ease-in-out infinite;
+        }
+
+        .radar-wave-2 {
+            animation: radarPulse 2s ease-in-out 0.5s infinite;
+        }
+
+        .radar-wave-3 {
+            animation: radarPulse 2s ease-in-out 1s infinite;
+        }
+
+        @keyframes radarPulse {
+            0%, 100% {
+                opacity: 0.3;
+                transform: scale(0.8);
+            }
+            50% {
+                opacity: 1;
+                transform: scale(1.2);
+            }
+        }
+
+        /* 旋转动画 */
+        .blade-rotate {
+            animation: rotate 4s linear infinite;
+            transform-origin: center;
+        }
+
+        .blade-rotate-fast {
+            animation: rotate 2s linear infinite;
+            transform-origin: center;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* 摄像头光束 */
+        .camera-beam {
+            animation: beamPulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes beamPulse {
+            0%, 100% {
+                opacity: 0.2;
+            }
+            50% {
+                opacity: 0.8;
+            }
+        }
+
+        /* 虚线动画 */
+        .dashed-line {
+            stroke-dasharray: 8, 4;
+            animation: dashMove 1s linear infinite;
+        }
+
+        @keyframes dashMove {
+            to {
+                stroke-dashoffset: -12;
+            }
+        }
+
+        /* 地面雷达波纹 */
+        .ground-radar {
+            animation: groundRadar 2s ease-out infinite;
+        }
+
+        @keyframes groundRadar {
+            0% {
+                opacity: 1;
+                r: 5;
+            }
+            100% {
+                opacity: 0;
+                r: 30;
+            }
+        }
+
+        .solution-icon-wrapper {
+            width: 50px;
+            height: 50px;
+            background: var(--orange-50);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .solution-name {
+            font-size: 1.15rem;
+            color: var(--gray-800);
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .solution-detail {
+            font-size: 0.85rem;
+            color: var(--gray-500);
+            line-height: 1.7;
+        }
+
+        .detail-row {
+            display: flex;
+            margin-bottom: 10px;
+        }
+
+        .detail-label {
+            color: var(--gray-400);
+            min-width: 50px;
+            flex-shrink: 0;
+        }
+
+        .detail-value {
+            color: var(--gray-600);
+        }
+
+        /* 痛点对比 */
+        .pain-points-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 25px;
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        .pain-card {
+            background: var(--white);
+            border-radius: 16px;
+            padding: 25px;
+            border: 1px solid var(--gray-200);
+        }
+
+        .pain-card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.1rem;
+            color: var(--gray-700);
+            font-weight: 600;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .pain-item {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 12px;
+            padding: 12px;
+            background: var(--gray-50);
+            border-radius: 8px;
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        .pain-item.visible {
+            animation: fadeInUp 0.4s ease forwards;
+        }
+
+        .pain-badge {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            flex-shrink: 0;
+        }
+
+        .badge-red {
+            background: var(--red-100);
+            color: var(--red-500);
+        }
+
+        .badge-yellow {
+            background: var(--yellow-100);
+            color: var(--yellow-500);
+        }
+
+        .badge-green {
+            background: var(--green-100);
+            color: var(--green-500);
+        }
+
+        .pain-content {
+            font-size: 0.85rem;
+            color: var(--gray-600);
+            line-height: 1.6;
+        }
+
+        .pain-scheme {
+            font-weight: 600;
+            color: var(--gray-700);
+        }
+
+        .pain-desc {
+            color: var(--gray-500);
+            margin-top: 4px;
+        }
+
+        /* 对比表格 */
+        .comparison-table-wrapper {
+            max-width: 1100px;
+            width: 100%;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            background: var(--white);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--gray-200);
+        }
+
+        .comparison-table thead th {
+            background: var(--orange-50);
+            padding: 16px 15px;
+            font-size: 0.9rem;
+            color: var(--gray-700);
+            font-weight: 600;
+            text-align: center;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .comparison-table tbody td {
+            padding: 14px 15px;
+            font-size: 0.85rem;
+            color: var(--gray-600);
+            border-bottom: 1px solid var(--gray-100);
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        .comparison-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .comparison-table tbody tr:hover {
+            background: var(--orange-50);
+        }
+
+        .comparison-table tbody tr td:first-child {
+            text-align: left;
+            font-weight: 500;
+            color: var(--gray-700);
+        }
+
+        .val-good {
+            color: var(--green-500);
+            font-weight: 600;
+        }
+
+        .val-bad {
+            color: var(--red-500);
+        }
+
+        .val-mid {
+            color: var(--yellow-500);
+        }
+
+        /* 总结卡片 */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 25px;
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        .summary-card {
+            border-radius: 16px;
+            padding: 28px;
+            position: relative;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        .summary-card.visible {
+            animation: fadeInUp 0.6s ease forwards;
+        }
+
+        .summary-card.eliminate {
+            background: var(--red-100);
+            border: 1px solid var(--red-500);
+        }
+
+        .summary-card.transition {
+            background: var(--yellow-100);
+            border: 1px solid var(--yellow-500);
+        }
+
+        .summary-card.optimal {
+            background: var(--green-100);
+            border: 1px solid var(--green-500);
+        }
+
+        .summary-badge {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .summary-badge.eliminate {
+            background: var(--red-500);
+            color: var(--white);
+        }
+
+        .summary-badge.transition {
+            background: var(--yellow-500);
+            color: var(--gray-800);
+        }
+
+        .summary-badge.optimal {
+            background: var(--green-500);
+            color: var(--white);
+        }
+
+        .summary-title {
+            font-size: 1.1rem;
+            color: var(--gray-800);
+            margin-bottom: 18px;
+            font-weight: 600;
+        }
+
+        .summary-section {
+            margin-bottom: 12px;
+        }
+
+        .summary-label {
+            font-size: 0.8rem;
+            color: var(--gray-500);
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+
+        .summary-value {
+            font-size: 0.85rem;
+            color: var(--gray-700);
+            line-height: 1.6;
+        }
+
+        /* 建议页 */
+        .recommendations {
+            max-width: 900px;
+            width: 100%;
+        }
+
+        .priority-list {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .priority-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 20px;
+            padding: 22px 25px;
+            background: var(--white);
+            border-radius: 12px;
+            border-left: 3px solid;
+            opacity: 0;
+            transform: translateX(-20px);
+        }
+
+        .priority-item.visible {
+            animation: slideIn 0.5s ease forwards;
+        }
+
+        .priority-1 { border-color: var(--green-500); }
+        .priority-2 { border-color: var(--yellow-500); }
+        .priority-3 { border-color: var(--red-500); }
+
+        .priority-rank {
+            font-size: 2rem;
+            font-weight: 700;
+            min-width: 50px;
+            text-align: center;
+        }
+
+        .priority-1 .priority-rank { color: var(--green-500); }
+        .priority-2 .priority-rank { color: var(--yellow-500); }
+        .priority-3 .priority-rank { color: var(--red-500); }
+
+        .priority-content {
+            flex: 1;
+        }
+
+        .priority-title {
+            font-size: 1.1rem;
+            color: var(--gray-800);
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .priority-desc {
+            font-size: 0.85rem;
+            color: var(--gray-500);
+            line-height: 1.6;
+            margin-bottom: 12px;
+        }
+
+        .priority-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .tag {
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+        }
+
+        .tag-green { background: var(--green-100); color: var(--green-500); }
+        .tag-yellow { background: var(--yellow-100); color: var(--yellow-500); }
+        .tag-red { background: var(--red-100); color: var(--red-500); }
+
+        .decision-box {
+            margin-top: 25px;
+            padding: 20px;
+            background: var(--orange-50);
+            border-radius: 12px;
+            border: 1px solid var(--orange-200);
+        }
+
+        .decision-title {
+            color: var(--orange-600);
+            font-size: 0.95rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .decision-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 8px;
+            color: var(--gray-600);
+            font-size: 0.9rem;
+        }
+
+        .decision-arrow {
+            color: var(--orange-500);
+        }
+
+        .decision-result {
+            font-weight: 600;
+            color: var(--orange-600);
+        }
+
+        /* 结束页 */
+        .end-slide {
+            background: linear-gradient(135deg, var(--white) 0%, var(--orange-50) 100%);
+            text-align: center;
+        }
+
+        .end-content {
+            max-width: 700px;
+        }
+
+        .end-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 30px;
+        }
+
+        .end-conclusion {
+            font-size: 1.8rem;
+            color: var(--gray-800);
+            margin-bottom: 25px;
+            line-height: 1.6;
+        }
+
+        .end-highlight {
+            color: var(--orange-500);
+            font-weight: 600;
+        }
+
+        .end-next-steps {
+            font-size: 1rem;
+            color: var(--gray-500);
+            margin-bottom: 15px;
+        }
+
+        .end-qa {
+            font-size: 0.9rem;
+            color: var(--gray-400);
+        }
+
+        /* 导航按钮 */
+        .nav-buttons {
+            position: fixed;
+            bottom: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            z-index: 100;
+            background: var(--white);
+            padding: 10px 20px;
+            border-radius: 30px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-btn {
+            width: 40px;
+            height: 40px;
+            border: 1px solid var(--gray-200);
+            background: var(--white);
+            color: var(--gray-600);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .nav-btn:hover {
+            background: var(--orange-50);
+            border-color: var(--orange-300);
+            color: var(--orange-600);
+        }
+
+        .nav-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .slide-counter {
+            color: var(--gray-500);
+            font-size: 0.9rem;
+            min-width: 50px;
+            text-align: center;
+        }
+
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 3px;
+            background: var(--orange-400);
+            transition: width 0.3s ease;
+            z-index: 101;
+        }
+
+        /* 动画延迟 */
+        .delay-1 { animation-delay: 0.1s !important; }
+        .delay-2 { animation-delay: 0.2s !important; }
+        .delay-3 { animation-delay: 0.3s !important; }
+        .delay-4 { animation-delay: 0.4s !important; }
+        .delay-5 { animation-delay: 0.5s !important; }
+        .delay-6 { animation-delay: 0.6s !important; }
+
+        /* 响应式 */
+        @media (max-width: 1024px) {
+            .slide { padding: 40px 50px; }
+            .cover-title { font-size: 2rem; }
+            .slide-title { font-size: 1.6rem; }
+            .solutions-grid, .pain-points-grid, .summary-grid {
+                grid-template-columns: 1fr;
+            }
+            .toc-list { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 768px) {
+            .slide { padding: 30px 25px; }
+            .cover-comparison { flex-direction: column; gap: 20px; }
+            .cover-title { font-size: 1.6rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="progress-bar" id="progressBar"></div>
+
+    <div class="presentation" id="presentation">
+        <!-- 封面页 -->
+        <div class="slide cover-slide active" data-slide="0">
+            <div class="cover-content">
+                <div class="cover-icon">
+                    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="50" cy="50" r="45" fill="#fff8f0" stroke="#ffb066" stroke-width="2"/>
+                        <path d="M50 20C50 20 60 35 60 45C60 50 55 55 50 55C45 55 40 50 40 45C40 35 50 20 50 20Z" fill="#f59e42"/>
+                        <path d="M50 80C50 80 60 65 60 55C60 50 55 45 50 45C45 45 40 50 40 55C40 65 50 80 50 80Z" fill="#f59e42" opacity="0.7"/>
+                        <path d="M20 50C20 50 35 40 45 40C50 40 55 45 55 50C55 55 50 60 45 60C35 60 20 50 20 50Z" fill="#f59e42" opacity="0.5"/>
+                        <path d="M80 50C80 50 65 40 55 40C50 40 45 45 45 50C45 55 50 60 55 60C65 60 80 50 80 50Z" fill="#f59e42" opacity="0.5"/>
+                        <circle cx="50" cy="50" r="5" fill="#ffffff"/>
+                    </svg>
+                </div>
+                <h1 class="cover-title">风电叶片间隙检测方案对比</h1>
+                <div class="cover-divider"></div>
+                <p class="cover-subtitle">天气适应性 · 抗共振干扰 · 落地可行性</p>
+                <div class="cover-comparison">
+                    <div class="cover-item">
+                        <div class="cover-item-label">方案1</div>
+                        <div class="cover-item-name">内部视觉拍照</div>
+                    </div>
+                    <div class="cover-vs">vs</div>
+                    <div class="cover-item">
+                        <div class="cover-item-label">方案2</div>
+                        <div class="cover-item-name">内部毫米波雷达</div>
+                    </div>
+                    <div class="cover-vs">vs</div>
+                    <div class="cover-item">
+                        <div class="cover-item-label">方案3</div>
+                        <div class="cover-item-name">地面毫米波雷达</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 目录页 -->
+        <div class="slide toc-slide" data-slide="1">
+            <div class="slide-header">
+                <div class="section-label">Contents</div>
+                <h2 class="slide-title">目录</h2>
+                <div class="slide-title-line"></div>
+            </div>
+            <div class="toc-list">
+                <div class="toc-item delay-1" onclick="goToSlide(2)">
+                    <div class="toc-number">01</div>
+                    <div class="toc-text">方案核心定义</div>
+                </div>
+                <div class="toc-item delay-2" onclick="goToSlide(3)">
+                    <div class="toc-number">02</div>
+                    <div class="toc-text">核心痛点直击对比</div>
+                </div>
+                <div class="toc-item delay-3" onclick="goToSlide(4)">
+                    <div class="toc-number">03</div>
+                    <div class="toc-text">全维度性能拆解</div>
+                </div>
+                <div class="toc-item delay-4" onclick="goToSlide(5)">
+                    <div class="toc-number">04</div>
+                    <div class="toc-text">毫米波雷达科普</div>
+                </div>
+                <div class="toc-item delay-5" onclick="goToSlide(6)">
+                    <div class="toc-number">05</div>
+                    <div class="toc-text">方案3技术栈与挑战</div>
+                </div>
+                <div class="toc-item delay-6" onclick="goToSlide(7)">
+                    <div class="toc-number">06</div>
+                    <div class="toc-text">潜在问题与应对策略</div>
+                </div>
+                <div class="toc-item delay-1" onclick="goToSlide(8)">
+                    <div class="toc-number">07</div>
+                    <div class="toc-text">MVP落地方案</div>
+                </div>
+                <div class="toc-item delay-2" onclick="goToSlide(9)">
+                    <div class="toc-number">08</div>
+                    <div class="toc-text">各方案痛点与优势总结</div>
+                </div>
+                <div class="toc-item delay-3" onclick="goToSlide(10)">
+                    <div class="toc-number">09</div>
+                    <div class="toc-text">选型建议与落地优先级</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 方案定义页 -->
+        <div class="slide" data-slide="2">
+            <div class="slide-header">
+                <div class="section-label">Part 01</div>
+                <h2 class="slide-title">方案核心定义</h2>
+                <div class="slide-title-line"></div>
+            </div>
+            <div class="solutions-grid">
+                <div class="solution-card delay-1">
+                    <div class="turbine-diagram">
+                        <svg class="turbine-svg" viewBox="0 0 300 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <!-- 天空背景 -->
+                            <rect width="300" height="180" fill="#faf8f5"/>
+                            
+                            <!-- 塔筒 -->
+                            <rect x="145" y="60" width="10" height="120" fill="#d1d5db" rx="2"/>
+                            
+                            <!-- 机舱 -->
+                            <rect x="130" y="50" width="30" height="20" fill="#9ca3af" rx="3"/>
+                            
+                            <!-- 旋转叶片 -->
+                            <g class="blade-rotate" style="transform-origin: 145px 50px;">
+                                <!-- 叶片1 -->
+                                <path d="M145 50 L142 15 Q145 5 148 15 L145 50Z" fill="#f59e42"/>
+                                <!-- 叶片2 -->
+                                <path d="M145 50 L115 30 Q105 25 115 35 L145 50Z" fill="#f59e42" opacity="0.8"/>
+                                <!-- 叶片3 -->
+                                <path d="M145 50 L175 30 Q185 25 175 35 L145 50Z" fill="#f59e42" opacity="0.8"/>
+                                <!-- 中心点 -->
+                                <circle cx="145" cy="50" r="3" fill="#374151"/>
+                            </g>
+                            
+                            <!-- 摄像头（向下） -->
+                            <rect x="125" y="65" width="10" height="8" fill="#f59e42" rx="1"/>
+                            <circle cx="130" cy="73" r="2" fill="#ef4444"/>
+                            
+                            <!-- 摄像头光束（向下） -->
+                            <polygon class="camera-beam" points="130,73 120,110 140,110" fill="#f59e42" opacity="0.3"/>
+                            
+                            <!-- 间隙箭头 -->
+                            <line class="dashed-line" x1="118" y1="80" x2="118" y2="105" stroke="#f59e42" stroke-width="1.5"/>
+                            <text x="105" y="95" font-size="7" fill="#f59e42">间隙</text>
+                            
+                            <!-- 地面 -->
+                            <rect x="0" y="160" width="300" height="20" fill="#e5e7eb"/>
+                            
+                            <!-- 标签 -->
+                            <rect x="195" y="70" width="85" height="40" fill="white" rx="4" stroke="#f59e42" stroke-width="1"/>
+                            <text x="205" y="82" font-size="7" fill="#374151" font-weight="600">方案1</text>
+                            <text x="205" y="92" font-size="6" fill="#6b7280">摄像头向下</text>
+                            <text x="205" y="102" font-size="6" fill="#6b7280">受光照/天气影响</text>
+                        </svg>
+                    </div>
+                    <h3 class="solution-name">内部向下视觉拍照</h3>
+                    <div class="solution-detail">
+                        <div class="detail-row">
+                            <span class="detail-label">位置</span>
+                            <span class="detail-value">机舱内部，主轴附近</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">原理</span>
+                            <span class="detail-value">摄像头拍摄间隙图像</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">依赖</span>
+                            <span class="detail-value">光学成像、光照条件</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="solution-card delay-2">
+                    <div class="turbine-diagram">
+                        <svg class="turbine-svg" viewBox="0 0 300 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <!-- 天空背景 -->
+                            <rect width="300" height="180" fill="#faf8f5"/>
+                            
+                            <!-- 塔筒 -->
+                            <rect x="145" y="60" width="10" height="120" fill="#d1d5db" rx="2"/>
+                            
+                            <!-- 机舱 -->
+                            <rect x="130" y="50" width="30" height="20" fill="#9ca3af" rx="3"/>
+                            
+                            <!-- 旋转叶片 -->
+                            <g class="blade-rotate" style="transform-origin: 145px 50px;">
+                                <path d="M145 50 L142 15 Q145 5 148 15 L145 50Z" fill="#f59e42"/>
+                                <path d="M145 50 L115 30 Q105 25 115 35 L145 50Z" fill="#f59e42" opacity="0.8"/>
+                                <path d="M145 50 L175 30 Q185 25 175 35 L145 50Z" fill="#f59e42" opacity="0.8"/>
+                                <circle cx="145" cy="50" r="3" fill="#374151"/>
+                            </g>
+                            
+                            <!-- 毫米波雷达（机舱内） -->
+                            <rect x="125" y="65" width="10" height="8" fill="#3b82f6" rx="1"/>
+                            <circle cx="130" cy="69" r="3" fill="#3b82f6" class="radar-wave"/>
+                            <circle cx="130" cy="69" r="3" fill="#3b82f6" class="radar-wave-2"/>
+                            
+                            <!-- 雷达波束（向下） -->
+                            <polygon class="camera-beam" points="130,73 118,108 142,108" fill="#3b82f6" opacity="0.2"/>
+                            
+                            <!-- 振动波纹（表示共振） -->
+                            <path d="M120 55 Q125 52 130 55 Q135 52 140 55" stroke="#ef4444" stroke-width="1" fill="none" opacity="0.5"/>
+                            <text x="100" y="50" font-size="6" fill="#ef4444">共振</text>
+                            
+                            <!-- 间隙箭头 -->
+                            <line class="dashed-line" x1="115" y1="80" x2="115" y2="105" stroke="#3b82f6" stroke-width="1.5"/>
+                            <text x="102" y="95" font-size="7" fill="#3b82f6">间隙</text>
+                            
+                            <!-- 地面 -->
+                            <rect x="0" y="160" width="300" height="20" fill="#e5e7eb"/>
+                            
+                            <!-- 标签 -->
+                            <rect x="195" y="70" width="85" height="40" fill="white" rx="4" stroke="#3b82f6" stroke-width="1"/>
+                            <text x="205" y="82" font-size="7" fill="#374151" font-weight="600">方案2</text>
+                            <text x="205" y="92" font-size="6" fill="#6b7280">雷达向下</text>
+                            <text x="205" y="102" font-size="6" fill="#6b7280">不受天气影响</text>
+                        </svg>
+                    </div>
+                    <h3 class="solution-name">内部向下毫米波雷达</h3>
+                    <div class="solution-detail">
+                        <div class="detail-row">
+                            <span class="detail-label">位置</span>
+                            <span class="detail-value">机舱内部（同方案1）</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">原理</span>
+                            <span class="detail-value">电磁波直接测量间隙</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">改进</span>
+                            <span class="detail-value">弃用光学，保留直接测量</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="solution-card delay-3">
+                    <div class="turbine-diagram">
+                        <svg class="turbine-svg" viewBox="0 0 300 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <!-- 天空背景 -->
+                            <rect width="300" height="180" fill="#faf8f5"/>
+                            
+                            <!-- 塔筒 -->
+                            <rect x="145" y="40" width="10" height="130" fill="#d1d5db" rx="2"/>
+                            
+                            <!-- 机舱 -->
+                            <rect x="130" y="30" width="30" height="20" fill="#9ca3af" rx="3"/>
+                            
+                            <!-- 旋转叶片 -->
+                            <g class="blade-rotate" style="transform-origin: 145px 30px;">
+                                <path d="M145 30 L142 -5 Q145 -15 148 -5 L145 30Z" fill="#f59e42"/>
+                                <path d="M145 30 L115 10 Q105 5 115 15 L145 30Z" fill="#f59e42" opacity="0.8"/>
+                                <path d="M145 30 L175 10 Q185 5 175 15 L145 30Z" fill="#f59e42" opacity="0.8"/>
+                                <circle cx="145" cy="30" r="3" fill="#374151"/>
+                            </g>
+                            
+                            <!-- 地面 -->
+                            <rect x="0" y="155" width="300" height="25" fill="#d1d5db"/>
+                            <rect x="0" y="155" width="300" height="3" fill="#9ca3af"/>
+                            
+                            <!-- 地面雷达 -->
+                            <circle cx="145" cy="165" r="4" fill="#22c55e"/>
+                            <circle cx="145" cy="165" r="4" fill="#22c55e" class="radar-wave"/>
+                            <circle cx="145" cy="165" r="4" fill="#22c55e" class="radar-wave-2"/>
+                            <circle cx="145" cy="165" r="4" fill="#22c55e" class="radar-wave-3"/>
+                            
+                            <!-- 向上雷达波 -->
+                            <polygon class="camera-beam" points="145,160 135,80 155,80" fill="#22c55e" opacity="0.15"/>
+                            
+                            <!-- 测量线（向上） -->
+                            <line class="dashed-line" x1="165" y1="40" x2="165" y2="160" stroke="#22c55e" stroke-width="1.5"/>
+                            <text x="170" y="100" font-size="7" fill="#22c55e">测量</text>
+                            
+                            <!-- 静基座标记 -->
+                            <rect x="30" y="168" width="35" height="15" fill="#22c55e" opacity="0.2" rx="2"/>
+                            <text x="32" y="178" font-size="5" fill="#22c55e" font-weight="600">静基座</text>
+                            
+                            <!-- 标签 -->
+                            <rect x="200" y="70" width="85" height="40" fill="white" rx="4" stroke="#22c55e" stroke-width="1"/>
+                            <text x="210" y="82" font-size="7" fill="#374151" font-weight="600">方案3</text>
+                            <text x="210" y="92" font-size="6" fill="#6b7280">地面向上</text>
+                            <text x="210" y="102" font-size="6" fill="#6b7280">无共振干扰</text>
+                        </svg>
+                    </div>
+                    <h3 class="solution-name">地面向上毫米波雷达</h3>
+                    <div class="solution-detail">
+                        <div class="detail-row">
+                            <span class="detail-label">位置</span>
+                            <span class="detail-value">风机底部混凝土底座</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">原理</span>
+                            <span class="detail-value">测量高度变化，算法反演</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">创新</span>
+                            <span class="detail-value">静基座安装，根治振动</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 核心痛点对比页 -->
+        <div class="slide" data-slide="3">
+            <div class="slide-header">
+                <div class="section-label">Part 02</div>
+                <h2 class="slide-title">核心痛点直击对比</h2>
+                <div class="slide-title-line"></div>
+            </div>
+            <div class="pain-points-grid">
+                <div class="pain-card">
+                    <div class="pain-card-header">
+                        <svg class="icon icon-gray" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M20 17.58A5 5 0 0018 8h-1.26A8 8 0 104 16.25"/>
+                            <path d="M8 16v.01"/>
+                            <path d="M8 20v.01"/>
+                            <path d="M12 18v.01"/>
+                            <path d="M12 22v.01"/>
+                            <path d="M16 16v.01"/>
+                            <path d="M16 20v.01"/>
+                        </svg>
+                        <span>天气适应性</span>
+                    </div>
+                    <div class="pain-item delay-1">
+                        <span class="pain-badge badge-red">方案1</span>
+                        <div class="pain-content">
+                            <div class="pain-scheme">完全失效</div>
+                            <div class="pain-desc">雨水挂壁、雾气遮挡、沙尘糊镜头</div>
+                        </div>
+                    </div>
+                    <div class="pain-item delay-2">
+                        <span class="pain-badge badge-yellow">方案2</span>
+                        <div class="pain-content">
+                            <div class="pain-scheme">部分解决</div>
+                            <div class="pain-desc">穿透雨水雾气，但机舱凝露影响信号</div>
+                        </div>
+                    </div>
+                    <div class="pain-item delay-3">
+                        <span class="pain-badge badge-green">方案3</span>
+                        <div class="pain-content">
+                            <div class="pain-scheme">完全解决</div>
+                            <div class="pain-desc">电磁波穿透所有天气，无限制</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="pain-card">
+                    <div class="pain-card-header">
+                        <svg class="icon icon-gray" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="5"/>
+                            <path d="M12 1v2"/>
+                            <path d="M12 21v2"/>
+                            <path d="M4.22 4.22l1.42 1.42"/>
+                            <path d="M18.36 18.36l1.42 1.42"/>
+                            <path d="M1 12h2"/>
+                            <path d="M21 12h2"/>
+                            <path d="M4.22 19.78l1.42-1.42"/>
+                            <path d="M18.36 5.64l1.42-1.42"/>
+                        </svg>
+                        <span>照明依赖</span>
+                    </div>
+                    <div class="pain-item delay-1">
+                        <span class="pain-badge badge-red">方案1</span>
+                        <div class="pain-content">
+                            <div class="pain-scheme">严重依赖</div>
+                            <div class="pain-desc">夜间需补光灯常亮，老化后失效</div>
+                        </div>
+                    </div>
+                    <div class="pain-item delay-2">
+                        <span class="pain-badge badge-green">方案2</span>
+                        <div class="pain-content">
+                            <div class="pain-scheme">完全独立</div>
+                            <div class="pain-desc">电磁波无需光照，昼夜精度一致</div>
+                        </div>
+                    </div>
+                    <div class="pain-item delay-3">
+                        <span class="pain-badge badge-green">方案3</span>
+                        <div class="pain-content">
+                            <div class="pain-scheme">完全独立</div>
+                            <div class="pain-desc">无光照依赖，全天时工作</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="pain-card">
+                    <div class="pain-card-header">
+                        <svg class="icon icon-gray" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 2v8"/>
+                            <path d="M12 18v4"/>
+                            <path d="M8 10l4-6 4 6"/>
+                            <path d="M6 14h12"/>
+                            <path d="M6 18h12"/>
+                        </svg>
+                        <span>共振干扰</span>
+                    </div>
+                    <div class="pain-item delay-1">
+                        <span class="pain-badge badge-red">方案1</span>
+                        <div class="pain-content">
+                            <div class="pain-scheme">严重干扰</div>
+                            <div class="pain-desc">振动剧烈，图像模糊、基准漂移</div>
+                        </div>
+                    </div>
+                    <div class="pain-item delay-2">
+                        <span class="pain-badge badge-red">方案2</span>
+                        <div class="pain-content">
+                            <div class="pain-scheme">干扰未根治</div>
+                            <div class="pain-desc">同安装位，共振导致基准漂移</div>
+                        </div>
+                    </div>
+                    <div class="pain-item delay-3">
+                        <span class="pain-badge badge-green">方案3</span>
+                        <div class="pain-content">
+                            <div class="pain-scheme">根源根治</div>
+                            <div class="pain-desc">底座振动衰减99%，基准静止</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 全维度性能对比页 -->
+        <div class="slide" data-slide="4">
+            <div class="slide-header">
+                <div class="section-label">Part 03</div>
+                <h2 class="slide-title">全维度性能拆解</h2>
+                <div class="slide-title-line"></div>
+            </div>
+            <div class="comparison-table-wrapper">
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 20%">对比维度</th>
+                            <th style="width: 27%">方案1<br><span style="font-weight: 400; font-size: 0.8rem; color: var(--gray-400)">内部视觉</span></th>
+                            <th style="width: 27%">方案2<br><span style="font-weight: 400; font-size: 0.8rem; color: var(--gray-400)">内部雷达</span></th>
+                            <th style="width: 27%">方案3<br><span style="font-weight: 400; font-size: 0.8rem; color: var(--gray-400)">地面雷达</span></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>测量精度（动态）</td>
+                            <td class="val-bad">低</td>
+                            <td class="val-mid">中</td>
+                            <td class="val-good">高</td>
+                        </tr>
+                        <tr>
+                            <td>安装维护难度</td>
+                            <td class="val-bad">高</td>
+                            <td class="val-mid">高</td>
+                            <td class="val-good">低</td>
+                        </tr>
+                        <tr>
+                            <td>结构干涉风险</td>
+                            <td class="val-bad">高</td>
+                            <td class="val-mid">高</td>
+                            <td class="val-good">无</td>
+                        </tr>
+                        <tr>
+                            <td>故障点数量</td>
+                            <td class="val-bad">多</td>
+                            <td class="val-good">少</td>
+                            <td class="val-good">少</td>
+                        </tr>
+                        <tr>
+                            <td>昼夜连续工作</td>
+                            <td class="val-bad">否</td>
+                            <td class="val-good">是</td>
+                            <td class="val-good">是</td>
+                        </tr>
+                        <tr>
+                            <td>运维成本</td>
+                            <td class="val-bad">高</td>
+                            <td class="val-mid">中</td>
+                            <td class="val-good">低</td>
+                        </tr>
+                        <tr>
+                            <td>异物误判风险</td>
+                            <td class="val-bad">高</td>
+                            <td class="val-mid">中</td>
+                            <td class="val-good">低</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 毫米波科普页 -->
+        <div class="slide" data-slide="5">
+            <div class="slide-header">
+                <div class="section-label">Part 04</div>
+                <h2 class="slide-title">毫米波雷达科普</h2>
+                <div class="slide-title-line"></div>
+            </div>
+            <div class="tech-grid">
+                <div class="tech-card delay-1">
+                    <h3 class="tech-card-title">
+                        <svg class="icon icon-orange" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"/>
+                            <path d="M12 2a15 15 0 0 1 0 20"/>
+                            <path d="M12 2a15 15 0 0 0 0 20"/>
+                            <path d="M2 12h20"/>
+                        </svg>
+                        什么是毫米波？
+                    </h3>
+                    <div class="tech-card-content">
+                        <p>毫米波是指波长在 <span class="tech-highlight">1~10mm</span> 之间的电磁波，对应频率范围为 <span class="tech-highlight">30~300GHz</span>。</p>
+                        <div class="spectrum-bar">
+                            <div class="spectrum-section" style="width: 20%; background: #9ca3af;">无线电波</div>
+                            <div class="spectrum-section" style="width: 15%; background: #d1d5db; color: #374151;">微波</div>
+                            <div class="spectrum-section" style="width: 25%; background: #f59e42;">毫米波</div>
+                            <div class="spectrum-section" style="width: 20%; background: #3b82f6;">红外线</div>
+                            <div class="spectrum-section" style="width: 20%; background: #8b5cf6;">可见光</div>
+                        </div>
+                        <ul class="tech-list">
+                            <li>波长极短，可精准检测微小距离变化</li>
+                            <li>穿透能力强，不受雨雾沙尘影响</li>
+                            <li>无需光照，昼夜均可工作</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="tech-card delay-2">
+                    <h3 class="tech-card-title">
+                        <svg class="icon icon-orange" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 2v4"/>
+                            <path d="M12 18v4"/>
+                            <path d="M4.93 4.93l2.83 2.83"/>
+                            <path d="M16.24 16.24l2.83 2.83"/>
+                            <path d="M2 12h4"/>
+                            <path d="M18 12h4"/>
+                            <path d="M4.93 19.07l2.83-2.83"/>
+                            <path d="M16.24 7.76l2.83-2.83"/>
+                        </svg>
+                        工作原理
+                    </h3>
+                    <div class="tech-card-content">
+                        <p>毫米波雷达通过发射电磁波并接收反射信号，计算目标距离：</p>
+                        <ul class="tech-list">
+                            <li><span class="tech-highlight">FMCW体制</span>：线性调频连续波，精度高</li>
+                            <li><span class="tech-highlight">飞行时间法</span>：通过回波延迟计算距离</li>
+                            <li><span class="tech-highlight">多普勒效应</span>：可检测目标运动速度</li>
+                            <li>典型测量精度可达 <span class="tech-highlight">±1mm</span> 级别</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="tech-card delay-3">
+                    <h3 class="tech-card-title">
+                        <svg class="icon icon-green" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                        </svg>
+                        核心优势
+                    </h3>
+                    <div class="tech-card-content">
+                        <ul class="tech-list">
+                            <li><span class="tech-highlight">全天候工作</span>：穿透雨、雾、雪、沙尘</li>
+                            <li><span class="tech-highlight">非接触测量</span>：无机械磨损，寿命长</li>
+                            <li><span class="tech-highlight">抗干扰强</span>：不受电磁噪声影响</li>
+                            <li><span class="tech-highlight">隐私保护</span>：非光学成像，不涉及图像</li>
+                            <li><span class="tech-highlight">低功耗</span>：适合长期无人值守</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="tech-card delay-4">
+                    <h3 class="tech-card-title">
+                        <svg class="icon icon-orange" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="2" y="3" width="20" height="14" rx="2"/>
+                            <path d="M8 21h8"/>
+                            <path d="M12 17v4"/>
+                        </svg>
+                        典型应用场景
+                    </h3>
+                    <div class="tech-card-content">
+                        <ul class="tech-list">
+                            <li><span class="tech-highlight">自动驾驶</span>：车载毫米波雷达</li>
+                            <li><span class="tech-highlight">气象监测</span>：降水粒子检测</li>
+                            <li><span class="tech-highlight">工业检测</span>：液位、料位测量</li>
+                            <li><span class="tech-highlight">安防监控</span>：人体目标检测</li>
+                            <li><span class="tech-highlight">风电行业</span>：叶片形变、间隙监测</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 方案3技术栈与挑战页 -->
+        <div class="slide" data-slide="6">
+            <div class="slide-header">
+                <div class="section-label">Part 05</div>
+                <h2 class="slide-title">方案3技术栈与可行性</h2>
+                <div class="slide-title-line"></div>
+            </div>
+            <div class="techstack-grid">
+                <div class="techstack-card delay-1">
+                    <div class="techstack-icon">
+                        <svg class="icon icon-orange" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="4" y="4" width="16" height="16" rx="2"/>
+                            <path d="M9 9h6v6H9z"/>
+                            <path d="M9 1v3"/>
+                            <path d="M15 1v3"/>
+                            <path d="M9 20v3"/>
+                            <path d="M15 20v3"/>
+                            <path d="M20 9h3"/>
+                            <path d="M20 14h3"/>
+                            <path d="M1 9h3"/>
+                            <path d="M1 14h3"/>
+                        </svg>
+                    </div>
+                    <h4 class="techstack-title">硬件技术栈</h4>
+                    <ul class="techstack-list">
+                        <li>
+                            <span class="tooltip-wrapper">77GHz 毫米波雷达芯片
+                                <span class="tooltip-content">工作在77GHz频段的毫米波雷达芯片，波长约3.9mm。该频段是车载雷达标准频段，技术成熟，供应链完善。高分辨率，可实现毫米级测距精度。</span>
+                            </span>
+                        </li>
+                        <li>高精度天线阵列设计</li>
+                        <li>
+                            <span class="tooltip-wrapper">工业级防护外壳（IP67）
+                                <span class="tooltip-content">IP67防护等级：6表示完全防尘，7表示可在1米深水中浸泡30分钟不进水。适用于户外恶劣环境，能承受暴雨、沙尘等工况。</span>
+                            </span>
+                        </li>
+                        <li>
+                            <span class="tooltip-wrapper">防雷/防浪涌电路
+                                <span class="tooltip-content">风机塔架是雷击高发区域。防雷模块包括避雷针、浪涌保护器（SPD）、接地系统等，可承受数十千安的雷击电流，保护电子设备不被损坏。</span>
+                            </span>
+                        </li>
+                        <li>太阳能+电池双供电</li>
+                        <li>4G/5G 通信模块</li>
+                    </ul>
+                </div>
+                <div class="techstack-card delay-2">
+                    <div class="techstack-icon">
+                        <svg class="icon icon-orange" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M16 18l6-6-6-6"/>
+                            <path d="M8 6l-6 6 6 6"/>
+                        </svg>
+                    </div>
+                    <h4 class="techstack-title">软件与算法</h4>
+                    <ul class="techstack-list">
+                        <li>
+                            <span class="tooltip-wrapper">FMCW 信号处理算法
+                                <span class="tooltip-content">FMCW（Frequency Modulated Continuous Wave）：线性调频连续波技术。通过发射频率线性变化的连续波，比较发射信号与回波信号的频率差来计算目标距离。优点是功耗低、精度高、可同时测量距离和速度。</span>
+                            </span>
+                        </li>
+                        <li>
+                            <span class="tooltip-wrapper">FFT + CFAR 目标检测
+                                <span class="tooltip-content">FFT（快速傅里叶变换）：将时域信号转换为频域信号，提取目标频率信息。CFAR（恒虚警率检测）：自动适应噪声环境，动态调整检测阈值，确保在不同环境下保持稳定的虚警概率。</span>
+                            </span>
+                        </li>
+                        <li>
+                            <span class="tooltip-wrapper">卡尔曼滤波降噪
+                                <span class="tooltip-content">一种递归的最优估计算法，通过预测和更新两个步骤，结合系统模型和观测数据，从噪声中提取真实信号。特别适合处理动态系统的时序数据，能有效平滑测量抖动。</span>
+                            </span>
+                        </li>
+                        <li>
+                            <span class="tooltip-wrapper">高度-间隙映射模型
+                                <span class="tooltip-content">建立地面雷达测量的叶片垂直高度与主轴-叶片间隙之间的数学映射关系。通过几何建模和实测数据拟合，将间接测量值转换为目标间隙值。</span>
+                            </span>
+                        </li>
+                        <li>
+                            <span class="tooltip-wrapper">叶片形变补偿算法
+                                <span class="tooltip-content">风机叶片在风速作用下会产生弹性弯曲变形，影响间隙测量。该算法根据实时风速、叶片材料特性和结构力学模型，计算并补偿形变带来的测量误差。</span>
+                            </span>
+                        </li>
+                        <li>
+                            <span class="tooltip-wrapper">机器学习异常检测
+                                <span class="tooltip-content">利用历史数据训练分类模型（如孤立森林、SVM等），自动识别异常测量数据。可区分真实间隙变化与干扰信号，降低误报率。</span>
+                            </span>
+                        </li>
+                    </ul>
+                </div>
+                <div class="techstack-card delay-3">
+                    <div class="techstack-icon">
+                        <svg class="icon icon-orange" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+                        </svg>
+                    </div>
+                    <h4 class="techstack-title">核心挑战</h4>
+                    <ul class="techstack-list">
+                        <li>
+                            <span class="tooltip-wrapper">标定
+                                <span class="tooltip-content">建立精确的高度-间隙对应关系：通过已知间隙值的标准测试，采集雷达回波数据，建立测量高度与实际间隙之间的映射曲线。需覆盖不同风速、温度工况。</span>
+                            </span>：建立精确的高度-间隙对应关系
+                        </li>
+                        <li>
+                            <span class="tooltip-wrapper">叶片形变
+                                <span class="tooltip-content">风速导致的弹性变形补偿：风机叶片在风载荷下会产生弯曲变形，最大变形量可达数米。需要建立叶片结构力学模型，结合实时风速数据进行形变补偿计算。</span>
+                            </span>：风速导致的弹性变形补偿
+                        </li>
+                        <li>多目标分辨：区分叶片与背景杂物</li>
+                        <li>温度漂移：极端温度下的精度保持</li>
+                        <li>长期稳定性：设备老化与精度衰减</li>
+                        <li>
+                            <span class="tooltip-wrapper">SCADA系统联动
+                                <span class="tooltip-content">SCADA（Supervisory Control And Data Acquisition）：数据采集与监控系统。风机的核心控制系统，记录风速、转速、功率、偏航角等运行参数。雷达数据需与SCADA数据融合，实现联合分析与故障预警。</span>
+                            </span>：与SCADA系统联动
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="decision-box delay-4" style="margin-top: 25px; max-width: 1100px; width: 100%;">
+                <h4 class="decision-title">技术可行性评估</h4>
+                <div class="decision-item">
+                    <span class="decision-arrow">▸</span>
+                    <span>77GHz 毫米波雷达技术成熟，已广泛应用于车载领域</span>
+                </div>
+                <div class="decision-item">
+                    <span class="decision-arrow">▸</span>
+                    <span>地面静基座安装避免共振，技术路径清晰可行</span>
+                </div>
+                <div class="decision-item">
+                    <span class="decision-arrow">▸</span>
+                    <span>标定算法可通过初期数据积累逐步优化</span>
+                </div>
+                <div class="decision-item">
+                    <span class="decision-arrow">▸</span>
+                    <span>建议：先单台试点3个月，验证标定模型与算法效果</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 潜在问题与应对策略页 -->
+        <div class="slide" data-slide="7">
+            <div class="slide-header">
+                <div class="section-label">Part 06</div>
+                <h2 class="slide-title">潜在问题与应对策略</h2>
+                <div class="slide-title-line"></div>
+            </div>
+            <div class="challenges-grid">
+                <div class="challenge-card delay-1">
+                    <div class="challenge-header">
+                        <span class="challenge-badge badge-high">高风险</span>
+                        <h4 class="challenge-title">异物检测干扰</h4>
+                    </div>
+                    <p class="challenge-desc">飞鸟、昆虫、落叶等进入雷达探测区域，可能产生误报信号，影响间隙测量精度。</p>
+                    <div class="challenge-solution">
+                        <strong>应对策略：</strong><br>
+                        • 多帧滤波：连续N帧检测才认定为有效目标<br>
+                        • 速度过滤：利用多普勒效应区分静止/运动物体<br>
+                        • 轨迹预测：根据运动轨迹过滤非叶片目标<br>
+                        • 误报率目标：≤0.01%
+                    </div>
+                    <div class="foreign-object-demo">
+                        <div class="demo-radar-wave"></div>
+                        <div class="demo-object"></div>
+                        <div class="demo-object"></div>
+                    </div>
+                </div>
+                <div class="challenge-card delay-2">
+                    <div class="challenge-header">
+                        <span class="challenge-badge badge-high">高风险</span>
+                        <h4 class="challenge-title">人为破坏风险</h4>
+                    </div>
+                    <p class="challenge-desc">地面设备暴露在外，存在被故意破坏、盗窃或误触的风险。</p>
+                    <div class="challenge-solution">
+                        <strong>应对策略：</strong><br>
+                        • 防护罩：安装金属防护笼，防撞击<br>
+                        • 报警装置：震动传感器+声光报警<br>
+                        • 视频监控：联动摄像头，可疑行为记录<br>
+                        • 隐蔽安装：嵌入混凝土底座，减少暴露<br>
+                        • 远程监控：设备状态实时上报云端
+                    </div>
+                </div>
+                <div class="challenge-card delay-3">
+                    <div class="challenge-header">
+                        <span class="challenge-badge badge-medium">中风险</span>
+                        <h4 class="challenge-title">极端天气影响</h4>
+                    </div>
+                    <p class="challenge-desc">冰雹、暴雪、台风等极端天气可能对设备造成物理损害或信号衰减。</p>
+                    <div class="challenge-solution">
+                        <strong>应对策略：</strong><br>
+                        • 防护等级：IP67 防水防尘<br>
+                        • 防雷设计：内置防雷模块<br>
+                        • 加热除冰：雷达罩内置加热膜<br>
+                        • 冗余设计：双雷达互为备份
+                    </div>
+                </div>
+                <div class="challenge-card delay-4">
+                    <div class="challenge-header">
+                        <span class="challenge-badge badge-medium">中风险</span>
+                        <h4 class="challenge-title">长期运维挑战</h4>
+                    </div>
+                    <p class="challenge-desc">设备长期运行后可能出现精度衰减、通信中断、供电不足等问题。</p>
+                    <div class="challenge-solution">
+                        <strong>应对策略：</strong><br>
+                        • 自检机制：设备定期自检，异常自动上报<br>
+                        • 远程标定：支持OTA远程校准<br>
+                        • 太阳能供电：双电池备份，阴雨天续航<br>
+                        • 模块化设计：故障部件可快速更换
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MVP落地方案页 -->
+        <div class="slide" data-slide="8">
+            <div class="slide-header">
+                <div class="section-label">Part 07</div>
+                <h2 class="slide-title">MVP落地方案</h2>
+                <div class="slide-title-line"></div>
+            </div>
+            <div class="mvp-layout">
+                <!-- 核心思路 -->
+                <div class="mvp-section delay-1">
+                    <h3 class="mvp-section-title">
+                        <svg class="icon icon-orange" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"/>
+                            <path d="M12 16v-4"/>
+                            <path d="M12 8h.01"/>
+                        </svg>
+                        核心思路
+                        <span class="title-line"></span>
+                    </h3>
+                    <div class="mvp-grid">
+                        <div class="mvp-item">
+                            <div class="mvp-item-icon">
+                                <svg class="icon icon-orange" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M12 2v4"/>
+                                    <path d="M12 18v4"/>
+                                    <path d="M4.93 4.93l2.83 2.83"/>
+                                    <path d="M16.24 16.24l2.83 2.83"/>
+                                    <path d="M2 12h4"/>
+                                    <path d="M18 12h4"/>
+                                </svg>
+                            </div>
+                            <div class="mvp-item-text">
+                                <h5>最小可行性验证</h5>
+                                <p>单台风机试点，验证核心测量逻辑，3个月跑通数据采集-标定-验证闭环</p>
+                            </div>
+                        </div>
+                        <div class="mvp-item">
+                            <div class="mvp-item-icon">
+                                <svg class="icon icon-orange" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+                                </svg>
+                            </div>
+                            <div class="mvp-item-text">
+                                <h5>渐进式优化</h5>
+                                <p>先跑通基础测量，再逐步加入形变补偿、异常检测等高级功能</p>
+                            </div>
+                        </div>
+                        <div class="mvp-item">
+                            <div class="mvp-item-icon">
+                                <svg class="icon icon-orange" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                    <polyline points="14 2 14 8 20 8"/>
+                                    <line x1="16" y1="13" x2="8" y2="13"/>
+                                    <line x1="16" y1="17" x2="8" y2="17"/>
+                                </svg>
+                            </div>
+                            <div class="mvp-item-text">
+                                <h5>数据驱动迭代</h5>
+                                <p>收集真实工况数据，用数据反哺算法优化，逐步提升测量精度</p>
+                            </div>
+                        </div>
+                        <div class="mvp-item">
+                            <div class="mvp-item-icon">
+                                <svg class="icon icon-orange" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="1" y="3" width="15" height="13"/>
+                                    <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/>
+                                    <circle cx="5.5" cy="18.5" r="2.5"/>
+                                    <circle cx="18.5" cy="18.5" r="2.5"/>
+                                </svg>
+                            </div>
+                            <div class="mvp-item-text">
+                                <h5>可规模化复制</h5>
+                                <p>模块化设计，验证成功后可快速批量部署，降低边际成本</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 核心算法 -->
+                <div class="mvp-section delay-2">
+                    <h3 class="mvp-section-title">
+                        <svg class="icon icon-orange" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="16 18 22 12 16 6"/>
+                            <polyline points="8 6 2 12 8 18"/>
+                        </svg>
+                        核心算法
+                        <span class="title-line"></span>
+                    </h3>
+                    <div class="mvp-content">
+                        <div class="arch-flow">
+                            <div class="arch-node highlight">雷达原始信号</div>
+                            <span class="arch-arrow">→</span>
+                            <div class="arch-node">FFT变换</div>
+                            <span class="arch-arrow">→</span>
+                            <div class="arch-node">CFAR检测</div>
+                            <span class="arch-arrow">→</span>
+                            <div class="arch-node">卡尔曼滤波</div>
+                            <span class="arch-arrow">→</span>
+                            <div class="arch-node highlight">高度提取</div>
+                        </div>
+                        <div class="arch-flow">
+                            <div class="arch-node highlight">高度数据</div>
+                            <span class="arch-arrow">→</span>
+                            <div class="arch-node">形变补偿模型</div>
+                            <span class="arch-arrow">→</span>
+                            <div class="arch-node">高度-间隙映射</div>
+                            <span class="arch-arrow">→</span>
+                            <div class="arch-node highlight">间隙结果</div>
+                        </div>
+                        <div class="arch-flow">
+                            <div class="arch-node highlight">间隙结果</div>
+                            <span class="arch-arrow">→</span>
+                            <div class="arch-node">异常检测</div>
+                            <span class="arch-arrow">→</span>
+                            <div class="arch-node">阈值判断</div>
+                            <span class="arch-arrow">→</span>
+                            <div class="arch-node highlight">告警输出</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 核心架构设计 -->
+                <div class="mvp-section delay-3">
+                    <h3 class="mvp-section-title">
+                        <svg class="icon icon-orange" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="2" y="2" width="20" height="8" rx="2"/>
+                            <rect x="2" y="14" width="20" height="8" rx="2"/>
+                            <line x1="6" y1="6" x2="6.01" y2="6"/>
+                            <line x1="6" y1="18" x2="6.01" y2="18"/>
+                        </svg>
+                        核心架构设计
+                        <span class="title-line"></span>
+                    </h3>
+                    <div class="mvp-content">
+                        <div class="arch-flow">
+                            <div class="arch-node highlight">感知层</div>
+                            <div class="arch-node">77GHz毫米波雷达</div>
+                            <div class="arch-node">风速/温度传感器</div>
+                            <span class="arch-arrow">→</span>
+                            <div class="arch-node highlight">边缘计算层</div>
+                            <div class="arch-node">信号处理MCU</div>
+                            <div class="arch-node">特征提取</div>
+                        </div>
+                        <div class="arch-flow">
+                            <div class="arch-node highlight">通信层</div>
+                            <div class="arch-node">4G/5G模块</div>
+                            <div class="arch-node">MQTT协议</div>
+                            <span class="arch-arrow">→</span>
+                            <div class="arch-node highlight">云平台层</div>
+                            <div class="arch-node">数据存储</div>
+                            <div class="arch-node">算法训练</div>
+                            <div class="arch-node">OTA更新</div>
+                        </div>
+                        <div class="arch-flow">
+                            <div class="arch-node highlight">应用层</div>
+                            <div class="arch-node">Web监控看板</div>
+                            <div class="arch-node">告警推送</div>
+                            <div class="arch-node">SCADA对接</div>
+                            <div class="arch-node">报表生成</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 时间线 -->
+                <div class="mvp-section delay-4">
+                    <h3 class="mvp-section-title">
+                        <svg class="icon icon-orange" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"/>
+                            <polyline points="12 6 12 12 16 14"/>
+                        </svg>
+                        实施路线图（1个月）
+                        <span class="title-line"></span>
+                    </h3>
+                    <div class="timeline">
+                        <div class="timeline-item">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-month">第1周</div>
+                            <div class="timeline-desc">软件模拟验证<br>搭建仿真模型，验证算法逻辑</div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-month">第2周</div>
+                            <div class="timeline-desc">原型开发<br>雷达+MCU基础原型搭建</div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-month">第3周</div>
+                            <div class="timeline-desc">数据采集<br>实验室环境标定测试</div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-month">第4周</div>
+                            <div class="timeline-desc">精度验证<br>对比实测数据，优化算法</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 方案总结页 -->
+        <div class="slide" data-slide="9">
+            <div class="slide-header">
+                <div class="section-label">Part 08</div>
+                <h2 class="slide-title">各方案痛点与优势总结</h2>
+                <div class="slide-title-line"></div>
+            </div>
+            <div class="summary-grid">
+                <div class="summary-card eliminate delay-1">
+                    <span class="summary-badge eliminate">淘汰</span>
+                    <h3 class="summary-title">方案1：内部视觉拍照</h3>
+                    <div class="summary-section">
+                        <p class="summary-label">致命痛点</p>
+                        <p class="summary-value">天气敏感、照明依赖、共振干扰、维护频繁</p>
+                    </div>
+                    <div class="summary-section">
+                        <p class="summary-label">核心优势</p>
+                        <p class="summary-value" style="color: var(--red-500);">全维度落后</p>
+                    </div>
+                    <div class="summary-section">
+                        <p class="summary-label">结论</p>
+                        <p class="summary-value">完全不适应户外工况，需彻底替换</p>
+                    </div>
+                </div>
+                <div class="summary-card transition delay-2">
+                    <span class="summary-badge transition">过渡</span>
+                    <h3 class="summary-title">方案2：内部毫米波雷达</h3>
+                    <div class="summary-section">
+                        <p class="summary-label">核心优势</p>
+                        <p class="summary-value">解决天气/照明痛点，改造难度低</p>
+                    </div>
+                    <div class="summary-section">
+                        <p class="summary-label">核心痛点</p>
+                        <p class="summary-value">未根治共振干扰，高空维护成本高</p>
+                    </div>
+                    <div class="summary-section">
+                        <p class="summary-label">结论</p>
+                        <p class="summary-value">过渡性改良，适合短期快速替换</p>
+                    </div>
+                </div>
+                <div class="summary-card optimal delay-3">
+                    <span class="summary-badge optimal">最优</span>
+                    <h3 class="summary-title">方案3：地面毫米波雷达</h3>
+                    <div class="summary-section">
+                        <p class="summary-label">核心优势</p>
+                        <p class="summary-value">根治三大痛点，全气候稳定，维护成本低</p>
+                    </div>
+                    <div class="summary-section">
+                        <p class="summary-label">核心挑战</p>
+                        <p class="summary-value">需完成高度-间隙标定+算法优化</p>
+                    </div>
+                    <div class="summary-section">
+                        <p class="summary-label">结论</p>
+                        <p class="summary-value">长期最优解，全生命周期收益最高</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 选型建议页 -->
+        <div class="slide" data-slide="10">
+            <div class="slide-header">
+                <div class="section-label">Part 09</div>
+                <h2 class="slide-title">选型建议与落地优先级</h2>
+                <div class="slide-title-line"></div>
+            </div>
+            <div class="recommendations">
+                <div class="priority-list">
+                    <div class="priority-item priority-1 delay-1">
+                        <div class="priority-rank">1</div>
+                        <div class="priority-content">
+                            <h3 class="priority-title">首选方案：地面向上毫米波雷达</h3>
+                            <p class="priority-desc">
+                                适用：老旧机组技改、追求长期稳定+低运维成本<br>
+                                建议：先单台试点（3个月），完成标定后批量推广
+                            </p>
+                            <div class="priority-tags">
+                                <span class="tag tag-green">稳定性最优</span>
+                                <span class="tag tag-green">维护成本最低</span>
+                                <span class="tag tag-green">全生命周期收益最高</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="priority-item priority-2 delay-2">
+                        <div class="priority-rank">2</div>
+                        <div class="priority-content">
+                            <h3 class="priority-title">过渡方案：内部向下毫米波雷达</h3>
+                            <p class="priority-desc">
+                                适用：原方案紧急故障需快速替换<br>
+                                建议：复用原安装支架，快速替换，后期可升级为方案3
+                            </p>
+                            <div class="priority-tags">
+                                <span class="tag tag-yellow">改造速度快</span>
+                                <span class="tag tag-yellow">短期可用</span>
+                                <span class="tag tag-yellow">长期有隐患</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="priority-item priority-3 delay-3">
+                        <div class="priority-rank">3</div>
+                        <div class="priority-content">
+                            <h3 class="priority-title">淘汰方案：内部视觉拍照</h3>
+                            <p class="priority-desc">
+                                建议：立即停止维护投入，逐步替换
+                            </p>
+                            <div class="priority-tags">
+                                <span class="tag tag-red">全维度落后</span>
+                                <span class="tag tag-red">不适应户外工况</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="decision-box delay-4">
+                    <h4 class="decision-title">核心决策依据</h4>
+                    <div class="decision-item">
+                        <span class="decision-arrow">▸</span>
+                        <span>若优先级：稳定性 > 成本 > 改造速度</span>
+                        <span class="decision-result">→ 方案3</span>
+                    </div>
+                    <div class="decision-item">
+                        <span class="decision-arrow">▸</span>
+                        <span>若优先级：改造速度 > 稳定性 > 成本</span>
+                        <span class="decision-result">→ 方案2</span>
+                    </div>
+                    <div class="decision-item">
+                        <span class="decision-arrow">▸</span>
+                        <span>无任何场景建议保留方案1</span>
+                        <span class="decision-result">→ 立即淘汰</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 结束页 -->
+        <div class="slide end-slide" data-slide="11">
+            <div class="end-content">
+                <div class="end-icon">
+                    <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="40" cy="40" r="35" fill="#fff8f0" stroke="#ffb066" stroke-width="2"/>
+                        <path d="M25 40l10 10 20-20" stroke="#f59e42" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+                <h2 class="end-conclusion">
+                    <span class="end-highlight">地面向上毫米波雷达</span><br>
+                    是根治风电叶片间隙检测顽疾的<br>
+                    <span class="end-highlight">最优解决方案</span>
+                </h2>
+                <p class="end-next-steps">
+                    下一步行动：启动单台风机试点标定，同步完成算法开发与参数优化
+                </p>
+                <p class="end-qa">疑问解答与需求对接</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 导航按钮 -->
+    <div class="nav-buttons">
+        <button class="nav-btn" id="prevBtn" onclick="prevSlide()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M15 18l-6-6 6-6"/>
+            </svg>
+        </button>
+        <span class="slide-counter"><span id="currentSlide">1</span> / <span id="totalSlides">8</span></span>
+        <button class="nav-btn" id="nextBtn" onclick="nextSlide()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 18l6-6-6-6"/>
+            </svg>
+        </button>
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+
+        document.getElementById('totalSlides').textContent = totalSlides;
+
+        function updateSlide() {
+            slides.forEach((slide, index) => {
+                slide.classList.remove('active', 'prev');
+                if (index === currentSlide) {
+                    slide.classList.add('active');
+                } else if (index < currentSlide) {
+                    slide.classList.add('prev');
+                }
+            });
+
+            document.getElementById('currentSlide').textContent = currentSlide + 1;
+            document.getElementById('prevBtn').disabled = currentSlide === 0;
+            document.getElementById('nextBtn').disabled = currentSlide === totalSlides - 1;
+
+            const progress = ((currentSlide + 1) / totalSlides) * 100;
+            document.getElementById('progressBar').style.width = progress + '%';
+
+            triggerSlideAnimations(currentSlide);
+        }
+
+        function nextSlide() {
+            if (currentSlide < totalSlides - 1) {
+                currentSlide++;
+                updateSlide();
+            }
+        }
+
+        function prevSlide() {
+            if (currentSlide > 0) {
+                currentSlide--;
+                updateSlide();
+            }
+        }
+
+        function goToSlide(slideIndex) {
+            currentSlide = slideIndex;
+            updateSlide();
+        }
+
+        function triggerSlideAnimations(slideIndex) {
+            const slide = slides[slideIndex];
+            const animElements = slide.querySelectorAll('.toc-item, .solution-card, .pain-item, .summary-card, .priority-item, .tech-card, .techstack-card, .challenge-card, .mvp-section');
+            
+            animElements.forEach((el, index) => {
+                setTimeout(() => {
+                    el.classList.add('visible');
+                }, 150 + index * 120);
+            });
+        }
+
+        // 键盘导航
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+                e.preventDefault();
+                nextSlide();
+            } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                e.preventDefault();
+                prevSlide();
+            } else if (e.key === 'Home') {
+                e.preventDefault();
+                goToSlide(0);
+            } else if (e.key === 'End') {
+                e.preventDefault();
+                goToSlide(totalSlides - 1);
+            }
+        });
+
+        // 触摸滑动支持
+        let touchStartX = 0;
+        let touchEndX = 0;
+
+        document.addEventListener('touchstart', (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+        });
+
+        document.addEventListener('touchend', (e) => {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+        });
+
+        function handleSwipe() {
+            const swipeThreshold = 50;
+            const diff = touchStartX - touchEndX;
+
+            if (diff > swipeThreshold) {
+                nextSlide();
+            } else if (diff < -swipeThreshold) {
+                prevSlide();
+            }
+        }
+
+        // 初始化
+        updateSlide();
+    </script>
+</body>
+</html>
