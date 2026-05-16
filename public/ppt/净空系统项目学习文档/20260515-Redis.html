@@ -1,0 +1,1270 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>风电净空监控系统 - Redis设计与使用教程</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, sans-serif;
+        line-height: 1.8;
+        color: #333;
+        background: #f0f7f0;
+      }
+      .sidebar {
+        position: fixed;
+        left: 0;
+        top: 0;
+        width: 300px;
+        height: 100vh;
+        background: linear-gradient(180deg, #2d6a4f 0%, #40916c 100%);
+        overflow-y: auto;
+        z-index: 1000;
+        box-shadow: 2px 0 12px rgba(0, 0, 0, 0.15);
+      }
+      .sidebar-header {
+        padding: 25px 20px;
+        text-align: center;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+      }
+      .sidebar-header h1 {
+        color: #fff;
+        font-size: 1.3em;
+        margin-bottom: 8px;
+      }
+      .sidebar-header p {
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 0.85em;
+      }
+      .sidebar-nav {
+        padding: 15px 0;
+      }
+      .sidebar-nav .nav-category {
+        padding: 10px 20px 5px;
+        color: rgba(255, 255, 255, 0.5);
+        font-size: 0.75em;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+      .sidebar-nav a {
+        display: block;
+        padding: 8px 20px;
+        color: rgba(255, 255, 255, 0.85);
+        text-decoration: none;
+        font-size: 0.88em;
+        transition: all 0.3s;
+        border-left: 3px solid transparent;
+      }
+      .sidebar-nav a:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: #fff;
+        border-left-color: #95d5b2;
+      }
+      .sidebar-nav .nav-chapter {
+        font-weight: 600;
+        padding-left: 20px;
+      }
+      .sidebar-nav .nav-section {
+        padding-left: 35px;
+        font-size: 0.83em;
+      }
+      .sidebar-nav .nav-subsection {
+        padding-left: 50px;
+        font-size: 0.8em;
+        color: rgba(255, 255, 255, 0.7);
+      }
+      .main-content {
+        margin-left: 300px;
+        padding: 30px 40px;
+        min-height: 100vh;
+      }
+      .content-header {
+        text-align: center;
+        padding: 50px 30px;
+        background: linear-gradient(
+          135deg,
+          #95d5b2 0%,
+          #74c69d 50%,
+          #52b788 100%
+        );
+        color: white;
+        margin-bottom: 35px;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(82, 183, 136, 0.3);
+      }
+      .content-header h1 {
+        font-size: 2.2em;
+        margin-bottom: 12px;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+      .content-header p {
+        font-size: 1.1em;
+        opacity: 0.95;
+      }
+      .section {
+        background: white;
+        padding: 35px;
+        border-radius: 12px;
+        margin-bottom: 30px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+        border: 1px solid #e8f5e8;
+      }
+      .section h2 {
+        color: #2d6a4f;
+        font-size: 1.8em;
+        margin-bottom: 25px;
+        padding-bottom: 12px;
+        border-bottom: 3px solid #95d5b2;
+      }
+      .section h3 {
+        color: #40916c;
+        font-size: 1.4em;
+        margin: 25px 0 15px 0;
+        padding-left: 12px;
+        border-left: 4px solid #95d5b2;
+      }
+      .section h4 {
+        color: #555;
+        font-size: 1.15em;
+        margin: 20px 0 12px 0;
+      }
+      .section p {
+        margin-bottom: 15px;
+        text-align: justify;
+      }
+      pre {
+        background: #1e1e1e;
+        color: #d4d4d4;
+        padding: 20px;
+        border-radius: 8px;
+        overflow-x: auto;
+        margin: 20px 0;
+        font-size: 13px;
+        line-height: 1.6;
+        border: 1px solid #333;
+      }
+      code {
+        font-family: "Fira Code", "Consolas", "Monaco", monospace;
+      }
+      .inline-code {
+        background: #e8f5e8;
+        padding: 2px 8px;
+        border-radius: 4px;
+        color: #2d6a4f;
+        font-size: 0.88em;
+        border: 1px solid #b7e4c7;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 20px 0;
+        border-radius: 8px;
+        overflow: hidden;
+      }
+      table th {
+        background: linear-gradient(135deg, #52b788 0%, #40916c 100%);
+        color: white;
+        padding: 12px 15px;
+        text-align: left;
+        font-weight: 600;
+      }
+      table td {
+        padding: 10px 15px;
+        border-bottom: 1px solid #e8f5e8;
+      }
+      table tr:hover {
+        background: #f0f7f0;
+      }
+      table tr:nth-child(even) {
+        background: #f8fdf8;
+      }
+      .note {
+        background: #fff8e1;
+        border-left: 4px solid #ffc107;
+        padding: 15px 20px;
+        margin: 20px 0;
+        border-radius: 0 8px 8px 0;
+      }
+      .note strong {
+        color: #856404;
+      }
+      .tip {
+        background: #e8f5e8;
+        border-left: 4px solid #40916c;
+        padding: 15px 20px;
+        margin: 20px 0;
+        border-radius: 0 8px 8px 0;
+      }
+      .tip strong {
+        color: #2d6a4f;
+      }
+      .warning {
+        background: #fde8e8;
+        border-left: 4px solid #e74c3c;
+        padding: 15px 20px;
+        margin: 20px 0;
+        border-radius: 0 8px 8px 0;
+      }
+      .warning strong {
+        color: #c0392b;
+      }
+      .info-box {
+        background: #e8f4fd;
+        border-left: 4px solid #3498db;
+        padding: 15px 20px;
+        margin: 20px 0;
+        border-radius: 0 8px 8px 0;
+      }
+      .info-box strong {
+        color: #2980b9;
+      }
+      .file-path {
+        background: #e8f5e8;
+        padding: 3px 8px;
+        border-radius: 4px;
+        font-family: monospace;
+        font-size: 0.83em;
+        color: #2d6a4f;
+        border: 1px solid #b7e4c7;
+      }
+      .highlight-box {
+        background: linear-gradient(135deg, #e8f5e8 0%, #d4edda 100%);
+        border: 1px solid #95d5b2;
+        padding: 20px;
+        border-radius: 8px;
+        margin: 20px 0;
+      }
+      .code-comment {
+        color: #6a9955;
+      }
+      .code-keyword {
+        color: #569cd6;
+      }
+      .code-string {
+        color: #ce9178;
+      }
+      .code-method {
+        color: #dcdcaa;
+      }
+      .code-class {
+        color: #4ec9b0;
+      }
+      .code-number {
+        color: #b5cea8;
+      }
+      .code-type {
+        color: #9cdcfe;
+      }
+      .code-annotation {
+        color: #dcdcaa;
+      }
+      .code-variable {
+        color: #9cdcfe;
+      }
+      .knowledge-card {
+        background: linear-gradient(135deg, #f8fdf8 0%, #e8f5e8 100%);
+        border: 1px solid #b7e4c7;
+        border-radius: 10px;
+        padding: 20px;
+        margin: 20px 0;
+      }
+      .knowledge-card h5 {
+        color: #2d6a4f;
+        font-size: 1.05em;
+        margin-bottom: 12px;
+        padding-bottom: 8px;
+        border-bottom: 2px solid #95d5b2;
+      }
+      .knowledge-card ul {
+        padding-left: 20px;
+      }
+      .knowledge-card ul li {
+        margin-bottom: 8px;
+      }
+      .comparison-table {
+        margin: 20px 0;
+      }
+      .comparison-table th {
+        background: linear-gradient(135deg, #74c69d 0%, #52b788 100%);
+      }
+      .tag {
+        display: inline-block;
+        padding: 2px 10px;
+        border-radius: 12px;
+        font-size: 0.78em;
+        font-weight: 600;
+        margin: 0 4px;
+      }
+      .tag-green {
+        background: #d4edda;
+        color: #155724;
+      }
+      .tag-blue {
+        background: #d1ecf1;
+        color: #0c5460;
+      }
+      .tag-yellow {
+        background: #fff3cd;
+        color: #856404;
+      }
+      .tag-red {
+        background: #f8d7da;
+        color: #721c24;
+      }
+      .progress-indicator {
+        position: fixed;
+        top: 0;
+        left: 300px;
+        right: 0;
+        height: 3px;
+        background: #e8f5e8;
+        z-index: 999;
+      }
+      .progress-bar {
+        height: 100%;
+        background: linear-gradient(90deg, #52b788, #40916c);
+        width: 0%;
+        transition: width 0.3s;
+      }
+      .back-to-top {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        width: 45px;
+        height: 45px;
+        background: linear-gradient(135deg, #52b788 0%, #40916c 100%);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        cursor: pointer;
+        font-size: 1.2em;
+        box-shadow: 0 4px 15px rgba(82, 183, 136, 0.4);
+        transition: all 0.3s;
+        display: none;
+        z-index: 1001;
+      }
+      .back-to-top:hover {
+        transform: translateY(-3px);
+      }
+      footer {
+        text-align: center;
+        padding: 30px;
+        color: #888;
+        font-size: 0.9em;
+        margin-top: 40px;
+      }
+      .sidebar::-webkit-scrollbar {
+        width: 6px;
+      }
+      .sidebar::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.1);
+      }
+      .sidebar::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 3px;
+      }
+      @media (max-width: 1024px) {
+        .sidebar {
+          width: 240px;
+        }
+        .main-content {
+          margin-left: 240px;
+          padding: 20px;
+        }
+      }
+      @media (max-width: 768px) {
+        .sidebar {
+          display: none;
+        }
+        .main-content {
+          margin-left: 0;
+          padding: 15px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <nav class="sidebar">
+      <div class="sidebar-header">
+        <h1>📚 Redis教程</h1>
+        <p>风电净空监控系统</p>
+      </div>
+      <div class="sidebar-nav">
+        <div class="nav-category">基础篇</div>
+        <a href="#chapter1" class="nav-chapter">第一章：Redis在项目中的定位</a>
+        <a href="#section1-1" class="nav-section">1.1 为什么需要Redis</a>
+        <a href="#section1-2" class="nav-section">1.2 Redis vs MySQL对比</a>
+        <a href="#section1-3" class="nav-section">1.3 项目Redis架构概览</a>
+
+        <div class="nav-category">配置篇</div>
+        <a href="#chapter2" class="nav-chapter">第二章：Redis配置与连接</a>
+        <a href="#section2-1" class="nav-section"
+          >2.1 application-dev.yml配置</a
+        >
+        <a href="#section2-2" class="nav-section"
+          >2.2 RedissonConfig配置类源码</a
+        >
+        <a href="#section2-3" class="nav-section">2.3 Lettuce连接池参数</a>
+        <a href="#section2-4" class="nav-section">2.4 数据库选择与隔离</a>
+
+        <div class="nav-category">实战篇</div>
+        <a href="#chapter3" class="nav-chapter">第三章：Redis使用场景</a>
+        <a href="#section3-1" class="nav-section"
+          >3.1 设备状态缓存（MqttStatusManager）</a
+        >
+        <a href="#section3-2" class="nav-section">3.2 设备信息缓存</a>
+        <a href="#section3-3" class="nav-section">3.3 最后在线时间缓存</a>
+        <a href="#section3-4" class="nav-section">3.4 实时数据缓存（String）</a>
+        <a href="#section3-5" class="nav-section">3.5 趋势数据缓存（ZSet）</a>
+        <a href="#section3-6" class="nav-section"
+          >3.6 字典数据缓存（@Cacheable）</a
+        >
+        <a href="#section3-7" class="nav-section">3.7 Token缓存</a>
+
+        <a href="#chapter4" class="nav-chapter">第四章：Lua脚本原子操作</a>
+        <a href="#section4-1" class="nav-section">4.1 为什么需要Lua脚本</a>
+        <a href="#section4-2" class="nav-section"
+          >4.2 RedisStatsLuaScripts源码</a
+        >
+        <a href="#section4-3" class="nav-section">4.3 Lua脚本完整逻辑</a>
+        <a href="#section4-4" class="nav-section">4.4 毫米单位精度处理</a>
+        <a href="#section4-5" class="nav-section">4.5 等级统计设计</a>
+        <a href="#section4-6" class="nav-section"
+          >4.6 DeviceDailyStatsServiceImpl集成</a
+        >
+
+        <a href="#chapter5" class="nav-chapter">第五章：Redisson分布式锁</a>
+        <a href="#section5-1" class="nav-section">5.1 Redisson vs Jedis</a>
+        <a href="#section5-2" class="nav-section">5.2 Shiro Session存储源码</a>
+        <a href="#section5-3" class="nav-section">5.3 Shiro缓存管理源码</a>
+        <a href="#section5-4" class="nav-section">5.4 分布式锁使用示例</a>
+
+        <a href="#chapter6" class="nav-chapter">第六章：Redis Stream日志缓冲</a>
+        <a href="#section6-1" class="nav-section">6.1 为什么使用Stream</a>
+        <a href="#section6-2" class="nav-section">6.2 LogBufferService架构</a>
+        <a href="#section6-3" class="nav-section">6.3 消费者组与ACK</a>
+        <a href="#section6-4" class="nav-section">6.4 三级降级容错</a>
+        <a href="#section6-5" class="nav-section">6.5 死信队列设计</a>
+        <a href="#section6-6" class="nav-section">6.6 Pending消息恢复</a>
+
+        <div class="nav-category">进阶篇</div>
+        <a href="#chapter7" class="nav-chapter">第七章：Redis Key设计规范</a>
+        <a href="#section7-1" class="nav-section">7.1 Key命名规范</a>
+        <a href="#section7-2" class="nav-section">7.2 过期时间策略</a>
+        <a href="#section7-3" class="nav-section">7.3 数据类型选择</a>
+
+        <a href="#chapter8" class="nav-chapter">第八章：监控与最佳实践</a>
+        <a href="#section8-1" class="nav-section">8.1 Redis监控接口源码</a>
+        <a href="#section8-2" class="nav-section">8.2 缓存穿透/击穿/雪崩</a>
+        <a href="#section8-3" class="nav-section">8.3 连接池优化</a>
+        <a href="#section8-4" class="nav-section">8.4 内存优化</a>
+        <a href="#section8-5" class="nav-section">8.5 常见问题排查</a>
+      </div>
+    </nav>
+
+    <div class="progress-indicator">
+      <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <div class="main-content">
+      <div class="content-header">
+        <h1>🔴 Redis设计与使用教程</h1>
+        <p>风电净空监控系统 · 2026年5月15日</p>
+        <p style="margin-top: 10px; font-size: 0.95em">
+          配置架构 · 使用场景 · Lua脚本 · Redisson · Stream日志缓冲 · 监控 ·
+          最佳实践
+        </p>
+      </div>
+
+      <div class="section" id="chapter1">
+        <h2>第一章：Redis在项目中的定位</h2>
+
+        <h3 id="section1-1">1.1 为什么需要Redis</h3>
+        <p>
+          风电净空监控系统是一个典型的
+          <strong>物联网数据采集与分析系统</strong>，具有以下业务特点：
+        </p>
+
+        <div class="knowledge-card">
+          <h5>📖 项目业务特点与数据规模</h5>
+          <table>
+            <tr>
+              <th>数据类型</th>
+              <th>频率/规模</th>
+              <th>特点</th>
+              <th>Redis应用场景</th>
+            </tr>
+            <tr>
+              <td>设备状态上报</td>
+              <td>50-100台设备，每秒多次</td>
+              <td>高频、实时性要求高</td>
+              <td>状态缓存（防抖）</td>
+            </tr>
+            <tr>
+              <td>净空检测记录</td>
+              <td>每台设备500-2000条/天</td>
+              <td>大量写入、需统计</td>
+              <td>Hash统计（Lua脚本）</td>
+            </tr>
+            <tr>
+              <td>最新识别结果</td>
+              <td>前端轮询查询</td>
+              <td>实时性要求极高</td>
+              <td>String缓存（60秒）</td>
+            </tr>
+            <tr>
+              <td>趋势图表数据</td>
+              <td>按时间排序查询</td>
+              <td>有序、范围查询</td>
+              <td>ZSet缓存（1000条）</td>
+            </tr>
+            <tr>
+              <td>系统日志</td>
+              <td>每次操作产生日志</td>
+              <td>异步写入、批量处理</td>
+              <td>Stream缓冲队列</td>
+            </tr>
+            <tr>
+              <td>字典数据</td>
+              <td>变更频率低、查询频繁</td>
+              <td>读多写少</td>
+              <td>@Cacheable缓存</td>
+            </tr>
+          </table>
+        </div>
+
+        <p>如果所有数据都直接读写MySQL，会遇到以下严重问题：</p>
+        <ul style="margin: 15px 0; padding-left: 30px">
+          <li>
+            <strong>数据库连接池耗尽</strong
+            >：50台设备每秒上报状态，占用大量连接
+          </li>
+          <li><strong>查询性能差</strong>：实时数据查询延迟高，前端轮询卡顿</li>
+          <li><strong>写入瓶颈</strong>：统计数据频繁更新导致行锁竞争</li>
+          <li><strong>日志写入压力大</strong>：系统日志直接写库影响业务性能</li>
+        </ul>
+
+        <h3 id="section1-2">1.2 Redis vs MySQL对比</h3>
+        <p>
+          Redis作为内存数据库，在项目中的定位是
+          <strong>缓存层 + 消息队列 + 分布式协调</strong>：
+        </p>
+
+        <table class="comparison-table">
+          <tr>
+            <th>对比维度</th>
+            <th>MySQL</th>
+            <th>Redis</th>
+            <th>本项目使用策略</th>
+          </tr>
+          <tr>
+            <td><strong>存储介质</strong></td>
+            <td>磁盘（SSD/HDD）</td>
+            <td>内存</td>
+            <td>热数据用Redis，冷数据用MySQL</td>
+          </tr>
+          <tr>
+            <td><strong>读取延迟</strong></td>
+            <td>1-10ms</td>
+            <td><0.1ms（快100倍）</td>
+            <td>实时状态查询走Redis</td>
+          </tr>
+          <tr>
+            <td><strong>写入性能</strong></td>
+            <td>数百TPS</td>
+            <td>数万TPS（快100倍）</td>
+            <td>高频状态更新走Redis</td>
+          </tr>
+          <tr>
+            <td><strong>数据结构</strong></td>
+            <td>表结构（关系型）</td>
+            <td>String/Hash/ZSet/Stream</td>
+            <td>根据场景选择合适类型</td>
+          </tr>
+          <tr>
+            <td><strong>持久化</strong></td>
+            <td>强持久化（WAL）</td>
+            <td>可选RDB/AOF</td>
+            <td>缓存允许丢失，日志用Stream持久化</td>
+          </tr>
+          <tr>
+            <td><strong>原子操作</strong></td>
+            <td>事务（ACID）</td>
+            <td>Lua脚本（原子执行）</td>
+            <td>统计更新使用Lua脚本</td>
+          </tr>
+          <tr>
+            <td><strong>分布式支持</strong></td>
+            <td>主从/分库分表</td>
+            <td>集群/哨兵/Redisson</td>
+            <td>单机Redis + Redisson分布式锁</td>
+          </tr>
+        </table>
+
+        <h3 id="section1-3">1.3 项目Redis架构概览</h3>
+        <p>本项目Redis架构分为 <strong>四个层次</strong>，各层职责清晰：</p>
+
+        <div class="flowchart">
+          <pre>
+┌─────────────────────────────────────────────────────────┐
+│                    应用层 (Application)                    │
+│  MqttStatusManager | DeviceDailyStats | LogBufferService  │
+│  MqttMessageHandler | SysDictService | TokenUtils         │
+└────────────────────┬────────────────────────────────────┘
+                     │ 调用
+┌────────────────────▼────────────────────────────────────┐
+│                   框架层 (Framework)                       │
+│    StringRedisTemplate | RedisTemplate | RedissonClient   │
+│    @Cacheable (Spring Cache) | DefaultRedisScript         │
+└────────────────────┬────────────────────────────────────┘
+                     │ 依赖
+┌────────────────────▼────────────────────────────────────┐
+│                   配置层 (Configuration)                   │
+│   RedissonConfig | Lettuce连接池 | 数据库3 (fengji_system)│
+│   application-dev.yml (host/port/pool/redisson)          │
+└────────────────────┬────────────────────────────────────┘
+                     │ 连接
+┌────────────────────▼────────────────────────────────────┐
+│                   存储层 (Storage)                         │
+│         Redis 6.x (127.0.0.1:6379) - 内存 + RDB/AOF      │
+└─────────────────────────────────────────────────────────┘
+                </pre
+          >
+        </div>
+
+        <div class="tip">
+          <strong>💡 架构设计原则：</strong>
+          <ul style="margin-top: 10px">
+            <li>
+              <strong>分层清晰</strong>：应用层不直接操作连接，通过框架层封装
+            </li>
+            <li>
+              <strong>配置集中</strong
+              >：所有Redis配置集中在application-dev.yml和RedissonConfig
+            </li>
+            <li>
+              <strong>类型安全</strong>：使用StringRedisTemplate避免序列化问题
+            </li>
+            <li>
+              <strong>降级容错</strong
+              >：Redis不可用时自动降级到数据库（三级降级）
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="section" id="chapter2">
+        <h2>第二章：Redis配置与连接</h2>
+
+        <h3 id="section2-1">2.1 application-dev.yml配置</h3>
+        <p>
+          项目的Redis配置集中在
+          <span class="file-path"
+            >jeecg-boot-module-system/src/main/resources/application-dev.yml</span
+          >
+          文件中：
+        </p>
+
+        <pre><code class="language-yaml"><span class="code-comment"># ============================================</span>
+<span class="code-comment"># Redis 配置（开发环境）</span>
+<span class="code-comment"># ============================================</span>
+spring:
+  redis:
+    <span class="code-comment"># 数据库编号：使用DB 3，与其他业务隔离</span>
+    <span class="code-comment"># Redis默认有16个数据库（DB 0-15）</span>
+    database: <span class="code-number">3</span>
+    
+    <span class="code-comment"># Redis服务器地址（开发环境本地）</span>
+    host: <span class="code-string">127.0.0.1</span>
+    port: <span class="code-number">6379</span>
+    
+    <span class="code-comment"># 密码（开发环境为空字符串）</span>
+    <span class="code-comment"># ⚠️ 注意：空字符串会导致Redisson自动配置AUTH失败</span>
+    password: <span class="code-string">""</span>
+    
+    <span class="code-comment"># ============================================</span>
+    <span class="code-comment"># Lettuce 连接池配置</span>
+    <span class="code-comment"># Lettuce基于Netty，线程安全，支持异步</span>
+    <span class="code-comment"># ============================================</span>
+    lettuce:
+      pool:
+        <span class="code-comment"># 最大连接数：8个连接足够应对当前并发</span>
+        <span class="code-comment"># 计算公式：(核心数 * 2) + 有效磁盘数</span>
+        <span class="code-comment"># 当前并发不高，8个足够；高并发场景可设为20-50</span>
+        max-active: <span class="code-number">8</span>
+        
+        <span class="code-comment"># 最大空闲连接：保持8个空闲连接，避免频繁创建</span>
+        <span class="code-comment"># 与max-active保持一致，避免连接频繁创建销毁</span>
+        max-idle: <span class="code-number">8</span>
+        
+        <span class="code-comment"># 最小空闲连接：0表示允许全部回收</span>
+        <span class="code-comment"># 节省资源，低峰期自动回收</span>
+        min-idle: <span class="code-number">0</span>
+        
+        <span class="code-comment"># 获取连接最大等待时间：-1表示无限等待</span>
+        <span class="code-comment"># ⚠️ 建议设为3000ms避免线程长时间阻塞</span>
+        max-wait: <span class="code-number">-1ms</span>
+        
+        <span class="code-comment"># 关闭超时时间</span>
+        shutdown-timeout: <span class="code-number">100ms</span>
+  
+  <span class="code-comment"># ============================================</span>
+  <span class="code-comment"># Redisson 配置（用于分布式锁和Session存储）</span>
+  <span class="code-comment"># Redisson提供分布式锁、MapCache、Session管理等</span>
+  <span class="code-comment"># ============================================</span>
+  redisson:
+    config: |
+      singleServerConfig:
+        address: <span class="code-string">"redis://127.0.0.1:6379"</span>
+        database: <span class="code-number">3</span>
+        <span class="code-comment"># 连接池大小</span>
+        connectionPoolSize: <span class="code-number">8</span>
+        <span class="code-comment"># 最小空闲连接数</span>
+        connectionMinimumIdleSize: <span class="code-number">5</span>
+        <span class="code-comment"># 空闲连接超时时间（毫秒）</span>
+        idleConnectionTimeout: <span class="code-number">10000</span>
+        <span class="code-comment"># 连接超时时间（毫秒）</span>
+        connectTimeout: <span class="code-number">10000</span></code></pre>
+
+        <div class="note">
+          <strong>📌 为什么使用Lettuce而不是Jedis？</strong>
+          <ul style="margin-top: 10px">
+            <li>
+              <strong>线程安全</strong
+              >：Lettuce基于Netty，连接实例可线程安全共享；Jedis连接非线程安全，需要连接池
+            </li>
+            <li>
+              <strong>异步支持</strong
+              >：Lettuce原生支持异步和响应式编程（Reactive Streams）
+            </li>
+            <li>
+              <strong>连接池优化</strong>：Lettuce的连接池基于Apache Commons
+              Pool2，性能更好
+            </li>
+            <li>
+              <strong>Spring Boot推荐</strong>：Spring Boot
+              2.x默认使用Lettuce作为Redis客户端
+            </li>
+            <li>
+              <strong>资源占用低</strong
+              >：Lettuce单个连接即可支持高并发，Jedis需要多个连接
+            </li>
+          </ul>
+        </div>
+
+        <h3 id="section2-2">2.2 RedissonConfig配置类源码</h3>
+        <p>
+          项目自定义了
+          <span class="file-path">RedissonConfig.java</span>
+          来手动配置Redisson客户端，<strong>避免自动配置的空密码问题</strong>：
+        </p>
+
+        <pre><code class="language-java"><span class="code-keyword">package</span> org.jeecg.config;
+
+<span class="code-keyword">import</span> lombok.extern.slf4j.Slf4j;
+<span class="code-keyword">import</span> org.redisson.Redisson;
+<span class="code-keyword">import</span> org.redisson.api.RedissonClient;
+<span class="code-keyword">import</span> org.redisson.config.Config;
+<span class="code-keyword">import</span> org.springframework.beans.factory.annotation.Value;
+<span class="code-keyword">import</span> org.springframework.context.annotation.Bean;
+<span class="code-keyword">import</span> org.springframework.context.annotation.Configuration;
+<span class="code-keyword">import</span> org.springframework.util.StringUtils;
+
+<span class="code-keyword">import</span> java.io.IOException;
+
+<span class="code-comment">/**
+ * Redisson手动配置，替代RedissonAutoConfiguration
+ * 
+ * ⚠️ 为什么需要手动配置？
+ * Spring Boot自动配置在 spring.redis.password=""（空字符串）时，
+ * 会尝试执行 AUTH "" 命令，导致Redis拒绝连接。
+ * 手动配置可以判断密码是否为空，避免此问题。
+ * 
+ * @author fengji-system
+ */</span>
+<span class="code-keyword">@Slf4j</span>
+<span class="code-keyword">@Configuration</span>
+<span class="code-keyword">public class</span> <span class="code-class">RedissonConfig</span> {
+
+    <span class="code-comment">// ============================================</span>
+    <span class="code-comment">// 配置属性注入</span>
+    <span class="code-comment">// ============================================</span>
+    
+    <span class="code-comment">// Redisson YAML配置（支持集群、哨兵等高级场景）</span>
+    <span class="code-keyword">@Value</span>(<span class="code-string">"${spring.redisson.config:}"</span>)
+    <span class="code-keyword">private</span> <span class="code-class">String</span> configYaml;
+
+    <span class="code-comment">// Redis服务器地址</span>
+    <span class="code-keyword">@Value</span>(<span class="code-string">"${spring.redis.host:127.0.0.1}"</span>)
+    <span class="code-keyword">private</span> <span class="code-class">String</span> redisHost;
+
+    <span class="code-comment">// Redis端口</span>
+    <span class="code-keyword">@Value</span>(<span class="code-string">"${spring.redis.port:6379}"</span>)
+    <span class="code-keyword">private int</span> redisPort;
+
+    <span class="code-comment">// Redis数据库编号</span>
+    <span class="code-keyword">@Value</span>(<span class="code-string">"${spring.redis.database:0}"</span>)
+    <span class="code-keyword">private int</span> redisDatabase;
+
+    <span class="code-comment">// Redis密码（可能为空字符串）</span>
+    <span class="code-keyword">@Value</span>(<span class="code-string">"${spring.redis.password:}"</span>)
+    <span class="code-keyword">private</span> <span class="code-class">String</span> redisPassword;
+
+    <span class="code-comment">/**
+     * 创建RedissonClient Bean
+     * 
+     * destroyMethod = "shutdown" 确保应用关闭时正确释放资源
+     * 包括：关闭连接、释放线程池、清理缓存等
+     * 
+     * @return RedissonClient实例
+     */</span>
+    <span class="code-keyword">@Bean</span>(destroyMethod = <span class="code-string">"shutdown"</span>)
+    <span class="code-keyword">public</span> <span class="code-class">RedissonClient</span> <span class="code-method">redissonClient</span>() {
+        <span class="code-comment">// ============================================</span>
+        <span class="code-comment">// 分支1：未配置YAML，使用默认单机配置</span>
+        <span class="code-comment">// ============================================</span>
+        <span class="code-keyword">if</span> (!StringUtils.hasText(configYaml)) {
+            log.warn(<span class="code-string">"spring.redisson.config 未配置，使用默认单机配置"</span>);
+            
+            <span class="code-class">Config</span> config = <span class="code-keyword">new</span> <span class="code-class">Config</span>();
+            config.useSingleServer()
+                    .setAddress(<span class="code-string">"redis://"</span> + redisHost + <span class="code-string">":"</span> + redisPort)
+                    .setDatabase(redisDatabase);
+            
+            <span class="code-comment">// ⚠️ 关键：只有密码非空时才设置，避免空字符串导致AUTH失败</span>
+            <span class="code-keyword">if</span> (redisPassword != <span class="code-keyword">null</span> && !redisPassword.isEmpty()) {
+                config.useSingleServer().setPassword(redisPassword);
+            }
+            
+            <span class="code-keyword">return</span> <span class="code-class">Redisson</span>.create(config);
+        }
+
+        <span class="code-comment">// ============================================</span>
+        <span class="code-comment">// 分支2：使用YAML配置（支持集群、哨兵等高级场景）</span>
+        <span class="code-comment">// ============================================</span>
+        log.info(<span class="code-string">"加载 Redisson 配置，配置内容:\n{}"</span>, configYaml);
+        <span class="code-keyword">try</span> {
+            <span class="code-comment">// 从YAML解析配置</span>
+            <span class="code-class">Config</span> config = <span class="code-class">Config</span>.fromYAML(configYaml);
+            <span class="code-class">RedissonClient</span> client = <span class="code-class">Redisson</span>.create(config);
+            log.info(<span class="code-string">"RedissonClient 初始化成功"</span>);
+            <span class="code-keyword">return</span> client;
+        } <span class="code-keyword">catch</span> (<span class="code-class">IOException</span> e) {
+            <span class="code-comment">// ============================================</span>
+            <span class="code-comment">// 降级：YAML解析失败，使用默认配置</span>
+            <span class="code-comment">// ============================================</span>
+            log.error(<span class="code-string">"Redisson YAML 配置解析失败，使用默认配置：{}"</span>, e.getMessage());
+            
+            <span class="code-class">Config</span> config = <span class="code-keyword">new</span> <span class="code-class">Config</span>();
+            config.useSingleServer()
+                    .setAddress(<span class="code-string">"redis://"</span> + redisHost + <span class="code-string">":"</span> + redisPort)
+                    .setDatabase(redisDatabase);
+            <span class="code-keyword">if</span> (redisPassword != <span class="code-keyword">null</span> && !redisPassword.isEmpty()) {
+                config.useSingleServer().setPassword(redisPassword);
+            }
+            <span class="code-keyword">return</span> <span class="code-class">Redisson</span>.create(config);
+        }
+    }
+}</code></pre>
+
+        <div class="warning">
+          <strong>⚠️ 为什么需要手动配置Redisson？</strong>
+          <p>
+            Spring Boot自动配置在
+            <span class="inline-code">spring.redis.password=""</span
+            >（空字符串）时，会尝试执行
+            <span class="inline-code">AUTH ""</span>
+            命令，导致Redis拒绝连接并抛出
+            <span class="inline-code"
+              >ERR Client sent AUTH, but no password is set</span
+            >
+            错误。手动配置可以判断密码是否为空，避免此问题。
+          </p>
+        </div>
+
+        <h3 id="section2-3">2.3 Lettuce连接池参数详解</h3>
+        <table>
+          <tr>
+            <th>参数</th>
+            <th>当前值</th>
+            <th>说明</th>
+            <th>调优建议</th>
+          </tr>
+          <tr>
+            <td><strong>max-active</strong></td>
+            <td>8</td>
+            <td>最大连接数</td>
+            <td>当前并发不高，8个足够；高并发场景可设为20-50</td>
+          </tr>
+          <tr>
+            <td><strong>max-idle</strong></td>
+            <td>8</td>
+            <td>最大空闲连接</td>
+            <td>与max-active保持一致，避免频繁创建销毁</td>
+          </tr>
+          <tr>
+            <td><strong>min-idle</strong></td>
+            <td>0</td>
+            <td>最小空闲连接</td>
+            <td>设为0允许全部回收，节省资源；高并发可设为5</td>
+          </tr>
+          <tr>
+            <td><strong>max-wait</strong></td>
+            <td>-1ms</td>
+            <td>获取连接最大等待时间</td>
+            <td>-1表示无限等待；<strong>建议设为3000ms</strong>避免线程阻塞</td>
+          </tr>
+          <tr>
+            <td><strong>shutdown-timeout</strong></td>
+            <td>100ms</td>
+            <td>关闭超时</td>
+            <td>默认值即可</td>
+          </tr>
+        </table>
+
+        <h3 id="section2-4">2.4 数据库选择与隔离</h3>
+        <p>
+          Redis默认有16个数据库（DB 0-15），本项目使用 <strong>DB 3</strong>：
+        </p>
+
+        <div class="knowledge-card">
+          <h5>📖 数据库隔离策略</h5>
+          <table>
+            <tr>
+              <th>数据库</th>
+              <th>用途</th>
+              <th>本项目是否使用</th>
+            </tr>
+            <tr>
+              <td>DB 0</td>
+              <td>默认数据库</td>
+              <td>否</td>
+            </tr>
+            <tr>
+              <td>DB 1</td>
+              <td>其他业务（预留）</td>
+              <td>否</td>
+            </tr>
+            <tr>
+              <td>DB 2</td>
+              <td>其他业务（预留）</td>
+              <td>否</td>
+            </tr>
+            <tr>
+              <td><strong>DB 3</strong></td>
+              <td><strong>风电净空监控系统</strong></td>
+              <td><span class="tag tag-green">✓ 当前使用</span></td>
+            </tr>
+          </table>
+        </div>
+
+        <div class="tip">
+          <strong>💡 为什么选择DB 3？</strong>
+          <ul style="margin-top: 10px">
+            <li><strong>避免冲突</strong>：不与默认DB 0冲突，方便多项目共存</li>
+            <li>
+              <strong>便于管理</strong>：可通过
+              <span class="inline-code">SELECT 3</span> 切换到本项目数据库
+            </li>
+            <li><strong>数据隔离</strong>：不同项目使用不同DB，避免Key冲突</li>
+            <li>
+              <strong>清理方便</strong>：可使用
+              <span class="inline-code">FLUSHDB</span> 清空当前DB，不影响其他DB
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="section" id="chapter3">
+        <h2>第三章：Redis使用场景</h2>
+
+        <h3 id="section3-1">3.1 设备状态缓存（MqttStatusManager）</h3>
+        <p>
+          <span class="file-path">MqttStatusManager.java</span>
+          使用Redis缓存设备状态，<strong>避免频繁查询数据库</strong>，核心源码如下：
+        </p>
+
+        <pre><code class="language-java"><span class="code-keyword">package</span> org.jeecg.modules.mqtt;
+
+<span class="code-keyword">import</span> org.jeecg.modules.fengji.common.DeviceStatusConstants;
+<span class="code-keyword">import</span> org.jeecg.modules.fengji.info.entity.FengdianDeviceInfo;
+<span class="code-keyword">import</span> org.springframework.beans.factory.annotation.Autowired;
+<span class="code-keyword">import</span> org.springframework.data.redis.core.RedisTemplate;
+<span class="code-keyword">import</span> org.springframework.stereotype.Component;
+<span class="code-keyword">import</span> java.util.concurrent.TimeUnit;
+
+<span class="code-comment">/**
+ * MQTT设备状态管理器
+ * 负责处理设备状态更新、Redis缓存和最后在线时间管理
+ * 用于打破MqttClientManager和MqttMessageHandler之间的循环依赖
+ * 
+ * 核心功能：
+ * 1. 设备状态缓存（防抖机制）
+ * 2. 设备信息缓存
+ * 3. 最后在线时间缓存
+ * 4. 设备检查标识管理
+ */</span>
+<span class="code-keyword">@Component</span>
+<span class="code-keyword">@ConditionalOnProperty</span>(name = <span class="code-string">"mqtt.enabled"</span>, havingValue = <span class="code-string">"true"</span>)
+<span class="code-keyword">public class</span> <span class="code-class">MqttStatusManager</span> {
+
+    <span class="code-keyword">@Autowired</span>
+    <span class="code-keyword">private</span> <span class="code-class">RedisTemplate</span>&lt;<span class="code-class">String</span>, <span class="code-class">String</span>&gt; redisTemplate;
+    
+    <span class="code-keyword">@Autowired</span>
+    <span class="code-keyword">private</span> <span class="code-class">IFengdianDeviceInfoService</span> fengdianDeviceInfoService;
+
+    <span class="code-comment">/**
+     * 处理设备状态更新
+     * 
+     * ⚠️ 核心设计：防抖机制
+     * 通过比较Redis缓存中的状态，避免相同状态重复写入数据库
+     * 50台设备每秒上报多次，防抖可减少90%以上的数据库写入
+     * 
+     * @param deviceNo 设备编号
+     * @param status 状态值（"0"离线/"1"在线/"2"故障）
+     * @param statusType 状态类型（online/running/camera）
+     * @return true-需要更新数据库，false-状态未变更，跳过
+     */</span>
+    <span class="code-keyword">public boolean</span> <span class="code-method">handleDeviceStatusUpdate</span>(<span class="code-class">String</span> deviceNo, <span class="code-class">String</span> status, <span class="code-class">String</span> statusType) {
+        <span class="code-keyword">try</span> {
+            <span class="code-comment">// ============================================</span>
+            <span class="code-comment">// Redis Key格式：mqtt:device:status:{deviceNo}:{statusType}</span>
+            <span class="code-comment">// 示例：mqtt:device:status:DEVICE001:online</span>
+            <span class="code-comment">//      mqtt:device:status:DEVICE001:running</span>
+            <span class="code-comment">//      mqtt:device:status:DEVICE001:camera</span>
+            <span class="code-comment">// ============================================</span>
+            <span class="code-class">String</span> redisKey = <span class="code-class">DeviceStatusConstants</span>.REDIS_KEY_DEVICE_STATUS + deviceNo + <span class="code-string">":"</span> + statusType;
+
+            <span class="code-comment">// ============================================</span>
+            <span class="code-comment">// 步骤1：检查Redis中是否存在相同状态（防抖）</span>
+            <span class="code-comment">// ============================================</span>
+            <span class="code-class">String</span> cachedStatus = redisTemplate.opsForValue().get(redisKey);
+            <span class="code-keyword">if</span> (status.equals(cachedStatus)) {
+                <span class="code-comment">// 状态未变更，跳过数据库更新</span>
+                logger.debug(<span class="code-string">"Device status unchanged, skipping update - DeviceNo: {}, StatusType: {}, Status: {}"</span>, 
+                    deviceNo, statusType, status);
+                <span class="code-keyword">return false</span>;
+            }
+
+            <span class="code-comment">// ============================================</span>
+            <span class="code-comment">// 步骤2：更新Redis缓存，设置过期时间为1小时</span>
+            <span class="code-comment">// ============================================</span>
+            redisTemplate.opsForValue().set(redisKey, status, 
+                <span class="code-class">DeviceStatusConstants</span>.DEVICE_STATUS_CACHE_EXPIRE / <span class="code-number">1000</span> / <span class="code-number">60</span>, <span class="code-class">TimeUnit</span>.MINUTES);
+
+            <span class="code-comment">// ============================================</span>
+            <span class="code-comment">// 步骤3：更新最后在线时间（24小时过期）</span>
+            <span class="code-comment">// ============================================</span>
+            <span class="code-class">String</span> lastOnlineKey = <span class="code-class">DeviceStatusConstants</span>.REDIS_KEY_DEVICE_LAST_ONLINE + deviceNo;
+            redisTemplate.opsForValue().set(lastOnlineKey, <span class="code-class">String</span>.valueOf(<span class="code-class">System</span>.currentTimeMillis()), <span class="code-number">24</span>, <span class="code-class">TimeUnit</span>.HOURS);
+
+            <span class="code-comment">// ============================================</span>
+            <span class="code-comment">// 步骤4：设置设备检查标识（用于定时任务）</span>
+            <span class="code-comment">// ============================================</span>
+            <span class="code-class">FengdianDeviceInfo</span> deviceInfo = <span class="code-method">getDeviceInfo</span>(deviceNo);
+            <span class="code-keyword">if</span> (deviceInfo != <span class="code-keyword">null</span>) {
+                <span class="code-method">setDeviceCheckFlag</span>(deviceInfo.getId());
+            }
+
+            logger.info(<span class="code-string">"Device status updated - DeviceNo: {}, StatusType: {}, Status: {}"</span>, deviceNo, statusType, status);
+            <span class="code-keyword">return true</span>; <span class="code-comment">// 需要更新数据库</span>
+        } <span class="code-keyword">catch</span> (<span class="code-class">Exception</span> e) {
+            logger.error(<span class="code-string">"Error handling device status update"</span>, e);
+            <span class="code-comment">// ⚠️ 降级策略：Redis操作失败时，仍然允许更新数据库</span>
+            <span class="code-keyword">return true</span>;
+        }
+    }
+
+    <span class="code-comment">/**
+     * 获取设备基础信息（从Redis缓存或数据库）
+     * 
+     * 缓存策略：Cache-Aside（旁路缓存）
+     * 1. 先读Redis缓存
+     * 2. 缓存命中则直接返回
+     * 3. 缓存未命中则查数据库，并写入缓存
+     * 
+     * @param deviceNo 设备编号
+     * @return 设备信息对象
+     */</span>
+    <span class="code-keyword">public</span> <span class="code-class">FengdianDeviceInfo</span> <span class="code-method">getDeviceInfo</span>(<span class="code-class">String</span> deviceNo) {
+        <span class="code-keyword">try</span> {
+            <span class="code-comment">// Redis Key格式：mqtt:device:info:{deviceNo}</span>
+            <span class="code-comment">// 缓存值为设备ID（主键），用于快速查询</span>
+            <span class="code-class">String</span> cacheKey = <span class="code-class">DeviceStatusConstants</span>.REDIS_KEY_DEVICE_INFO + deviceNo;
+            <span class="code-class">String</span> cachedInfo = redisTemplate.opsForValue().get(cacheKey);
+            
+            <span class="code-keyword">if</span> (cachedInfo != <span class="code-keyword">null</span>) {
+                <span class="code-comment">// 缓存命中：根据缓存的设备ID查询数据库</span>
+                <span class="code-class">FengdianDeviceInfo</span> deviceInfo = fengdianDeviceInfoService.getById(cachedInfo);
+                <span class="code-keyword">if</span> (deviceInfo != <span class="code-keyword">null</span>) {
+                    <span class="code-keyword">return</span> deviceInfo;
+                }
+            }
+            
+            <span class="code-comment">// 缓存未命中：从数据库查询</span>
+            <span class="code-class">FengdianDeviceInfo</span> deviceInfo = fengdianDeviceInfoService.lambdaQuery()
+                    .eq(<span class="code-class">FengdianDeviceInfo</span>::getDeviceNo, deviceNo)
+                    .one();
+            
+            <span class="code-keyword">if</span> (deviceInfo != <span class="code-keyword">null</span>) {
+                <span class="code-comment">// 写入缓存，过期时间1小时</span>
+                redisTemplate.opsForValue().set(cacheKey, deviceInfo.getId(), 
+                    <span class="code-class">DeviceStatusConstants</span>.DEVICE_INFO_CACHE_EXPIRE / <span class="code-number">1000</span> / <span class="code-number">60</span>, <span class="code-class">TimeUnit</span>.MINUTES);
+            }
+            
+            <span class="code-keyword">return</span> deviceInfo;
+        } <span class="code-keyword">catch</span> (<span class="code-class">Exception</span> e) {
+            logger.error(<span class="code-string">"Error getting device info"</span>, e);
+            <span class="code-keyword">return null</span>;
+        }
+    }
+}</code></pre>
+
+        <div class="highlight-box">
+          <h4>🔍 设计亮点分析</h4>
+          <table>
+            <tr>
+              <th>设计点</th>
+              <th>实现方式</th>
+              <th>效果</th>
+            </tr>
+            <tr>
+              <td><strong>防抖机制</strong></td>
+              <td>比较缓存状态，相同则跳过</td>
+              <td>减少90%以上数据库写入</td>
+            </tr>
+            <tr>
+              <td><strong>过期时间合理</strong></td>
+              <td>状态缓存1小时，在线时间24小时</td>
+              <td>符合业务变化频率</td>
+            </tr>
+            <tr>
+              <td><strong>降级容错</strong></td>
+              <td>Redis异常时返回true</td>
+              <td>保证业务不中断</td>
+            </tr>
+            <tr>
+              <td><strong>Cache-Aside</strong></td>
+              <td>先读缓存，未命中查库并写缓存</td>
+              <td>实现简单，缓存失败不影响业务</td>
+            </tr>
+          </table>
+        </div>
+
+        <h3 id="section3-2">3.2 设备信息缓存</h3>
+        <p>设备基础信息（设备编号、IP地址等）变更频率低，适合长时间缓存：</p>
+
+        <pre><code class="language-java"><span class="code-comment">// Redis Key格式：mqtt:device:info:{deviceNo}</span>
+<span class="code-comment">// 缓存值：设备ID（主键）</span>
+<span class="code-comment">// 过期时间：1小时（DEVICE_INFO_CACHE_EXPIRE = 3600000ms）</span>
+<span class="code-keyword">public</span> <span class="code-class">FengdianDeviceInfo</span> <span class="code-method">getDeviceInfo</span>(<span class="code-class">String</span> deviceNo) {
+    <span class="code-class">String</span> cacheKey = <span class="code-class">DeviceStatusConstants</span>.REDIS_KEY_DEVICE_INFO + deviceNo;
+    <span class="code-class">String</span> cachedInfo = redisTemplate.opsForValue().get(cacheKey);
+    
+    <span class="code-keyword">if</span> (cachedInfo != <span class="code-keyword">null</span>) {
+        <span class="code-comment">// 缓存命中：根据设备ID查询</span>
+        <span class="code-keyword">return</span> fengdianDeviceInfoService.getById(cachedInfo);
+    }
+    
+    <span class="code-comment">// 缓存未命中：查库并写缓存</span>
+    <span class="code-class">FengdianDeviceInfo</span> deviceInfo = fengdianDeviceInfoService.lambdaQuery()
+            .eq(<span class="code-class">FengdianDeviceInfo</span>::getDeviceNo, deviceNo)
+            .one();
+    
+    <span class="code-keyword">if</span> (deviceInfo != <span class="code-keyword">null</span>) {
+        redisTemplate.opsForValue().set(cacheKey, deviceInfo.getId(), <span class="code-number">60</span>, <span class="code-class">TimeUnit</span>.MINUTES);
+    }
+    
+    <span class="code-keyword">return</span> deviceInfo;
+}</code></pre>
+
+        <h3 id="section3-3">3.3 最后在线时间缓存</h3>
+        <p>
+          设备最后在线时间更新频繁（每30秒一次），使用Redis<strong>节流</strong>避免频繁写库：
+        </p>
+
+        <pre><code class="language-java"><span class="code-comment">/**
+ * 更新设备最后在线时间（使用Redis缓存优化）
+ * 
+ * ⚠️ 核心设计：30秒节流
+ * 只有间隔超过30秒才更新数据库，否则只更新Redis
+ * 将每秒多次的写操作降为每30秒一次
+ */</span>
+<span class="code-keyword">public void</span> <span class="code-method">updateDeviceLastOnline</span>(<span class="code-class">String</span> deviceNo) {
+    <span class="code-keyword">try</span> {
+        <span class="code-class">FengdianDeviceInfo</span> deviceInfo = <span class="code-method">getDeviceInfo</span>(deviceNo);
+        <span class="code-keyword">if</span> (deviceInfo == <span class="code-keyword">null</span>) <span class="code-keyword">return</span>;
+        
+        <span class="code-class">String</span> lastOnlineKey = <span class="code-class">DeviceStatusConstants</span>.REDIS_KEY_DEVICE_LAST_ONLINE + deviceNo;
+        <span class="code-class">String</span> lastOnlineStr = redisTemplate.opsForValue().get(lastOnlineKey);
+        <span class="code-keyword">long</span> currentTime = <span class="code-class">System</span>.currentTimeMillis();
+        
+        <span class="code-comment">// ============================================</span>
+        <span class="code-comment">// 节流判断：间隔超过30秒才更新数据库</span>
+        <span class="code-comment">// LAST_ONLINE_INTERVAL = 30 * 1000ms = 30秒</span>
+        <span class="code-comment">// ============================================</span>
+        <span class="code-keyword">if</span> (lastOnlineStr == <span class="code-keyword">null</span> || 
+            (currentTime - <span class="code-class">Long</span>.parseLong(lastOnlineStr) > <span class="code-class">DeviceStatusConstants</span>.LAST_ONLINE_INTERVAL)) {
+            
+            <span class="code-comment">// 更新数据库（仅更新必要字段）</span>
+            fengdianDeviceInfoService.lambdaUpdate()
+                    .eq(<span class="code-class">FengdianDeviceInfo</span>::getId, deviceInfo.getId())
+                    .set(<span class="code-class">FengdianDeviceInfo</span>::getLastTime, <span class="code-keyword">new</span> <span class="code-class">java</span>.util.<span class="code-class">Date</span>())
+                    .set(<span class="code-class">FengdianDeviceInfo</span>::getRunStatus, <span class="code-class">DeviceStatusConstants</span>.STATUS_ONLINE)
+                    .update();
+            
+            <span class="code-comment">// 更新Redis缓存（24小时过期）</span>
+            redisTemplate.opsForValue().set(lastOnlineKey, <span class="code-class">String</span>.valueOf(currentTime), <span class="code-number">24</span>, <span class="code-class">TimeUnit</span>.HOURS);
+            
+            logger.info(<span class="code-string">"Device last online time updated - DeviceNo: {}"</span>, deviceNo);
+        } <span class="code-keyword">else</span> {
+            <span class="code-comment">// 仅更新Redis，不写数据库</span>
+            redisTemplate.opsForValue().set(lastOnlineKey, <span class="code-class">String</span>.valueOf(currentTime), <span class="code-number">24</span>, <span class="code-class">TimeUnit</span>.HOURS);
+            logger.debug(<span class="code-string">"Device last online time updated in cache only - DeviceNo: {}"</span>, deviceNo);
+        }
+    } <span class="code-keyword">catch</span> (<span class="code-class">Exception</span> e) {
+        logger.error(<span class="code-string">"Error updating device last online time"</span>, e);
+    }
+}</code></pre>
+
+        <div class="tip">
+          <strong>💡 性能优化效果：</strong>
+          <ul style="margin-top: 10px">
+            <li>
+              <strong>减少数据库写入</strong
+              >：30秒内的多次上报只写一次数据库，减少95%写入
+            </li>
+            <li><strong>降低锁竞争</strong>：减少行锁持有时间，提升并发性能</li>
+            <li>
+              <strong>实时性保证</strong
+              >：Redis缓存保证最新时间始终可用，前端查询无延迟
+            </li>
+          </ul>
+        </div>
+
+        <h3 id="section3-4">3.4 实时数据缓存（String）</h3>
+        <p>
+          最新识别结果使用String类型缓存，前端轮询获取，<strong>延迟低于10ms</strong>：
+        </p>
+
+        <pre>>
+      </div>
+    </div>
+  </body>
+</html>
+json == <span class="code-keyword">null</span>) {
+        <span class="code-keyword">return</span> <span class="code-class">Result</span>.error(<span class="code-string">"暂无数据"</span>);
+    }
+    <span class="code-keyword">return</span> <span class="code-class">Result</span>.ok(<span class="code-class">JSON</span>.parseObject(json, <span class="code-class">RecordInfo</span>.<span class="code-keyword">class</span>));
+}</code></pre>
+
+            <h3 id="section3-5">3.5 趋势数据缓存（ZSet）</h3>
+            <p>使用ZSet存储趋势数据，

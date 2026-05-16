@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>风电净空监控系统 - 文档中心</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="index-container">
+      <!-- 左侧文件目录导航 -->
+      <nav class="index-sidebar">
+        <div class="index-sidebar-header">
+          <h1>风电净空监控系统</h1>
+          <p>文档中心</p>
+        </div>
+        <div class="index-sidebar-nav">
+          <div class="nav-category">业务页面</div>
+          <a href="20260514-数据总览页面.html" class="nav-file">
+            数据总览页面
+            <span class="nav-file-date">2026-05-14</span>
+          </a>
+          <a href="20250516-数据分析报告页面.html" class="nav-file">
+            数据分析报告页面
+            <span class="nav-file-date">2025-05-16</span>
+          </a>
+          <a href="20250516-风轮不平衡评估报告页面.html" class="nav-file">
+            风轮不平衡评估报告页面
+            <span class="nav-file-date">2025-05-16</span>
+          </a>
+
+          <div class="nav-category">技术教程</div>
+          <a href="20260513-分库分表实战教程.html" class="nav-file">
+            分库分表实战教程
+            <span class="nav-file-date">2026-05-13</span>
+          </a>
+          <a href="20260513-定时任务全链路教程.html" class="nav-file">
+            定时任务全链路教程
+            <span class="nav-file-date">2026-05-13</span>
+          </a>
+          <a href="20260513-数据流.html" class="nav-file">
+            数据流
+            <span class="nav-file-date">2026-05-13</span>
+          </a>
+          <a href="20260515-Redis.html" class="nav-file">
+            Redis 教程
+            <span class="nav-file-date">2026-05-15</span>
+          </a>
+          <a href="20260516-字典使用深入讲解.html" class="nav-file">
+            字典使用深入讲解
+            <span class="nav-file-date">2026-05-16</span>
+          </a>
+        </div>
+      </nav>
+
+      <!-- 主内容区域 -->
+      <main class="index-main">
+        <div class="index-content-header">
+          <h1>文档中心</h1>
+          <p>风电净空监控系统技术文档与教程汇总</p>
+        </div>
+
+        <div class="content-wrapper">
+          <section class="content-section" id="overview">
+            <h2>文档概览</h2>
+            <p>
+              本文档中心汇集了风电净空监控系统的业务页面说明和技术教程，涵盖前端页面开发、后端架构设计、数据库优化等多个方面。
+            </p>
+            <p>
+              系统基于 JeecgBoot 3.4.0 低代码平台构建，采用 Vue 2.6 + Ant Design Vue 前端技术栈，结合 Spring Boot 2.6.6 后端框架，提供完整的设备管理、视频监控、净空检测统计分析功能。
+            </p>
+          </section>
+
+          <section class="content-section" id="business-docs">
+            <h2>业务页面文档</h2>
+            <h3>数据总览页面</h3>
+            <p>系统主数据大屏，展示关键指标和实时监控信息，包含摄像头监控、设备状态总览等功能。</p>
+
+            <h3>数据分析报告页面</h3>
+            <p>提供净空检测数据的深度分析功能，支持多种图表展示和数据对比分析。</p>
+
+            <h3>风轮不平衡评估报告页面</h3>
+            <p>针对风机风轮不平衡问题的专项评估报告，包含振动分析、平衡状态评估等。</p>
+          </section>
+
+          <section class="content-section" id="tech-docs">
+            <h2>技术教程文档</h2>
+            <h3>分库分表实战教程</h3>
+            <p>详解如何在实际项目中进行数据库分库分表，提升系统性能和扩展性。</p>
+
+            <h3>定时任务全链路教程</h3>
+            <p>基于 Quartz 的定时任务完整实现方案，包含任务调度、监控和管理。</p>
+
+            <h3>数据流</h3>
+            <p>系统数据流转全景，从边缘设备到服务端的数据采集、处理和存储流程。</p>
+
+            <h3>Redis 教程</h3>
+            <p>Redis 在系统中的应用实践，包括缓存策略、分布式锁等场景。</p>
+
+            <h3>字典使用深入讲解</h3>
+            <p>JeecgBoot 字典功能的深度使用指南，包含字典配置、前端展示等。</p>
+          </section>
+
+          <section class="content-section" id="tech-stack">
+            <h2>技术栈</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th>技术</th>
+                  <th>版本</th>
+                  <th>用途</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Spring Boot</td>
+                  <td>2.6.6</td>
+                  <td>后端基础框架</td>
+                </tr>
+                <tr>
+                  <td>Vue</td>
+                  <td>2.6</td>
+                  <td>前端核心框架</td>
+                </tr>
+                <tr>
+                  <td>Ant Design Vue</td>
+                  <td>1.7.2</td>
+                  <td>UI 组件库</td>
+                </tr>
+                <tr>
+                  <td>MyBatis-Plus</td>
+                  <td>3.5.1</td>
+                  <td>ORM 框架</td>
+                </tr>
+                <tr>
+                  <td>Redis</td>
+                  <td>-</td>
+                  <td>缓存/分布式锁</td>
+                </tr>
+                <tr>
+                  <td>MQTT</td>
+                  <td>-</td>
+                  <td>设备通信协议</td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+
+          <section class="content-section" id="quick-start">
+            <h2>快速开始</h2>
+            <h3>后端启动</h3>
+            <pre><code>cd jeecg-boot-module-system
+mvn spring-boot:run</code></pre>
+
+            <h3>前端启动</h3>
+            <pre><code>cd fengji-system-vue
+yarn serve</code></pre>
+
+            <div class="tip">
+              <strong>提示：</strong>后端已配置热部署（devtools），修改 Java 代码后无需重启服务。
+            </div>
+          </section>
+        </div>
+      </main>
+
+      <!-- 右侧页内目录 -->
+      <aside class="index-toc">
+        <h3>本页目录</h3>
+        <a href="#overview" class="toc-link">文档概览</a>
+        <a href="#business-docs" class="toc-link">业务页面文档</a>
+        <a href="#tech-docs" class="toc-link">技术教程文档</a>
+        <a href="#tech-stack" class="toc-link">技术栈</a>
+        <a href="#quick-start" class="toc-link">快速开始</a>
+      </aside>
+    </div>
+
+    <!-- 返回顶部按钮 -->
+    <button class="back-to-top" id="backToTop" title="返回顶部">↑</button>
+
+    <script>
+      // 返回顶部按钮
+      const backToTopBtn = document.getElementById('backToTop');
+      
+      window.addEventListener('scroll', function() {
+        if (window.pageYOffset > 300) {
+          backToTopBtn.classList.add('visible');
+        } else {
+          backToTopBtn.classList.remove('visible');
+        }
+      });
+
+      backToTopBtn.addEventListener('click', function() {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+
+      // 右侧页内目录高亮
+      const tocLinks = document.querySelectorAll('.toc-link');
+      const sections = [];
+
+      tocLinks.forEach(function(link) {
+        const href = link.getAttribute('href');
+        const section = document.querySelector(href);
+        if (section) {
+          sections.push({ link, section });
+        }
+      });
+
+      function updateTocHighlight() {
+        let currentSection = null;
+        
+        sections.forEach(function(item) {
+          const rect = item.section.getBoundingClientRect();
+          if (rect.top <= 150) {
+            currentSection = item;
+          }
+        });
+
+        sections.forEach(function(item) {
+          item.link.classList.remove('active');
+        });
+
+        if (currentSection) {
+          currentSection.link.classList.add('active');
+        }
+      }
+
+      window.addEventListener('scroll', updateTocHighlight);
+      updateTocHighlight();
+    </script>
+  </body>
+</html>

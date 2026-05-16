@@ -1,0 +1,1794 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>风电净空监控系统 - 分库分表实战教程</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.8;
+            color: #333;
+            background: #f0f7f0;
+        }
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 280px;
+            height: 100vh;
+            background: linear-gradient(180deg, #2d6a4f 0%, #40916c 100%);
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 2px 0 12px rgba(0,0,0,0.15);
+        }
+        .sidebar-header {
+            padding: 25px 20px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255,255,255,0.15);
+        }
+        .sidebar-header h1 {
+            color: #fff;
+            font-size: 1.3em;
+            margin-bottom: 8px;
+        }
+        .sidebar-header p {
+            color: rgba(255,255,255,0.7);
+            font-size: 0.85em;
+        }
+        .sidebar-nav {
+            padding: 15px 0;
+        }
+        .sidebar-nav .nav-category {
+            padding: 10px 20px 5px;
+            color: rgba(255,255,255,0.5);
+            font-size: 0.75em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .sidebar-nav a {
+            display: block;
+            padding: 8px 20px;
+            color: rgba(255,255,255,0.85);
+            text-decoration: none;
+            font-size: 0.9em;
+            transition: all 0.3s;
+            border-left: 3px solid transparent;
+        }
+        .sidebar-nav a:hover {
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+            border-left-color: #95d5b2;
+        }
+        .sidebar-nav a.active {
+            background: rgba(255,255,255,0.15);
+            color: #fff;
+            border-left-color: #b7e4c7;
+        }
+        .sidebar-nav .nav-chapter {
+            font-weight: 600;
+            padding-left: 20px;
+        }
+        .sidebar-nav .nav-section {
+            padding-left: 35px;
+            font-size: 0.85em;
+        }
+        .sidebar-nav .nav-subsection {
+            padding-left: 50px;
+            font-size: 0.82em;
+            color: rgba(255,255,255,0.7);
+        }
+        .main-content {
+            margin-left: 280px;
+            padding: 30px 40px;
+            min-height: 100vh;
+        }
+        .content-header {
+            text-align: center;
+            padding: 50px 30px;
+            background: linear-gradient(135deg, #95d5b2 0%, #74c69d 50%, #52b788 100%);
+            color: white;
+            margin-bottom: 35px;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(82, 183, 136, 0.3);
+        }
+        .content-header h1 {
+            font-size: 2.2em;
+            margin-bottom: 12px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .content-header p {
+            font-size: 1.1em;
+            opacity: 0.95;
+        }
+        .section {
+            background: white;
+            padding: 35px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            border: 1px solid #e8f5e8;
+        }
+        .section h2 {
+            color: #2d6a4f;
+            font-size: 1.8em;
+            margin-bottom: 25px;
+            padding-bottom: 12px;
+            border-bottom: 3px solid #95d5b2;
+        }
+        .section h3 {
+            color: #40916c;
+            font-size: 1.4em;
+            margin: 25px 0 15px 0;
+            padding-left: 12px;
+            border-left: 4px solid #95d5b2;
+        }
+        .section h4 {
+            color: #555;
+            font-size: 1.15em;
+            margin: 20px 0 12px 0;
+        }
+        .section p {
+            margin-bottom: 15px;
+            text-align: justify;
+        }
+        pre {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 20px 0;
+            font-size: 13px;
+            line-height: 1.6;
+            border: 1px solid #333;
+        }
+        code {
+            font-family: "Fira Code", "Consolas", "Monaco", monospace;
+        }
+        .inline-code {
+            background: #e8f5e8;
+            padding: 2px 8px;
+            border-radius: 4px;
+            color: #2d6a4f;
+            font-size: 0.88em;
+            border: 1px solid #b7e4c7;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        table th {
+            background: linear-gradient(135deg, #52b788 0%, #40916c 100%);
+            color: white;
+            padding: 12px 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+        table td {
+            padding: 10px 15px;
+            border-bottom: 1px solid #e8f5e8;
+        }
+        table tr:hover {
+            background: #f0f7f0;
+        }
+        table tr:nth-child(even) {
+            background: #f8fdf8;
+        }
+        .note {
+            background: #fff8e1;
+            border-left: 4px solid #ffc107;
+            padding: 15px 20px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .note strong {
+            color: #856404;
+        }
+        .tip {
+            background: #e8f5e8;
+            border-left: 4px solid #40916c;
+            padding: 15px 20px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .tip strong {
+            color: #2d6a4f;
+        }
+        .warning {
+            background: #fde8e8;
+            border-left: 4px solid #e74c3c;
+            padding: 15px 20px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .warning strong {
+            color: #c0392b;
+        }
+        .info-box {
+            background: #e8f4fd;
+            border-left: 4px solid #3498db;
+            padding: 15px 20px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .info-box strong {
+            color: #2980b9;
+        }
+        .flowchart {
+            background: #f8fdf8;
+            padding: 25px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: center;
+            border: 1px solid #b7e4c7;
+        }
+        .flowchart pre {
+            display: inline-block;
+            text-align: left;
+            background: white;
+            border: 1px solid #e8f5e8;
+        }
+        .file-path {
+            background: #e8f5e8;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.83em;
+            color: #2d6a4f;
+            border: 1px solid #b7e4c7;
+        }
+        .highlight-box {
+            background: linear-gradient(135deg, #e8f5e8 0%, #d4edda 100%);
+            border: 1px solid #95d5b2;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .step-list {
+            counter-reset: step;
+            list-style: none;
+            padding-left: 0;
+        }
+        .step-list li {
+            counter-increment: step;
+            padding: 15px 15px 15px 60px;
+            position: relative;
+            margin-bottom: 15px;
+            background: #f8fdf8;
+            border-radius: 8px;
+            border: 1px solid #e8f5e8;
+        }
+        .step-list li::before {
+            content: counter(step);
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #52b788 0%, #40916c 100%);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        .code-comment { color: #6a9955; }
+        .code-keyword { color: #569cd6; }
+        .code-string { color: #ce9178; }
+        .code-method { color: #dcdcaa; }
+        .code-class { color: #4ec9b0; }
+        .code-number { color: #b5cea8; }
+        .code-type { color: #9cdcfe; }
+        .knowledge-card {
+            background: linear-gradient(135deg, #f8fdf8 0%, #e8f5e8 100%);
+            border: 1px solid #b7e4c7;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .knowledge-card h5 {
+            color: #2d6a4f;
+            font-size: 1.05em;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #95d5b2;
+        }
+        .knowledge-card ul {
+            padding-left: 20px;
+        }
+        .knowledge-card ul li {
+            margin-bottom: 8px;
+        }
+        .comparison-table {
+            margin: 20px 0;
+        }
+        .comparison-table th {
+            background: linear-gradient(135deg, #74c69d 0%, #52b788 100%);
+        }
+        .tag {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 0.78em;
+            font-weight: 600;
+            margin: 0 4px;
+        }
+        .tag-green { background: #d4edda; color: #155724; }
+        .tag-blue { background: #d1ecf1; color: #0c5460; }
+        .tag-yellow { background: #fff3cd; color: #856404; }
+        .tag-red { background: #f8d7da; color: #721c24; }
+        .progress-indicator {
+            position: fixed;
+            top: 0;
+            left: 280px;
+            right: 0;
+            height: 3px;
+            background: #e8f5e8;
+            z-index: 999;
+        }
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #52b788, #40916c);
+            width: 0%;
+            transition: width 0.3s;
+        }
+        .back-to-top {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 45px;
+            height: 45px;
+            background: linear-gradient(135deg, #52b788 0%, #40916c 100%);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2em;
+            box-shadow: 0 4px 15px rgba(82, 183, 136, 0.4);
+            transition: all 0.3s;
+            display: none;
+            z-index: 1001;
+        }
+        .back-to-top:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(82, 183, 136, 0.5);
+        }
+        footer {
+            text-align: center;
+            padding: 30px;
+            color: #888;
+            font-size: 0.9em;
+            margin-top: 40px;
+        }
+        .sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .sidebar::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.1);
+        }
+        .sidebar::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.3);
+            border-radius: 3px;
+        }
+        @media (max-width: 1024px) {
+            .sidebar {
+                width: 240px;
+            }
+            .main-content {
+                margin-left: 240px;
+                padding: 20px;
+            }
+        }
+        @media (max-width: 768px) {
+            .sidebar {
+                display: none;
+            }
+            .main-content {
+                margin-left: 0;
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="sidebar">
+        <div class="sidebar-header">
+            <h1>📚 分库分表教程</h1>
+            <p>风电净空监控系统</p>
+        </div>
+        <div class="sidebar-nav">
+            <div class="nav-category">基础篇</div>
+            <a href="#chapter1" class="nav-chapter">第一章：为什么需要分库分表</a>
+            <a href="#section1-1" class="nav-section">1.1 业务背景与数据增长</a>
+            <a href="#section1-2" class="nav-section">1.2 单表瓶颈分析</a>
+            <a href="#section1-3" class="nav-section">1.3 分库分表 vs 其他方案</a>
+            <a href="#section1-4" class="nav-section">1.4 技术选型对比</a>
+
+            <div class="nav-category">实战篇</div>
+            <a href="#chapter2" class="nav-chapter">第二章：项目分表方案实现</a>
+            <a href="#section2-1" class="nav-section">2.1 按天分表策略设计</a>
+            <a href="#section2-2" class="nav-section">2.2 分表命名规范</a>
+            <a href="#section2-3" class="nav-section">2.3 核心工具类 TableShardingUtil</a>
+            <a href="#section2-4" class="nav-section">2.4 分表服务层 IShardingRecordService</a>
+            <a href="#section2-5" class="nav-section">2.5 数据写入与查询</a>
+            <a href="#section2-6" class="nav-section">2.6 分表清理定时任务</a>
+
+            <a href="#chapter3" class="nav-chapter">第三章：ShardingSphere 分库分表</a>
+            <a href="#section3-1" class="nav-section">3.1 ShardingSphere 简介</a>
+            <a href="#section3-2" class="nav-section">3.2 单库分表配置</a>
+            <a href="#section3-3" class="nav-section">3.3 分库分表配置</a>
+            <a href="#section3-4" class="nav-section">3.4 自定义分片算法</a>
+            <a href="#section3-5" class="nav-section">3.5 读写分离配置</a>
+
+            <div class="nav-category">进阶篇</div>
+            <a href="#chapter4" class="nav-chapter">第四章：分片键选择与路由</a>
+            <a href="#section4-1" class="nav-section">4.1 分片键设计原则</a>
+            <a href="#section4-2" class="nav-section">4.2 路由策略对比</a>
+            <a href="#section4-3" class="nav-section">4.3 跨分片查询优化</a>
+
+            <a href="#chapter5" class="nav-chapter">第五章：分布式主键方案</a>
+            <a href="#section5-1" class="nav-section">5.1 主键生成策略对比</a>
+            <a href="#section5-2" class="nav-section">5.2 雪花算法原理</a>
+            <a href="#section5-3" class="nav-section">5.3 项目中的主键实践</a>
+
+            <a href="#chapter6" class="nav-chapter">第六章：性能优化与最佳实践</a>
+            <a href="#section6-1" class="nav-section">6.1 查询性能优化</a>
+            <a href="#section6-2" class="nav-section">6.2 写入性能优化</a>
+            <a href="#section6-3" class="nav-section">6.3 常见问题排查</a>
+            <a href="#section6-4" class="nav-section">6.4 最佳实践总结</a>
+        </div>
+    </nav>
+
+    <div class="progress-indicator">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <div class="main-content">
+        <div class="content-header">
+            <h1>🗄️ 分库分表实战教程</h1>
+            <p>风电净空监控系统 · 2026年5月13日</p>
+            <p style="margin-top: 10px; font-size: 0.95em;">为什么分库分表 · 技术选型 · 按天分表实战 · ShardingSphere 配置</p>
+        </div>
+
+        <div class="section" id="chapter1">
+            <h2>第一章：为什么需要分库分表</h2>
+            
+            <h3 id="section1-1">1.1 业务背景与数据增长</h3>
+            <p>风电净空监控系统是一个典型的 <strong>物联网数据采集与分析系统</strong>，每天产生大量设备识别记录和 MQTT 通信日志。让我们先看看项目的数据规模：</p>
+            
+            <div class="knowledge-card">
+                <h5>📖 项目数据规模估算</h5>
+                <table>
+                    <tr>
+                        <th>数据类型</th>
+                        <th>单设备日均产生</th>
+                        <th>设备数量</th>
+                        <th>日均总量</th>
+                        <th>月增长量</th>
+                    </tr>
+                    <tr>
+                        <td>识别记录 (RecordInfo)</td>
+                        <td>约 500-2000 条</td>
+                        <td>50-100 台</td>
+                        <td>5-20 万条</td>
+                        <td>150-600 万条</td>
+                    </tr>
+                    <tr>
+                        <td>MQTT 日志 (MqttServiceLog)</td>
+                        <td>约 2000-5000 条</td>
+                        <td>50-100 台</td>
+                        <td>20-50 万条</td>
+                        <td>600-1500 万条</td>
+                    </tr>
+                    <tr>
+                        <td>每日统计 (ClearanceDailyStats)</td>
+                        <td>1 条/设备</td>
+                        <td>50-100 台</td>
+                        <td>50-100 条</td>
+                        <td>1500-3000 条</td>
+                    </tr>
+                </table>
+            </div>
+
+            <p>按照这个增长速度，<strong>一年后的数据量</strong>：</p>
+            <ul style="margin: 15px 0; padding-left: 30px;">
+                <li><strong>识别记录表</strong>：约 1800-7200 万条记录</li>
+                <li><strong>MQTT 日志表</strong>：约 7200-1.8 亿条记录</li>
+                <li><strong>总数据量</strong>：接近 2 亿条记录，存储约 200-500 GB</li>
+            </ul>
+
+            <h3 id="section1-2">1.2 单表瓶颈分析</h3>
+            <p>如果所有数据都存储在单表中，会遇到以下严重问题：</p>
+
+            <div class="knowledge-card">
+                <h5>📖 单表性能瓶颈详解</h5>
+                
+                <h4>1.2.1 查询性能急剧下降</h4>
+                <p>MySQL InnoDB 引擎使用 B+ 树索引，当表数据量达到千万级时：</p>
+                <ul>
+                    <li><strong>索引深度增加</strong>：100 万行约 2-3 层，1000 万行约 3-4 层，查询 IO 次数增加</li>
+                    <li><strong>全表扫描代价高</strong>：即使有索引，范围查询仍需扫描大量数据页</li>
+                    <li><strong>缓存命中率降低</strong>：热数据无法完全加载到 Buffer Pool，频繁磁盘 IO</li>
+                    <li><strong>锁竞争加剧</strong>：高并发写入时行锁等待时间增长</li>
+                </ul>
+
+                <h4>1.2.2 数据清理困难</h4>
+                <p>业务要求保留最近 30 天的详细记录，删除历史数据时：</p>
+                <ul>
+                    <li><strong>DELETE 操作慢</strong>：删除 900 万条记录需要数小时，且产生大量 undo log</li>
+                    <li><strong>表碎片严重</strong>：DELETE 后表空间不会自动回收，需要 <span class="inline-code">OPTIMIZE TABLE</span></li>
+                    <li><strong>OPTIMIZE 锁表</strong>：优化表期间表被锁定，影响业务读写</li>
+                </ul>
+
+                <h4>1.2.3 维护成本高昂</h4>
+                <ul>
+                    <li><strong>添加索引耗时</strong>：千万级表添加索引需要锁表数小时</li>
+                    <li><strong>备份恢复慢</strong>：全量备份需要数小时，恢复时间更长</li>
+                    <li><strong>主从延迟</strong>：大事务导致主从同步延迟严重</li>
+                </ul>
+            </div>
+
+            <div class="warning">
+                <strong>⚠️ 实际案例：</strong>某风电场项目单表 record_info 达到 5000 万条记录后，按设备编号查询当天数据从 50ms 飙升到 3-5 秒，严重影响用户体验。
+            </div>
+
+            <h3 id="section1-3">1.3 分库分表 vs 其他方案</h3>
+            <p>面对数据量增长，常见的解决方案对比如下：</p>
+
+            <table class="comparison-table">
+                <tr>
+                    <th>方案</th>
+                    <th>适用场景</th>
+                    <th>优点</th>
+                    <th>缺点</th>
+                    <th>本项目选择</th>
+                </tr>
+                <tr>
+                    <td><strong>SQL 优化 + 索引</strong></td>
+                    <td>数据量 &lt; 1000 万</td>
+                    <td>简单、无需改架构</td>
+                    <td>提升有限，无法解决根本问题</td>
+                    <td>基础方案，必须做</td>
+                </tr>
+                <tr>
+                    <td><strong>读写分离</strong></td>
+                    <td>读多写少（8:2 以上）</td>
+                    <td>提升读性能，架构简单</td>
+                    <td>不解决单表写入瓶颈和存储问题</td>
+                    <td>配合使用</td>
+                </tr>
+                <tr>
+                    <td><strong>缓存 (Redis)</strong></td>
+                    <td>热点数据查询</td>
+                    <td>查询极快，减轻数据库压力</td>
+                    <td>不解决存储问题，数据一致性复杂</td>
+                    <td>配合使用</td>
+                </tr>
+                <tr>
+                    <td><strong>归档表</strong></td>
+                    <td>历史数据很少查询</td>
+                    <td>实现简单，迁移成本低</td>
+                    <td>仍是大表，只是数据量减少</td>
+                    <td>不适合</td>
+                </tr>
+                <tr>
+                    <td><strong>按天分表（本项目）</strong></td>
+                    <td>数据有明显时间维度</td>
+                    <td>查询快、清理快、维护简单</td>
+                    <td>跨天查询需 UNION，表数量多</td>
+                    <td><span class="tag tag-green">✓ 已采用</span></td>
+                </tr>
+                <tr>
+                    <td><strong>ShardingSphere 分库分表</strong></td>
+                    <td>数据量极大，需水平扩展</td>
+                    <td>自动路由、支持分库、透明化</td>
+                    <td>学习成本高、配置复杂、有性能损耗</td>
+                    <td><span class="tag tag-blue">备选方案</span></td>
+                </tr>
+                <tr>
+                    <td><strong>ES/MongoDB</strong></td>
+                    <td>非结构化数据、全文检索</td>
+                    <td>水平扩展能力强</td>
+                    <td>引入新组件、运维成本增加</td>
+                    <td>不适合当前场景</td>
+                </tr>
+            </table>
+
+            <div class="tip">
+                <strong>💡 为什么本项目选择按天分表？</strong>
+                <ul style="margin-top: 10px;">
+                    <li><strong>业务特性匹配</strong>：识别记录和 MQTT 日志都有明确的时间属性，查询多为按天或按时间段</li>
+                    <li><strong>数据生命周期清晰</strong>：业务只关心最近 30 天的数据，过期数据直接删除即可</li>
+                    <li><strong>实现简单</strong>：无需引入额外中间件，使用 JdbcTemplate 动态建表即可</li>
+                    <li><strong>运维成本低</strong>：表结构统一，清理任务自动化，无需人工干预</li>
+                    <li><strong>性能提升明显</strong>：单表数据量从千万级降到万级，查询性能提升 10-100 倍</li>
+                </ul>
+            </div>
+
+            <h3 id="section1-4">1.4 技术选型对比</h3>
+            <p>如果未来数据量继续增长，需要考虑更专业的分库分表方案。以下是主流技术对比：</p>
+
+            <table>
+                <tr>
+                    <th>特性</th>
+                    <th>本项目方案<br/>(JdbcTemplate)</th>
+                    <th>ShardingSphere<br/>(推荐)</th>
+                    <th>MyCat<br/>(传统)</th>
+                    <th>Vitess<br/>(Google)</th>
+                </tr>
+                <tr>
+                    <td>定位</td>
+                    <td>轻量级分表</td>
+                    <td>分布式数据库中间件</td>
+                    <td>数据库代理</td>
+                    <td>分布式数据库方案</td>
+                </tr>
+                <tr>
+                    <td>分表支持</td>
+                    <td><span class="tag tag-green">✓ 支持</span></td>
+                    <td><span class="tag tag-green">✓ 支持</span></td>
+                    <td><span class="tag tag-green">✓ 支持</span></td>
+                    <td><span class="tag tag-green">✓ 支持</span></td>
+                </tr>
+                <tr>
+                    <td>分库支持</td>
+                    <td><span class="tag tag-red">✗ 不支持</span></td>
+                    <td><span class="tag tag-green">✓ 支持</span></td>
+                    <td><span class="tag tag-green">✓ 支持</span></td>
+                    <td><span class="tag tag-green">✓ 支持</span></td>
+                </tr>
+                <tr>
+                    <td>读写分离</td>
+                    <td><span class="tag tag-red">✗ 不支持</span></td>
+                    <td><span class="tag tag-green">✓ 支持</span></td>
+                    <td><span class="tag tag-green">✓ 支持</span></td>
+                    <td><span class="tag tag-green">✓ 支持</span></td>
+                </tr>
+                <tr>
+                    <td>分布式事务</td>
+                    <td><span class="tag tag-red">✗ 不支持</span></td>
+                    <td><span class="tag tag-green">✓ 支持</span></td>
+                    <td><span class="tag tag-yellow">部分支持</span></td>
+                    <td><span class="tag tag-green">✓ 支持</span></td>
+                </tr>
+                <tr>
+                    <td>分布式主键</td>
+                    <td><span class="tag tag-yellow">手动实现</span></td>
+                    <td><span class="tag tag-green">✓ 内置</span></td>
+                    <td><span class="tag tag-green">✓ 内置</span></td>
+                    <td><span class="tag tag-green">✓ 内置</span></td>
+                </tr>
+                <tr>
+                    <td>SQL 透明</td>
+                    <td><span class="tag tag-red">✗ 需手动拼接</span></td>
+                    <td><span class="tag tag-green">✓ 完全透明</span></td>
+                    <td><span class="tag tag-green">✓ 完全透明</span></td>
+                    <td><span class="tag tag-green">✓ 完全透明</span></td>
+                </tr>
+                <tr>
+                    <td>学习成本</td>
+                    <td><span class="tag tag-green">低</span></td>
+                    <td><span class="tag tag-yellow">中</span></td>
+                    <td><span class="tag tag-yellow">中</span></td>
+                    <td><span class="tag tag-red">高</span></td>
+                </tr>
+                <tr>
+                    <td>运维成本</td>
+                    <td><span class="tag tag-green">低</span></td>
+                    <td><span class="tag tag-yellow">中</span></td>
+                    <td><span class="tag tag-yellow">中</span></td>
+                    <td><span class="tag tag-red">高</span></td>
+                </tr>
+                <tr>
+                    <td>性能损耗</td>
+                    <td><span class="tag tag-green">无</span></td>
+                    <td><span class="tag tag-yellow">5-15%</span></td>
+                    <td><span class="tag tag-yellow">10-20%</span></td>
+                    <td><span class="tag tag-yellow">5-10%</span></td>
+                </tr>
+                <tr>
+                    <td>社区活跃度</td>
+                    <td>-</td>
+                    <td><span class="tag tag-green">高</span></td>
+                    <td><span class="tag tag-yellow">中</span></td>
+                    <td><span class="tag tag-green">高</span></td>
+                </tr>
+            </table>
+
+            <div class="info-box">
+                <strong>📘 技术选型建议：</strong>
+                <ul style="margin-top: 10px;">
+                    <li><strong>当前阶段（日增 &lt; 50 万）</strong>：本项目按天分表方案完全够用，无需引入额外复杂度</li>
+                    <li><strong>中期扩展（日增 50-200 万）</strong>：考虑引入 ShardingSphere，实现分库分表 + 读写分离</li>
+                    <li><strong>长期规划（日增 &gt; 200 万）</strong>：考虑 TiDB / Vitess 等分布式数据库方案</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="section" id="chapter2">
+            <h2>第二章：项目分表方案实现</h2>
+            
+            <h3 id="section2-1">2.1 按天分表策略设计</h3>
+            <p>本项目采用 <strong>按天分表</strong> 策略，每天的数据独立存储在一张表中。这是最适合当前业务场景的方案。</p>
+
+            <div class="knowledge-card">
+                <h5>📖 为什么选择按天而不是按月？</h5>
+                <table>
+                    <tr>
+                        <th>对比维度</th>
+                        <th>按天分表</th>
+                        <th>按月分表</th>
+                    </tr>
+                    <tr>
+                        <td>单表数据量</td>
+                        <td>5-20 万条（识别记录）</td>
+                        <td>150-600 万条</td>
+                    </tr>
+                    <tr>
+                        <td>查询性能</td>
+                        <td>极快（扫描万级数据）</td>
+                        <td>较快（扫描百万级数据）</td>
+                    </tr>
+                    <tr>
+                        <td>数据清理</td>
+                        <td>DROP 30 张表（秒级）</td>
+                        <td>DROP 1 张表（但表很大）</td>
+                    </tr>
+                    <tr>
+                        <td>表数量</td>
+                        <td>30-90 张（保留 30-90 天）</td>
+                        <td>3-6 张（保留 3-6 月）</td>
+                    </tr>
+                    <tr>
+                        <td>跨天查询</td>
+                        <td>需 UNION 多张表</td>
+                        <td>单表查询即可</td>
+                    </tr>
+                    <tr>
+                        <td>适用场景</td>
+                        <td>高频按天查询、快速清理</td>
+                        <td>低频查询、表数量少</td>
+                    </tr>
+                </table>
+            </div>
+
+            <h3 id="section2-2">2.2 分表命名规范</h3>
+            <p>良好的命名规范是分表管理的基础，本项目遵循以下规范：</p>
+
+            <table>
+                <tr>
+                    <th>数据类型</th>
+                    <th>分表命名格式</th>
+                    <th>示例</th>
+                    <th>说明</th>
+                </tr>
+                <tr>
+                    <td>识别记录</td>
+                    <td><code>record_info_YYYYMMDD</code></td>
+                    <td><code>record_info_20260513</code></td>
+                    <td>存储设备识别记录</td>
+                </tr>
+                <tr>
+                    <td>MQTT 日志</td>
+                    <td><code>mqtt_service_log_YYYYMMDD</code></td>
+                    <td><code>mqtt_service_log_20260513</code></td>
+                    <td>存储 MQTT 消息日志</td>
+                </tr>
+            </table>
+
+            <div class="knowledge-card">
+                <h5>📖 命名设计原则</h5>
+                <ul>
+                    <li><strong>可读性</strong>：表名包含日期信息，一目了然</li>
+                    <li><strong>可排序</strong>：YYYYMMDD 格式保证按字符串排序即按时间排序</li>
+                    <li><strong>可解析</strong>：可通过 SQL 从表名提取日期：<span class="inline-code">STR_TO_DATE(RIGHT(table_name, 8), '%Y%m%d')</span></li>
+                    <li><strong>可匹配</strong>：使用 <span class="inline-code">LIKE 'record_info_%'</span> 可匹配所有分表</li>
+                </ul>
+            </div>
+
+            <h3 id="section2-3">2.3 核心工具类 TableShardingUtil</h3>
+            <p><span class="file-path">org.jeecg.modules.fengji.common.TableShardingUtil</span> 是分表管理的核心工具类，提供分表名称生成、存在性检查、自动创建、删除等功能。</p>
+
+            <h4>2.3.1 分表名称生成</h4>
+            <pre><code class="language-java"><span class="code-keyword">package</span> org.jeecg.modules.fengji.common;
+
+<span class="code-keyword">import</span> java.time.LocalDate;
+<span class="code-keyword">import</span> java.time.format.DateTimeFormatter;
+
+<span class="code-keyword">public class</span> <span class="code-class">TableShardingUtil</span> {
+
+    <span class="code-comment">// 日期格式：yyyyMMdd，如 20260513</span>
+    <span class="code-keyword">private static final</span> <span class="code-class">DateTimeFormatter</span> DATE_FORMATTER = 
+        <span class="code-class">DateTimeFormatter</span>.<span class="code-method">ofPattern</span>(<span class="code-string">"yyyyMMdd"</span>);
+
+    <span class="code-comment">/**
+     * 获取指定日期的 RecordInfo 分表名
+     * @param date 日期
+     * @return 表名，如 record_info_20260513
+     */</span>
+    <span class="code-keyword">public static</span> <span class="code-class">String</span> <span class="code-method">getRecordInfoTableName</span>(<span class="code-class">LocalDate</span> date) {
+        <span class="code-keyword">return</span> <span class="code-string">"record_info_"</span> + date.<span class="code-method">format</span>(<span class="code-class">DATE_FORMATTER</span>);
+    }
+
+    <span class="code-comment">/**
+     * 获取指定日期的 MQTT 日志分表名
+     * @param date 日期
+     * @return 表名，如 mqtt_service_log_20260513
+     */</span>
+    <span class="code-keyword">public static</span> <span class="code-class">String</span> <span class="code-method">getMqttLogTableName</span>(<span class="code-class">LocalDate</span> date) {
+        <span class="code-keyword">return</span> <span class="code-string">"mqtt_service_log_"</span> + date.<span class="code-method">format</span>(<span class="code-class">DATE_FORMATTER</span>);
+    }
+}</code></pre>
+
+            <h4>2.3.2 分表存在性检查</h4>
+            <pre><code class="language-java"><span class="code-comment">/**
+ * 检查表是否存在
+ * @param tableName 表名
+ * @return true-存在，false-不存在
+ */</span>
+<span class="code-keyword">public boolean</span> <span class="code-method">tableExists</span>(<span class="code-class">String</span> tableName) {
+    <span class="code-keyword">try</span> {
+        <span class="code-comment">// 查询 information_schema.tables 获取表信息</span>
+        <span class="code-comment">// DATABASE() 返回当前数据库名</span>
+        <span class="code-class">String</span> sql = <span class="code-string">"SELECT COUNT(*) FROM information_schema.tables "</span> +
+                   <span class="code-string">"WHERE table_schema = DATABASE() AND table_name = ?"</span>;
+        <span class="code-class">Integer</span> count = jdbcTemplate.<span class="code-method">queryForObject</span>(sql, <span class="code-class">Integer</span>.<span class="code-keyword">class</span>, tableName);
+        <span class="code-keyword">return</span> count != <span class="code-keyword">null</span> &amp;&amp; count &gt; <span class="code-number">0</span>;
+    } <span class="code-keyword">catch</span> (<span class="code-class">Exception</span> e) {
+        <span class="code-method">log</span>.<span class="code-method">error</span>(<span class="code-string">"检查表格是否存在失败: {}"</span>, tableName, e);
+        <span class="code-keyword">return false</span>;
+    }
+}</code></pre>
+
+            <div class="note">
+                <strong>📌 为什么查询 information_schema？</strong>
+                <ul style="margin-top: 10px;">
+                    <li><span class="inline-code">SHOW TABLES LIKE 'xxx'</span> 也可以，但 <span class="inline-code">information_schema</span> 更标准、更灵活</li>
+                    <li>可以结合其他条件过滤，如表引擎、表注释等</li>
+                    <li>支持批量查询，一次获取多个表的信息</li>
+                </ul>
+            </div>
+
+            <h4>2.3.3 分表自动创建</h4>
+            <pre><code class="language-java"><span class="code-comment">/**
+ * 确保 RecordInfo 分表存在，不存在则自动创建
+ * 使用 CREATE TABLE IF NOT EXISTS 保证幂等性
+ */</span>
+<span class="code-keyword">public void</span> <span class="code-method">ensureRecordInfoTableExists</span>(<span class="code-class">LocalDate</span> date) {
+    <span class="code-class">String</span> tableName = <span class="code-method">getRecordInfoTableName</span>(date);
+    <span class="code-keyword">if</span> (!<span class="code-method">tableExists</span>(tableName)) {
+        <span class="code-method">createRecordInfoTable</span>(tableName);
+    }
+}
+
+<span class="code-keyword">private void</span> <span class="code-method">createRecordInfoTable</span>(<span class="code-class">String</span> tableName) {
+    <span class="code-keyword">try</span> {
+        <span class="code-class">String</span> sql = <span class="code-string">"CREATE TABLE IF NOT EXISTS `"</span> + tableName + <span class="code-string">"` ("</span> +
+            <span class="code-string">"`id` varchar(36) NOT NULL COMMENT '主键', "</span> +
+            <span class="code-string">"`wind_farm_code` varchar(100) DEFAULT NULL COMMENT '风场编号', "</span> +
+            <span class="code-string">"`wind_turbine_code` varchar(100) DEFAULT NULL COMMENT '风机编号', "</span> +
+            <span class="code-string">"`equipment_code` varchar(100) DEFAULT NULL COMMENT '设备编号', "</span> +
+            <span class="code-string">"`clearance_value` decimal(10,4) DEFAULT NULL COMMENT '净空距离值', "</span> +
+            <span class="code-string">"`recognize_time` datetime DEFAULT NULL COMMENT '识别时间', "</span> +
+            <span class="code-string">"`shoot_time` datetime DEFAULT NULL COMMENT '拍摄时间', "</span> +
+            <span class="code-string">"`recognize_result` varchar(50) DEFAULT NULL COMMENT '识别结果', "</span> +
+            <span class="code-string">"`content` text COMMENT '数据内容(JSON)', "</span> +
+            <span class="code-string">"`original_image` varchar(500) DEFAULT NULL COMMENT '原始图片 URL', "</span> +
+            <span class="code-string">"`processed_image` varchar(500) DEFAULT NULL COMMENT '处理后图片 URL', "</span> +
+            <span class="code-string">"`rotation_speed` decimal(10,2) DEFAULT NULL COMMENT '转速值 (r/min)', "</span> +
+            <span class="code-string">"`unbalance_level` varchar(50) DEFAULT NULL COMMENT '不平衡等级', "</span> +
+            <span class="code-string">"`current_wind_speed` decimal(10,2) DEFAULT NULL COMMENT '当前风速 (m/s)', "</span> +
+            <span class="code-string">"`is_abnormal` int DEFAULT 0 COMMENT '是否异常 (0-正常，1-异常)', "</span> +
+            <span class="code-string">"`source_type` varchar(50) DEFAULT NULL COMMENT '来源类型', "</span> +
+            <span class="code-string">"`status_level` varchar(50) DEFAULT NULL COMMENT '状态等级', "</span> +
+            <span class="code-string">"`del_flag` int DEFAULT 0 COMMENT '删除标志', "</span> +
+            <span class="code-string">"`create_time` datetime DEFAULT NULL COMMENT '创建时间', "</span> +
+            <span class="code-string">"`update_time` datetime DEFAULT NULL COMMENT '更新时间', "</span> +
+            <span class="code-string">"PRIMARY KEY (`id`), "</span> +
+            <span class="code-string">"KEY `idx_equipment_code` (`equipment_code`), "</span> +
+            <span class="code-string">"KEY `idx_recognize_time` (`recognize_time`), "</span> +
+            <span class="code-string">"KEY `idx_wind_turbine_code` (`wind_turbine_code`) "</span> +
+            <span class="code-string">") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"</span>;
+        jdbcTemplate.<span class="code-method">execute</span>(sql);
+        <span class="code-method">log</span>.<span class="code-method">info</span>(<span class="code-string">"创建RecordInfo分表成功: {}"</span>, tableName);
+    } <span class="code-keyword">catch</span> (<span class="code-class">Exception</span> e) {
+        <span class="code-method">log</span>.<span class="code-method">error</span>(<span class="code-string">"创建RecordInfo分表失败: {}"</span>, tableName, e);
+        <span class="code-keyword">throw new</span> <span class="code-class">RuntimeException</span>(<span class="code-string">"创建分表失败: "</span> + tableName, e);
+    }
+}</code></pre>
+
+            <div class="tip">
+                <strong>💡 索引设计说明：</strong>
+                <ul style="margin-top: 10px;">
+                    <li><strong>equipment_code 索引</strong>：按设备查询识别记录时使用，高频查询字段</li>
+                    <li><strong>recognize_time 索引</strong>：按时间范围查询时使用，支持时间区间过滤</li>
+                    <li><strong>wind_turbine_code 索引</strong>：按风机查询识别记录时使用</li>
+                    <li><strong>索引数量控制</strong>：每个分表 3-4 个索引，避免过多索引影响写入性能</li>
+                    <li><strong>新增字段</strong>：processed_image（处理后图片）、rotation_speed（转速）、unbalance_level（不平衡等级）等，用于扩展业务功能</li>
+                </ul>
+            </div>
+
+            <h4>2.3.4 分表删除</h4>
+            <pre><code class="language-java"><span class="code-comment">/**
+ * 删除指定日期之前的所有 RecordInfo 分表
+ * @param beforeDate 截止日期
+ * @return 删除的表数量
+ */</span>
+<span class="code-keyword">public int</span> <span class="code-method">deleteRecordInfoTablesBeforeDate</span>(<span class="code-class">LocalDate</span> beforeDate) {
+    <span class="code-keyword">int</span> deletedCount = <span class="code-number">0</span>;
+    <span class="code-keyword">try</span> {
+        <span class="code-comment">// 查询所有 record_info_YYYYMMDD 格式的表，且日期 &lt; beforeDate</span>
+        <span class="code-class">String</span> sql = <span class="code-string">"SELECT table_name FROM information_schema.tables "</span> +
+                <span class="code-string">"WHERE table_schema = DATABASE() "</span> +
+                <span class="code-string">"AND table_name LIKE 'record_info_%' "</span> +
+                <span class="code-string">"AND STR_TO_DATE(RIGHT(table_name, 8), '%Y%m%d') &lt; ?"</span>;
+        <span class="code-class">List</span>&lt;<span class="code-class">String</span>&gt; tables = jdbcTemplate.<span class="code-method">queryForList</span>(sql, <span class="code-class">String</span>.<span class="code-keyword">class</span>, beforeDate);
+        
+        <span class="code-keyword">for</span> (<span class="code-class">String</span> tableName : tables) {
+            <span class="code-keyword">if</span> (<span class="code-method">dropTable</span>(tableName)) {
+                deletedCount++;
+            }
+        }
+        <span class="code-method">log</span>.<span class="code-method">info</span>(<span class="code-string">"删除RecordInfo分表完成，共删除 {} 个表"</span>, deletedCount);
+    } <span class="code-keyword">catch</span> (<span class="code-class">Exception</span> e) {
+        <span class="code-method">log</span>.<span class="code-method">error</span>(<span class="code-string">"删除RecordInfo分表失败"</span>, e);
+    }
+    <span class="code-keyword">return</span> deletedCount;
+}
+
+<span class="code-comment">/**
+ * 删除单张分表
+ */</span>
+<span class="code-keyword">public boolean</span> <span class="code-method">dropTable</span>(<span class="code-class">String</span> tableName) {
+    <span class="code-keyword">try</span> {
+        <span class="code-keyword">if</span> (<span class="code-method">tableExists</span>(tableName)) {
+            <span class="code-class">String</span> sql = <span class="code-string">"DROP TABLE `"</span> + tableName + <span class="code-string">"`"</span>;
+            jdbcTemplate.<span class="code-method">execute</span>(sql);
+            <span class="code-method">log</span>.<span class="code-method">info</span>(<span class="code-string">"删除分表成功: {}"</span>, tableName);
+            <span class="code-keyword">return true</span>;
+        }
+        <span class="code-keyword">return false</span>;
+    } <span class="code-keyword">catch</span> (<span class="code-class">Exception</span> e) {
+        <span class="code-method">log</span>.<span class="code-method">error</span>(<span class="code-string">"删除分表失败: {}"</span>, tableName, e);
+        <span class="code-keyword">return false</span>;
+    }
+}</code></pre>
+
+            <div class="highlight-box">
+                <h4>🔍 DROP TABLE vs DELETE 的优势</h4>
+                <table>
+                    <tr>
+                        <th>操作</th>
+                        <th>执行时间</th>
+                        <th>空间回收</th>
+                        <th>锁表时间</th>
+                        <th>碎片产生</th>
+                    </tr>
+                    <tr>
+                        <td><strong>DROP TABLE</strong></td>
+                        <td>秒级</td>
+                        <td>立即回收</td>
+                        <td>极短</td>
+                        <td>无</td>
+                    </tr>
+                    <tr>
+                        <td><strong>DELETE + OPTIMIZE</strong></td>
+                        <td>小时级</td>
+                        <td>需 OPTIMIZE</td>
+                        <td>很长</td>
+                        <td>严重</td>
+                    </tr>
+                </table>
+            </div>
+
+            <h3 id="section2-4">2.4 分表服务层 IShardingRecordService</h3>
+            <p>服务层封装了分表的增删改查逻辑，对上层提供统一的接口。</p>
+
+            <h4>2.4.1 接口定义</h4>
+            <pre><code class="language-java"><span class="code-keyword">package</span> org.jeecg.modules.fengji.info.service;
+
+<span class="code-keyword">import</span> com.baomidou.mybatisplus.core.metadata.IPage;
+<span class="code-keyword">import</span> org.jeecg.modules.fengji.info.entity.RecordInfo;
+<span class="code-keyword">import</span> org.jeecg.modules.mqtt.entity.MqttServiceLog;
+<span class="code-keyword">import</span> java.time.LocalDate;
+<span class="code-keyword">import</span> java.util.Date;
+<span class="code-keyword">import</span> java.util.List;
+
+<span class="code-comment">/**
+ * 分表存储服务接口
+ */</span>
+<span class="code-keyword">public interface</span> <span class="code-class">IShardingRecordService</span> {
+
+    <span class="code-comment">// ==================== 写入操作 ====================</span>
+    
+    <span class="code-comment">/** 保存RecordInfo到分表 */</span>
+    <span class="code-keyword">boolean</span> <span class="code-method">saveRecordInfo</span>(<span class="code-class">RecordInfo</span> recordInfo);
+
+    <span class="code-comment">/** 批量保存RecordInfo到分表 */</span>
+    <span class="code-keyword">boolean</span> <span class="code-method">saveBatchRecordInfo</span>(<span class="code-class">List</span>&lt;<span class="code-class">RecordInfo</span>&gt; recordInfoList);
+
+    <span class="code-comment">/** 保存MqttServiceLog到分表 */</span>
+    <span class="code-keyword">boolean</span> <span class="code-method">saveMqttLog</span>(<span class="code-class">MqttServiceLog</span> log);
+
+    <span class="code-comment">/** 批量保存MqttServiceLog到分表 */</span>
+    <span class="code-keyword">boolean</span> <span class="code-method">saveBatchMqttLog</span>(<span class="code-class">List</span>&lt;<span class="code-class">MqttServiceLog</span>&gt; logs);
+
+    <span class="code-comment">// ==================== 查询操作 ====================</span>
+    
+    <span class="code-comment">/** 根据设备编号和时间范围查询RecordInfo */</span>
+    <span class="code-class">List</span>&lt;<span class="code-class">RecordInfo</span>&gt; <span class="code-method">queryRecordInfoByDeviceAndTime</span>(
+        <span class="code-class">String</span> deviceNo, <span class="code-class">Date</span> startTime, <span class="code-class">Date</span> endTime);
+
+    <span class="code-comment">/** 分页查询RecordInfo（单天查询） */</span>
+    <span class="code-class">IPage</span>&lt;<span class="code-class">RecordInfo</span>&gt; <span class="code-method">queryRecordInfoByDeviceAndTimePaged</span>(
+        <span class="code-class">String</span> deviceNo, <span class="code-class">Date</span> startTime, <span class="code-class">Date</span> endTime, 
+        <span class="code-keyword">int</span> pageNo, <span class="code-keyword">int</span> pageSize);
+
+    <span class="code-comment">// ==================== 分表管理操作 ====================</span>
+    
+    <span class="code-comment">/** 删除指定日期之前的RecordInfo分表 */</span>
+    <span class="code-keyword">int</span> <span class="code-method">deleteRecordInfoTablesBeforeDate</span>(<span class="code-class">LocalDate</span> beforeDate);
+
+    <span class="code-comment">/** 删除指定日期之前的Mqtt日志分表 */</span>
+    <span class="code-keyword">int</span> <span class="code-method">deleteMqttLogTablesBeforeDate</span>(<span class="code-class">LocalDate</span> beforeDate);
+
+    <span class="code-comment">/** 预创建未来几天的分表 */</span>
+    <span class="code-keyword">void</span> <span class="code-method">preCreateTables</span>(<span class="code-keyword">int</span> days);
+}</code></pre>
+
+            <h3 id="section2-5">2.5 数据写入与查询</h3>
+            
+            <h4>2.5.1 数据写入（自动路由到对应分表）</h4>
+            <pre><code class="language-java"><span class="code-keyword">package</span> org.jeecg.modules.fengji.info.service.impl;
+
+<span class="code-keyword">import</span> org.springframework.jdbc.core.JdbcTemplate;
+<span class="code-keyword">import</span> java.sql.Timestamp;
+<span class="code-keyword">import</span> java.time.LocalDate;
+<span class="code-keyword">import</span> java.time.ZoneId;
+<span class="code-keyword">import</span> java.util.Date;
+
+<span class="code-keyword">@Service</span>
+<span class="code-keyword">public class</span> <span class="code-class">ShardingRecordServiceImpl</span> <span class="code-keyword">implements</span> <span class="code-class">IShardingRecordService</span> {
+
+    <span class="code-keyword">@Autowired</span>
+    <span class="code-keyword">private</span> <span class="code-class">JdbcTemplate</span> jdbcTemplate;
+
+    <span class="code-keyword">@Autowired</span>
+    <span class="code-keyword">private</span> <span class="code-class">TableShardingUtil</span> tableShardingUtil;
+
+    <span class="code-comment">/**
+     * 根据日期获取对应的分表名，并确保表存在
+     */</span>
+    <span class="code-keyword">private</span> <span class="code-class">String</span> <span class="code-method">getRecordInfoTableName</span>(<span class="code-class">Date</span> date) {
+        <span class="code-class">LocalDate</span> localDate = date.<span class="code-method">toInstant</span>()
+            .<span class="code-method">atZone</span>(<span class="code-class">ZoneId</span>.<span class="code-method">systemDefault</span>())
+            .<span class="code-method">toLocalDate</span>();
+        <span class="code-class">String</span> tableName = <span class="code-class">TableShardingUtil</span>.<span class="code-method">getRecordInfoTableName</span>(localDate);
+        
+        <span class="code-comment">// 确保表存在，不存在则自动创建</span>
+        tableShardingUtil.<span class="code-method">ensureRecordInfoTableExists</span>(localDate);
+        
+        <span class="code-keyword">return</span> tableName;
+    }
+
+    <span class="code-keyword">@Override</span>
+    <span class="code-keyword">public boolean</span> <span class="code-method">saveRecordInfo</span>(<span class="code-class">RecordInfo</span> recordInfo) {
+        <span class="code-keyword">try</span> {
+            <span class="code-comment">// 根据 recognize_time 路由到对应日期的分表</span>
+            <span class="code-class">String</span> tableName = <span class="code-method">getRecordInfoTableName</span>(recordInfo.getRecognizeTime());
+            
+            <span class="code-class">String</span> sql = <span class="code-string">"INSERT INTO `"</span> + tableName + <span class="code-string">"` ("</span> +
+                <span class="code-string">"id, wind_farm_code, wind_turbine_code, equipment_code, "</span> +
+                <span class="code-string">"clearance_value, recognize_time, shoot_time, recognize_result, "</span> +
+                <span class="code-string">"content, original_image, processed_image, "</span> +
+                <span class="code-string">"rotation_speed, unbalance_level, current_wind_speed, is_abnormal, "</span> +
+                <span class="code-string">"source_type, status_level, del_flag, create_time, update_time"</span> +
+                <span class="code-string">") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"</span>;
+            
+            jdbcTemplate.<span class="code-method">update</span>(sql,
+                recordInfo.getId() != <span class="code-keyword">null</span> ? recordInfo.getId() : <span class="code-class">UUID</span>.<span class="code-method">randomUUID</span>().<span class="code-method">toString</span>(),
+                recordInfo.getWindFarmCode(),
+                recordInfo.getWindTurbineCode(),
+                recordInfo.getEquipmentCode(),
+                recordInfo.getClearanceValue(),
+                recordInfo.getRecognizeTime() != <span class="code-keyword">null</span> ? <span class="code-keyword">new</span> <span class="code-class">Timestamp</span>(recordInfo.getRecognizeTime().<span class="code-method">getTime</span>()) : <span class="code-keyword">new</span> <span class="code-class">Timestamp</span>(<span class="code-class">System</span>.<span class="code-method">currentTimeMillis</span>()),
+                recordInfo.getShootTime() != <span class="code-keyword">null</span> ? <span class="code-keyword">new</span> <span class="code-class">Timestamp</span>(recordInfo.getShootTime().<span class="code-method">getTime</span>()) : <span class="code-keyword">new</span> <span class="code-class">Timestamp</span>(<span class="code-class">System</span>.<span class="code-method">currentTimeMillis</span>()),
+                recordInfo.getRecognizeResult(),
+                recordInfo.getContent(),
+                recordInfo.getOriginalImage(),
+                recordInfo.getProcessedImage(),
+                recordInfo.getRotationSpeed(),
+                recordInfo.getUnbalanceLevel() != <span class="code-keyword">null</span> ? <span class="code-class">String</span>.<span class="code-method">valueOf</span>(recordInfo.getUnbalanceLevel()) : <span class="code-keyword">null</span>,
+                recordInfo.getCurrentWindSpeed(),
+                recordInfo.getIsAbnormal() != <span class="code-keyword">null</span> ? recordInfo.getIsAbnormal() : <span class="code-number">0</span>,
+                recordInfo.getSourceType(),
+                recordInfo.getStatusLevel(),
+                recordInfo.getDelFlag() != <span class="code-keyword">null</span> ? recordInfo.getDelFlag() : <span class="code-number">0</span>,
+                <span class="code-keyword">new</span> <span class="code-class">Timestamp</span>(<span class="code-class">System</span>.<span class="code-method">currentTimeMillis</span>()),
+                <span class="code-keyword">new</span> <span class="code-class">Timestamp</span>(<span class="code-class">System</span>.<span class="code-method">currentTimeMillis</span>())
+            );
+            <span class="code-keyword">return true</span>;
+        } <span class="code-keyword">catch</span> (<span class="code-class">Exception</span> e) {
+            <span class="code-method">log</span>.<span class="code-method">error</span>(<span class="code-string">"保存RecordInfo到分表失败"</span>, e);
+            <span class="code-keyword">return false</span>;
+        }
+    }
+}</code></pre>
+
+            <div class="note">
+                <strong>📌 关键设计：</strong>
+                <ul style="margin-top: 10px;">
+                    <li><strong>自动路由</strong>：根据 <span class="inline-code">recognize_time</span> 自动路由到对应日期的分表</li>
+                    <li><strong>自动建表</strong>：写入时如果分表不存在，自动创建，无需人工干预</li>
+                    <li><strong>动态 SQL</strong>：表名通过字符串拼接，MyBatis-Plus 的 <span class="inline-code">@TableName</span> 注解不适用此场景</li>
+                    <li><strong>字段扩展</strong>：新增 processed_image、rotation_speed、unbalance_level 等字段，支持更丰富的业务场景</li>
+                    <li><strong>空值处理</strong>：对于可能为 null 的字段，在插入时进行空值判断并设置默认值</li>
+                    <li><strong>UUID 生成</strong>：如果 ID 为空，自动生成 UUID 作为主键</li>
+                </ul>
+            </div>
+
+            <h4>2.5.2 数据查询（单天查询）</h4>
+            <pre><code class="language-java"><span class="code-keyword">@Override</span>
+<span class="code-keyword">public</span> <span class="code-class">IPage</span>&lt;<span class="code-class">RecordInfo</span>&gt; <span class="code-method">queryRecordInfoByDeviceAndTimePaged</span>(
+        <span class="code-class">String</span> deviceNo, <span class="code-class">Date</span> startTime, <span class="code-class">Date</span> endTime, 
+        <span class="code-keyword">int</span> pageNo, <span class="code-keyword">int</span> pageSize) {
+    <span class="code-keyword">try</span> {
+        <span class="code-comment">// 根据时间范围确定需要查询的分表</span>
+        <span class="code-class">LocalDate</span> startDate = startTime.<span class="code-method">toInstant</span>()
+            .<span class="code-method">atZone</span>(<span class="code-class">ZoneId</span>.<span class="code-method">systemDefault</span>())
+            .<span class="code-method">toLocalDate</span>();
+        <span class="code-class">LocalDate</span> endDate = endTime.<span class="code-method">toInstant</span>()
+            .<span class="code-method">atZone</span>(<span class="code-class">ZoneId</span>.<span class="code-method">systemDefault</span>())
+            .<span class="code-method">toLocalDate</span>();
+        
+        <span class="code-comment">// 单天查询直接查对应分表</span>
+        <span class="code-keyword">if</span> (startDate.<span class="code-method">isEqual</span>(endDate)) {
+            <span class="code-class">String</span> tableName = <span class="code-class">TableShardingUtil</span>
+                .<span class="code-method">getRecordInfoTableName</span>(startDate);
+            <span class="code-class">String</span> sql = <span class="code-string">"SELECT * FROM `"</span> + tableName + <span class="code-string">"` "</span> +
+                <span class="code-string">"WHERE equipment_code = ? AND recognize_time BETWEEN ? AND ? "</span> +
+                <span class="code-string">"ORDER BY recognize_time DESC LIMIT ?, ?"</span>;
+            
+            <span class="code-class">List</span>&lt;<span class="code-class">RecordInfo</span>&gt; records = jdbcTemplate.<span class="code-method">query</span>(
+                sql, <span class="code-keyword">new</span> <span class="code-class">RecordInfoRowMapper</span>(),
+                deviceNo, startTime, endTime,
+                (pageNo - <span class="code-number">1</span>) * pageSize, pageSize
+            );
+            
+            <span class="code-comment">// 构建分页结果</span>
+            <span class="code-class">IPage</span>&lt;<span class="code-class">RecordInfo</span>&gt; page = <span class="code-keyword">new</span> <span class="code-class">Page</span>&lt;&gt;(pageNo, pageSize);
+            page.<span class="code-method">setRecords</span>(records);
+            <span class="code-keyword">return</span> page;
+        } <span class="code-keyword">else</span> {
+            <span class="code-comment">// 跨天查询需要 UNION 多张表</span>
+            <span class="code-keyword">return</span> <span class="code-method">queryMultiTablePaged</span>(
+                deviceNo, startDate, endDate, pageNo, pageSize);
+        }
+    } <span class="code-keyword">catch</span> (<span class="code-class">Exception</span> e) {
+        log.<span class="code-method">error</span>(<span class="code-string">"分页查询RecordInfo失败"</span>, e);
+        <span class="code-keyword">return new</span> <span class="code-class">Page</span>&lt;&gt;();
+    }
+}</code></pre>
+
+            <h3 id="section2-6">2.6 分表清理定时任务</h3>
+            <p>分表清理任务每天凌晨执行，删除过期分表并预创建未来分表。</p>
+
+            <pre><code class="language-java"><span class="code-comment">// ShardingTableCleanJob.java</span>
+<span class="code-keyword">@Component</span>
+<span class="code-keyword">public class</span> <span class="code-class">ShardingTableCleanJob</span> <span class="code-keyword">implements</span> <span class="code-class">Job</span> {
+
+    <span class="code-keyword">@Autowired</span>
+    <span class="code-keyword">private</span> <span class="code-class">IShardingRecordService</span> shardingRecordService;
+
+    <span class="code-keyword">private</span> <span class="code-class">String</span> parameter; <span class="code-comment">// 保留天数</span>
+
+    <span class="code-keyword">public void</span> <span class="code-method">setParameter</span>(<span class="code-class">String</span> parameter) {
+        <span class="code-keyword">this</span>.parameter = parameter;
+    }
+
+    <span class="code-keyword">@Override</span>
+    <span class="code-keyword">public void</span> <span class="code-method">execute</span>(<span class="code-class">JobExecutionContext</span> context) {
+        <span class="code-method">log</span>.<span class="code-method">info</span>(<span class="code-string">"========== 分表清理任务开始 =========="</span>);
+        
+        <span class="code-keyword">int</span> retentionDays = <span class="code-number">30</span>; <span class="code-comment">// 默认保留30天</span>
+        <span class="code-keyword">if</span> (<span class="code-class">StringUtils</span>.<span class="code-method">isNotBlank</span>(parameter)) {
+            retentionDays = <span class="code-class">Integer</span>.<span class="code-method">valueOf</span>(parameter);
+        }
+        
+        <span class="code-keyword">try</span> {
+            <span class="code-class">LocalDate</span> beforeDate = <span class="code-class">LocalDate</span>.<span class="code-method">now</span>().<span class="code-method">minusDays</span>(retentionDays);
+            
+            <span class="code-comment">// 清理RecordInfo分表</span>
+            <span class="code-class">int</span> deleted = shardingRecordService
+                .<span class="code-method">deleteRecordInfoTablesBeforeDate</span>(beforeDate);
+            <span class="code-method">log</span>.<span class="code-method">info</span>(<span class="code-string">"清理RecordInfo分表: {} 个"</span>, deleted);
+            
+            <span class="code-comment">// 清理MQTT日志分表</span>
+            deleted = shardingRecordService
+                .<span class="code-method">deleteMqttLogTablesBeforeDate</span>(beforeDate);
+            <span class="code-method">log</span>.<span class="code-method">info</span>(<span class="code-string">"清理MQTT日志分表: {} 个"</span>, deleted);
+            
+            <span class="code-comment">// 预创建未来3天的分表</span>
+            shardingRecordService.<span class="code-method">preCreateTables</span>(<span class="code-number">3</span>);
+            
+        } <span class="code-keyword">catch</span> (<span class="code-class">Exception</span> e) {
+            <span class="code-method">log</span>.<span class="code-method">error</span>(<span class="code-string">"分表清理任务执行失败"</span>, e);
+        }
+        
+        <span class="code-method">log</span>.<span class="code-method">info</span>(<span class="code-string">"========== 分表清理任务结束 =========="</span>);
+    }
+}</code></pre>
+
+            <div class="tip">
+                <strong>💡 分表清理的优势：</strong>
+                <ul style="margin-top: 10px;">
+                    <li><strong>DROP TABLE 极快</strong>：秒级删除整张表，无需DELETE</li>
+                    <li><strong>空间立即回收</strong>：DROP后表空间立即释放</li>
+                    <li><strong>无碎片</strong>：不会产生表碎片，无需OPTIMIZE</li>
+                    <li><strong>预创建</strong>：提前创建未来分表，避免并发创建冲突</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="section" id="chapter3">
+            <h2>第三章：ShardingSphere 分库分表</h2>
+            
+            <h3 id="section3-1">3.1 ShardingSphere 简介</h3>
+            <p>ShardingSphere 是一套开源的分布式数据库中间件解决方案，提供分库分表、读写分离、分布式事务等功能。</p>
+
+            <div class="knowledge-card">
+                <h5>📖 ShardingSphere 核心组件</h5>
+                <table>
+                    <tr>
+                        <th>组件</th>
+                        <th>定位</th>
+                        <th>特点</th>
+                    </tr>
+                    <tr>
+                        <td><strong>ShardingSphere-JDBC</strong></td>
+                        <td>轻量级Java框架</td>
+                        <td>以JAR形式提供服务，无需额外部署</td>
+                    </tr>
+                    <tr>
+                        <td><strong>ShardingSphere-Proxy</strong></td>
+                        <td>分布式数据库代理</td>
+                        <td>独立部署，支持多语言客户端</td>
+                    </tr>
+                    <tr>
+                        <td><strong>ShardingSphere-Sidecar</strong></td>
+                        <td>Kubernetes云原生代理</td>
+                        <td>支持Service Mesh架构</td>
+                    </tr>
+                </table>
+            </div>
+
+            <h3 id="section3-2">3.2 单库分表配置</h3>
+            <p>在 Spring Boot 项目中配置 ShardingSphere-JDBC 实现单库分表（ShardingSphere 5.x）。</p>
+
+            <pre><code class="language-yaml"># application-sharding.yml
+spring:
+  shardingsphere:
+    props:
+      sql-show: true
+    datasource:
+      names: ds0
+      ds0:
+        type: com.alibaba.druid.pool.DruidDataSource
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        url: jdbc:mysql://127.0.0.1:3306/fengji_system
+        username: root
+        password: 123456
+    
+    rules:
+      sharding:
+        # 分布式序列算法配置
+        key-generators:
+          snowflake:
+            type: SNOWFLAKE
+            props:
+              worker-id: 123
+        # 分片算法配置
+        sharding-algorithms:
+          table-classbased:
+            type: CLASS_BASED
+            props:
+              strategy: standard
+              algorithmClassName: org.jeecg.modules.test.sharding.algorithm.StandardModTableShardAlgorithm
+        tables:
+          # 逻辑表名称
+          sys_log:
+            #配置具体表的数据节点
+            actual-data-nodes: ds0.sys_log$-&gt;{0..1}
+            # 分表策略
+            table-strategy:
+              standard:
+                # 分片算法名称
+                sharding-algorithm-name: table-classbased
+                # 分片列名称 (对应数据库字段)
+                sharding-column: log_type</code></pre>
+
+            <div class="info-box">
+                <strong>📘 配置说明：</strong>
+                <ul style="margin-top: 10px;">
+                    <li><strong>ShardingSphere 5.x</strong>：使用 <span class="inline-code">rules.sharding</span> 替代了旧版本的 <span class="inline-code">sharding</span></li>
+                    <li><strong>actual-data-nodes</strong>：定义数据节点，<span class="inline-code">sys_log$-&gt;{0..1}</span> 表示 <span class="inline-code">sys_log0</span> 和 <span class="inline-code">sys_log1</span> 两张表</li>
+                    <li><strong>sharding-column</strong>：分片键，这里是 <span class="inline-code">log_type</span> 字段</li>
+                    <li><strong>algorithmClassName</strong>：自定义分片算法类的完整路径</li>
+                    <li><strong>sql-show</strong>：开启 SQL 日志，便于调试</li>
+                </ul>
+            </div>
+
+            <h3 id="section3-3">3.3 分库分表配置</h3>
+            <p>当单库性能达到瓶颈时，可以扩展为分库分表（双库双表）。</p>
+
+            <pre><code class="language-yaml"># application-sharding-multi.yml
+spring:
+  shardingsphere:
+    props:
+      sql-show: true
+    datasource:
+      ds0:
+        driverClassName: com.mysql.cj.jdbc.Driver
+        url: jdbc:mysql://127.0.0.1:3306/fengji_system
+        type: com.alibaba.druid.pool.DruidDataSource
+        username: root
+        password: root
+      ds1:
+        driverClassName: com.mysql.cj.jdbc.Driver
+        url: jdbc:mysql://127.0.0.1:3306/fengji_system2
+        type: com.alibaba.druid.pool.DruidDataSource
+        username: root
+        password: root
+      names: ds0,ds1
+    rules:
+      sharding:
+        # 配置绑定表，每一行为一组
+        binding-tables:
+          - sys_log
+        # 分布式序列算法配置
+        key-generators:
+          snowflake:
+            type: SNOWFLAKE
+            props:
+              worker-id: 123
+        # 分片算法配置
+        sharding-algorithms:
+          table-classbased:
+            type: CLASS_BASED
+            props:
+              strategy: standard
+              algorithmClassName: org.jeecg.modules.test.sharding.algorithm.StandardModTableShardAlgorithm
+          # 通过 operate_type 取模的方式确定数据落在哪个库
+          database-inline:
+            type: INLINE
+            props:
+              algorithm-expression: ds$-&gt;{operate_type % 2}
+        tables:
+          sys_log:
+            #配置具体表的数据节点
+            actual-data-nodes: ds$-&gt;{0..1}.sys_log$-&gt;{0..1}
+            # 分库策略
+            database-strategy:
+              standard:
+                sharding-column: operate_type
+                sharding-algorithm-name: database-inline
+            # 分表策略
+            table-strategy:
+              standard:
+                sharding-algorithm-name: table-classbased
+                sharding-column: log_type</code></pre>
+
+            <div class="tip">
+                <strong>💡 配置说明：</strong>
+                <ul style="margin-top: 10px;">
+                    <li><strong>actual-data-nodes</strong>：<span class="inline-code">ds$-&gt;{0..1}.sys_log$-&gt;{0..1}</span> 表示 2 个库×2 张表=4 张物理表</li>
+                    <li><strong>database-strategy</strong>：根据 <span class="inline-code">operate_type</span> 字段取模分库</li>
+                    <li><strong>table-strategy</strong>：根据 <span class="inline-code">log_type</span> 字段取模分表</li>
+                    <li><strong>binding-tables</strong>：绑定表，提高关联查询效率</li>
+                </ul>
+            </div>
+
+            <h3 id="section3-4">3.4 自定义分片算法</h3>
+            <p>项目中使用的标准取模分片算法实现：</p>
+
+            <pre><code class="language-java"><span class="code-keyword">package</span> org.jeecg.modules.test.sharding.algorithm;
+
+<span class="code-keyword">import</span> org.apache.shardingsphere.sharding.api.sharding.standard.PreciseShardingValue;
+<span class="code-keyword">import</span> org.apache.shardingsphere.sharding.api.sharding.standard.RangeShardingValue;
+<span class="code-keyword">import</span> org.apache.shardingsphere.sharding.api.sharding.standard.StandardShardingAlgorithm;
+
+<span class="code-keyword">import</span> java.util.Collection;
+<span class="code-keyword">import</span> java.util.Properties;
+
+<span class="code-comment">/**
+ * 用于处理使用单一键
+ * 根据分片字段的值和 sharding-count 进行取模运算
+ * SQL 语句中有>，>=, <=，&lt;，=，IN 和 BETWEEN AND 操作符，都可以应用此分片策略。
+ */</span>
+<span class="code-keyword">public class</span> <span class="code-class">StandardModTableShardAlgorithm</span> 
+    <span class="code-keyword">implements</span> <span class="code-class">StandardShardingAlgorithm</span>&lt;<span class="code-class">Integer</span>&gt; {
+    
+    <span class="code-keyword">private</span> <span class="code-class">Properties</span> props = <span class="code-keyword">new</span> <span class="code-class">Properties</span>();
+
+    <span class="code-comment">/**
+     * 用于处理=和 IN 的分片
+     * @param collection 目标分片的集合 (表名)
+     * @param preciseShardingValue 逻辑表相关信息
+     * @return 目标表名
+     */</span>
+    <span class="code-keyword">@Override</span>
+    <span class="code-keyword">public</span> <span class="code-class">String</span> <span class="code-method">doSharding</span>(<span class="code-class">Collection</span>&lt;<span class="code-class">String</span>&gt; collection, 
+                               <span class="code-class">PreciseShardingValue</span>&lt;<span class="code-class">Integer</span>&gt; preciseShardingValue) {
+        <span class="code-keyword">for</span> (<span class="code-class">String</span> name : collection) {
+            <span class="code-class">Integer</span> value = preciseShardingValue.<span class="code-method">getValue</span>();
+            <span class="code-comment">// 根据值进行取模，得到一个目标值</span>
+            <span class="code-keyword">if</span> (name.<span class="code-method">indexOf</span>(value % <span class="code-number">2</span> + <span class="code-string">""</span>) &gt; <span class="code-number">-1</span>) {
+                <span class="code-keyword">return</span> name;
+            }
+        }
+        <span class="code-keyword">throw new</span> <span class="code-class">UnsupportedOperationException</span>();
+    }
+
+    <span class="code-comment">/**
+     * 用于处理 BETWEEN AND 分片
+     * 如果不配置 RangeShardingAlgorithm，SQL 中的 BETWEEN AND 将按照全库路由处理
+     */</span>
+    <span class="code-keyword">@Override</span>
+    <span class="code-keyword">public</span> <span class="code-class">Collection</span>&lt;<span class="code-class">String</span>&gt; <span class="code-method">doSharding</span>(<span class="code-class">Collection</span>&lt;<span class="code-class">String</span>&gt; collection, 
+                                <span class="code-class">RangeShardingValue</span>&lt;<span class="code-class">Integer</span>&gt; rangeShardingValue) {
+        <span class="code-comment">// 范围查询返回所有分片</span>
+        <span class="code-keyword">return</span> collection;
+    }
+
+    <span class="code-keyword">@Override</span>
+    <span class="code-keyword">public void</span> <span class="code-method">init</span>() {
+        <span class="code-comment">// 初始化方法</span>
+    }
+
+    <span class="code-keyword">@Override</span>
+    <span class="code-keyword">public</span> <span class="code-class">String</span> <span class="code-method">getType</span>() {
+        <span class="code-keyword">return</span> <span class="code-string">"STANDARD_MOD"</span>;
+    }
+
+    <span class="code-keyword">@Override</span>
+    <span class="code-keyword">public</span> <span class="code-class">Properties</span> <span class="code-method">getProps</span>() {
+        <span class="code-keyword">return this</span>.props;
+    }
+
+    <span class="code-keyword">@Override</span>
+    <span class="code-keyword">public void</span> <span class="code-method">setProps</span>(<span class="code-class">Properties</span> properties) {
+        <span class="code-keyword">this</span>.props = properties;
+    }
+}</code></pre>
+
+            <div class="note">
+                <strong>📌 算法说明：</strong>
+                <ul style="margin-top: 10px;">
+                    <li><strong>PreciseShardingValue</strong>：处理 <span class="inline-code">=</span> 和 <span class="inline-code">IN</span> 查询的精确分片</li>
+                    <li><strong>RangeShardingValue</strong>：处理 <span class="inline-code">BETWEEN AND</span> 范围查询</li>
+                    <li><strong>取模逻辑</strong>：<span class="inline-code">value % 2</span> 决定数据落在哪个分片（0 或 1）</li>
+                    <li><strong>表名匹配</strong>：通过 <span class="inline-code">indexOf</span> 匹配表名中的数字后缀</li>
+                </ul>
+            </div>
+
+            <h3 id="section3-5">3.5 读写分离配置</h3>
+            <p>ShardingSphere 5.x 使用 <span class="inline-code">replica-query</span> 替代了旧版本的 <span class="inline-code">master-slave</span>。</p>
+            
+            <pre><code class="language-yaml">spring:
+  shardingsphere:
+    datasource:
+      names: ds0,ds1
+      ds0:
+        type: com.alibaba.druid.pool.DruidDataSource
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        url: jdbc:mysql://master:3306/fengji_system
+        username: root
+        password: root
+      ds1:
+        type: com.alibaba.druid.pool.DruidDataSource
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        url: jdbc:mysql://slave1:3306/fengji_system
+        username: root
+        password: root
+    
+    props:
+      sql-show: true
+    
+    rules:
+      replica-query:
+        # 负载均衡算法
+        load-balancers:
+          round-robin:
+            type: ROUND_ROBIN
+            props:
+              default: 0
+        data-sources:
+          prds:
+            primary-data-source-name: ds0
+            replica-data-source-names: ds1
+            load-balancer-name: round_robin</code></pre>
+
+            <div class="info-box">
+                <strong>📘 配置说明：</strong>
+                <ul style="margin-top: 10px;">
+                    <li><strong>replica-query</strong>：ShardingSphere 5.x 的读写分离规则名称</li>
+                    <li><strong>primary-data-source-name</strong>：主数据源（写操作）</li>
+                    <li><strong>replica-data-source-names</strong>：从数据源列表（读操作）</li>
+                    <li><strong>load-balancer-name</strong>：负载均衡算法，支持 ROUND_ROBIN（轮询）和 RANDOM（随机）</li>
+                    <li><strong>读写分离场景</strong>：适用于读多写少（8:2 以上）的场景</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="section" id="chapter4">
+            <h2>第四章：分片键选择与路由</h2>
+            
+            <h3 id="section4-1">4.1 分片键设计原则</h3>
+            <div class="knowledge-card">
+                <h5>📖 分片键选择原则</h5>
+                <ul>
+                    <li><strong>高频查询字段</strong>：选择最常用作查询条件的字段</li>
+                    <li><strong>数据分布均匀</strong>：避免数据倾斜，保证各分片数据量均衡</li>
+                    <li><strong>业务关联性强</strong>：相关数据尽量在同一分片，减少跨分片查询</li>
+                    <li><strong>时间维度</strong>：对于有时间属性的数据，按时间分片是最佳选择</li>
+                </ul>
+            </div>
+
+            <h3 id="section4-2">4.2 路由策略对比</h3>
+            <table>
+                <tr>
+                    <th>路由策略</th>
+                    <th>适用场景</th>
+                    <th>优点</th>
+                    <th>缺点</th>
+                </tr>
+                <tr>
+                    <td><strong>精确路由</strong></td>
+                    <td>分片键等值查询</td>
+                    <td>定位精准，性能最优</td>
+                    <td>仅支持等值查询</td>
+                </tr>
+                <tr>
+                    <td><strong>范围路由</strong></td>
+                    <td>分片键范围查询</td>
+                    <td>支持时间范围查询</td>
+                    <td>可能扫描多个分片</td>
+                </tr>
+                <tr>
+                    <td><strong>广播路由</strong></td>
+                    <td>无分片键查询</td>
+                    <td>保证查询完整性</td>
+                    <td>性能最差，扫描所有分片</td>
+                </tr>
+            </table>
+
+            <h3 id="section4-3">4.3 跨分片查询优化</h3>
+            <ul>
+                <li>尽量使用分片键作为查询条件</li>
+                <li>避免跨分片的JOIN操作</li>
+                <li>使用汇总表减少跨分片查询</li>
+                <li>合理设置分页大小，避免全量扫描</li>
+            </ul>
+        </div>
+
+        <div class="section" id="chapter5">
+            <h2>第五章：分布式主键方案</h2>
+            
+            <h3 id="section5-1">5.1 主键生成策略对比</h3>
+            <table>
+                <tr>
+                    <th>策略</th>
+                    <th>优点</th>
+                    <th>缺点</th>
+                    <th>适用场景</th>
+                </tr>
+                <tr>
+                    <td><strong>数据库自增</strong></td>
+                    <td>简单、有序</td>
+                    <td>分库后冲突</td>
+                    <td>单库场景</td>
+                </tr>
+                <tr>
+                    <td><strong>UUID</strong></td>
+                    <td>全局唯一</td>
+                    <td>无序、长度长</td>
+                    <td>不推荐</td>
+                </tr>
+                <tr>
+                    <td><strong>雪花算法</strong></td>
+                    <td>全局唯一、有序、高性能</td>
+                    <td>依赖机器时钟</td>
+                    <td>分布式场景（推荐）</td>
+                </tr>
+                <tr>
+                    <td><strong>Redis自增</strong></td>
+                    <td>全局唯一、有序</td>
+                    <td>依赖Redis</td>
+                    <td>已有Redis基础设施</td>
+                </tr>
+            </table>
+
+            <h3 id="section5-2">5.2 雪花算法原理</h3>
+            <pre><code>雪花算法生成的64位Long型ID：
+
+┌─────────────────────────────────────────────────────────┐
+│  1位符号位  │  41位时间戳  │  10位工作机器ID  │  12位序列号  │
+│  (0)        │  (毫秒)      │  (机器标识)       │  (同毫秒内)   │
+│             │              │                  │             │
+│  固定为0    │  2^41毫秒    │  2^10=1024台     │  2^12=4096   │
+│  正数       │  ≈69年       │  可配置          │  /毫秒       │
+└─────────────────────────────────────────────────────────┘
+
+时间戳：41位，从自定义纪元开始，可用约69年
+机器ID：10位，支持最多1024台机器
+序列号：12位，同一毫秒内可生成4096个ID
+
+总容量：4096个ID/毫秒 × 1000毫秒 × 69年 ≈ 282万亿个ID</code></pre>
+
+            <h3 id="section5-3">5.3 项目中的主键实践</h3>
+            <pre><code class="language-java"><span class="code-comment">// 使用MyBatis-Plus的雪花算法</span>
+<span class="code-keyword">@Data</span>
+<span class="code-keyword">public class</span> <span class="code-class">RecordInfo</span> {
+    
+    <span class="code-keyword">@TableId</span>(type = <span class="code-class">IdType</span>.<span class="code-method">ASSIGN_ID</span>) <span class="code-comment">// 雪花算法自动生成</span>
+    <span class="code-keyword">private</span> <span class="code-class">String</span> id;
+    
+    <span class="code-comment">// ... 其他字段</span>
+}
+
+<span class="code-comment">// 或手动生成雪花ID</span>
+<span class="code-keyword">public class</span> <span class="code-class">IdGenerator</span> {
+    <span class="code-keyword">private static</span> <span class="code-keyword">final</span> <span class="code-class">Snowflake</span> SNOWFLAKE = 
+        <span class="code-keyword">new</span> <span class="code-class">Snowflake</span>(<span class="code-number">1</span>, <span class="code-number">1</span>); <span class="code-comment">// 机器ID: 1, 数据中心ID: 1</span>
+    
+    <span class="code-keyword">public static</span> <span class="code-class">String</span> <span class="code-method">generateId</span>() {
+        <span class="code-keyword">return</span> <span class="code-class">String</span>.<span class="code-method">valueOf</span>(<span class="code-class">SNOWFLAKE</span>.<span class="code-method">nextId</span>());
+    }
+}</code></pre>
+        </div>
+
+        <div class="section" id="chapter6">
+            <h2>第六章：性能优化与最佳实践</h2>
+            
+            <h3 id="section6-1">6.1 查询性能优化</h3>
+            <table>
+                <tr>
+                    <th>优化项</th>
+                    <th>优化前</th>
+                    <th>优化后</th>
+                    <th>提升</th>
+                </tr>
+                <tr>
+                    <td>单天查询</td>
+                    <td>全表扫描（千万级）</td>
+                    <td>分表扫描（万级）</td>
+                    <td>100-1000倍</td>
+                </tr>
+                <tr>
+                    <td>跨天查询</td>
+                    <td>UNION多表（慢）</td>
+                    <td>汇总表查询</td>
+                    <td>50-100倍</td>
+                </tr>
+                <tr>
+                    <td>实时查询</td>
+                    <td>查分表（100-500ms）</td>
+                    <td>Redis缓存（<10ms）</td>
+                    <td>10-50倍</td>
+                </tr>
+            </table>
+
+            <h3 id="section6-2">6.2 写入性能优化</h3>
+            <ul>
+                <li>批量插入：使用 batch insert 减少网络开销</li>
+                <li>异步写入：MQTT日志异步写入，不阻塞主流程</li>
+                <li>预创建分表：避免并发创建冲突</li>
+                <li>连接池优化：合理配置Druid连接池参数</li>
+            </ul>
+
+            <h3 id="section6-3">6.3 常见问题排查</h3>
+            <table>
+                <tr>
+                    <th>问题</th>
+                    <th>原因</th>
+                    <th>解决方案</th>
+                </tr>
+                <tr>
+                    <td>分表创建失败</td>
+                    <td>权限不足或表名冲突</td>
+                    <td>检查数据库权限和表名</td>
+                </tr>
+                <tr>
+                    <td>跨分片查询慢</td>
+                    <td>未使用分片键</td>
+                    <td>添加分片键或使用汇总表</td>
+                </tr>
+                <tr>
+                    <td>数据倾斜</td>
+                    <td>分片键选择不当</td>
+                    <td>重新选择分片键或调整算法</td>
+                </tr>
+            </table>
+
+            <h3 id="section6-4">6.4 最佳实践总结</h3>
+            <div class="knowledge-card">
+                <h5>📖 分库分表最佳实践</h5>
+                <ul>
+                    <li><strong>合理选择分片键</strong>：根据查询模式选择高频查询字段</li>
+                    <li><strong>控制分片数量</strong>：单库分表建议不超过100张</li>
+                    <li><strong>使用汇总表</strong>：跨分片查询使用汇总表提升性能</li>
+                    <li><strong>多级缓存</strong>：Redis缓存热点数据，减少数据库压力</li>
+                    <li><strong>定期清理</strong>：定时清理过期分表，释放存储空间</li>
+                    <li><strong>监控告警</strong>：监控分片数据量，及时预警数据倾斜</li>
+                    <li><strong>灰度迁移</strong>：存量数据迁移使用双写+校验+切换策略</li>
+                    <li><strong>备份策略</strong>：利用分表优势，按天备份降低风险</li>
+                </ul>
+            </div>
+
+            <div class="warning">
+                <strong>⚠️ 注意事项：</strong>
+                <ul style="margin-top: 10px;">
+                    <li>分库分表会增加系统复杂度，评估数据量后再决定是否引入</li>
+                    <li>跨分片JOIN、分页、排序等功能受限，需业务层适配</li>
+                    <li>分布式事务性能开销大，尽量避免跨分片事务</li>
+                    <li>数据迁移风险高，务必做好数据校验和回滚方案</li>
+                </ul>
+            </div>
+        </div>
+
+        <footer>
+            <p>风电净空监控系统 · 分库分表实战教程 · 2026年5月13日</p>
+            <p style="margin-top: 10px; font-size: 0.85em;">为什么分库分表 · 技术选型 · 按天分表实战 · ShardingSphere 配置</p>
+        </footer>
+    </div>
+
+    <button class="back-to-top" id="backToTop" title="返回顶部">↑</button>
+
+    <script>
+        // 进度条
+        window.onscroll = function() {
+            var scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
+            var scrollHeight = document.documentElement.scrollHeight || document.body.scrollHeight;
+            var clientHeight = document.documentElement.clientHeight || document.body.clientHeight;
+            var scrolled = (scrollTop / (scrollHeight - clientHeight)) * 100;
+            document.getElementById('progressBar').style.width = scrolled + '%';
+            
+            // 返回顶部按钮
+            var backToTop = document.getElementById('backToTop');
+            if (scrollTop > 300) {
+                backToTop.style.display = 'block';
+            } else {
+                backToTop.style.display = 'none';
+            }
+        };
+
+        // 返回顶部
+        document.getElementById('backToTop').onclick = function() {
+            window.scrollTo({top: 0, behavior: 'smooth'});
+        };
+
+        // 平滑滚动
+        document.querySelectorAll('.sidebar-nav a').forEach(function(anchor) {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                var targetId = this.getAttribute('href');
+                var targetElement = document.querySelector(targetId);
+                if (targetElement) {
+                    targetElement.scrollIntoView({behavior: 'smooth', block: 'start'});
+                }
+            });
+        });
+    </script>
+</body>
+</html>

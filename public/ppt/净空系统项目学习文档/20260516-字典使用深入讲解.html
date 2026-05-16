@@ -1,0 +1,1863 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>JeecgBoot 字典机制深入讲解 - 风电净空监控系统</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, sans-serif;
+        line-height: 1.8;
+        color: #333;
+        background: #f0f7f0;
+      }
+      .sidebar {
+        position: fixed;
+        left: 0;
+        top: 0;
+        width: 300px;
+        height: 100vh;
+        background: linear-gradient(180deg, #1e40af 0%, #3b82f6 100%);
+        overflow-y: auto;
+        z-index: 1000;
+        box-shadow: 2px 0 12px rgba(0, 0, 0, 0.15);
+      }
+      .sidebar-header {
+        padding: 25px 20px;
+        text-align: center;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+      }
+      .sidebar-header h1 {
+        color: #fff;
+        font-size: 1.3em;
+        margin-bottom: 8px;
+      }
+      .sidebar-header p {
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 0.85em;
+      }
+      .sidebar-nav {
+        padding: 15px 0;
+      }
+      .sidebar-nav .nav-category {
+        padding: 10px 20px 5px;
+        color: rgba(255, 255, 255, 0.5);
+        font-size: 0.75em;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+      .sidebar-nav a {
+        display: block;
+        padding: 8px 20px;
+        color: rgba(255, 255, 255, 0.85);
+        text-decoration: none;
+        font-size: 0.9em;
+        transition: all 0.3s;
+        border-left: 3px solid transparent;
+      }
+      .sidebar-nav a:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: #fff;
+        border-left-color: #93c5fd;
+      }
+      .sidebar-nav a.active {
+        background: rgba(255, 255, 255, 0.15);
+        color: #fff;
+        border-left-color: #dbeafe;
+      }
+      .sidebar-nav .nav-chapter {
+        font-weight: 600;
+        padding-left: 20px;
+      }
+      .sidebar-nav .nav-section {
+        padding-left: 35px;
+        font-size: 0.85em;
+      }
+      .main-content {
+        margin-left: 300px;
+        padding: 30px 40px;
+        min-height: 100vh;
+      }
+      .content-header {
+        text-align: center;
+        padding: 50px 30px;
+        background: linear-gradient(
+          135deg,
+          #60a5fa 0%,
+          #3b82f6 50%,
+          #2563eb 100%
+        );
+        color: white;
+        margin-bottom: 35px;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(37, 99, 235, 0.3);
+      }
+      .content-header h1 {
+        font-size: 2.2em;
+        margin-bottom: 12px;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+      .content-header p {
+        font-size: 1.1em;
+        opacity: 0.95;
+      }
+      .section {
+        background: white;
+        padding: 35px;
+        border-radius: 12px;
+        margin-bottom: 30px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+        border: 1px solid #dbeafe;
+      }
+      .section h2 {
+        color: #1e40af;
+        font-size: 1.8em;
+        margin-bottom: 25px;
+        padding-bottom: 12px;
+        border-bottom: 3px solid #60a5fa;
+      }
+      .section h3 {
+        color: #3b82f6;
+        font-size: 1.4em;
+        margin: 25px 0 15px 0;
+        padding-left: 12px;
+        border-left: 4px solid #60a5fa;
+      }
+      .section h4 {
+        color: #555;
+        font-size: 1.15em;
+        margin: 20px 0 12px 0;
+      }
+      .section p {
+        margin-bottom: 15px;
+        text-align: justify;
+      }
+      pre {
+        background: #1e1e1e;
+        color: #d4d4d4;
+        padding: 20px;
+        border-radius: 8px;
+        overflow-x: auto;
+        margin: 20px 0;
+        font-size: 13px;
+        line-height: 1.6;
+        border: 1px solid #333;
+      }
+      code {
+        font-family: "Fira Code", "Consolas", "Monaco", monospace;
+      }
+      .inline-code {
+        background: #dbeafe;
+        padding: 2px 8px;
+        border-radius: 4px;
+        color: #1e40af;
+        font-size: 0.88em;
+        border: 1px solid #93c5fd;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 20px 0;
+        border-radius: 8px;
+        overflow: hidden;
+      }
+      table th {
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        color: white;
+        padding: 12px 15px;
+        text-align: left;
+        font-weight: 600;
+      }
+      table td {
+        padding: 10px 15px;
+        border-bottom: 1px solid #dbeafe;
+      }
+      table tr:hover {
+        background: #eff6ff;
+      }
+      table tr:nth-child(even) {
+        background: #f8fafc;
+      }
+      .note {
+        background: #fff8e1;
+        border-left: 4px solid #ffc107;
+        padding: 15px 20px;
+        margin: 20px 0;
+        border-radius: 0 8px 8px 0;
+      }
+      .note strong {
+        color: #856404;
+      }
+      .tip {
+        background: #dbeafe;
+        border-left: 4px solid #3b82f6;
+        padding: 15px 20px;
+        margin: 20px 0;
+        border-radius: 0 8px 8px 0;
+      }
+      .tip strong {
+        color: #1e40af;
+      }
+      .info-card {
+        background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+        border: 1px solid #93c5fd;
+        border-radius: 8px;
+        padding: 20px;
+        margin: 20px 0;
+      }
+      .info-card h4 {
+        color: #1e40af;
+        margin-top: 0;
+      }
+      .progress-bar {
+        position: fixed;
+        top: 0;
+        left: 300px;
+        right: 0;
+        height: 4px;
+        background: #e5e7eb;
+        z-index: 999;
+      }
+      .progress-bar-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%);
+        width: 0%;
+        transition: width 0.3s;
+      }
+      .back-to-top {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        width: 50px;
+        height: 50px;
+        background: #3b82f6;
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+        transition: all 0.3s;
+        z-index: 998;
+      }
+      .back-to-top:hover {
+        background: #2563eb;
+        transform: translateY(-3px);
+        box-shadow: 0 6px 16px rgba(59, 130, 246, 0.5);
+      }
+      .flow-chart {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 20px;
+        margin: 20px 0;
+        font-family: "Courier New", monospace;
+        white-space: pre;
+        overflow-x: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- 侧边栏导航 -->
+    <nav class="sidebar">
+      <div class="sidebar-header">
+        <h1>📚 JeecgBoot 字典详解</h1>
+        <p>风电净空监控系统</p>
+      </div>
+      <div class="sidebar-nav">
+        <div class="nav-category">基础篇</div>
+        <a href="#chapter1" class="nav-chapter">第一章：字典概述</a>
+        <a href="#section1-1" class="nav-section">1.1 什么是字典</a>
+        <a href="#section1-2" class="nav-section">1.2 字典的作用</a>
+        <a href="#section1-3" class="nav-section">1.3 应用场景</a>
+
+        <div class="nav-category">数据库篇</div>
+        <a href="#chapter2" class="nav-chapter">第二章：数据库表结构</a>
+        <a href="#section2-1" class="nav-section">2.1 sys_dict 表</a>
+        <a href="#section2-2" class="nav-section">2.2 sys_dict_item 表</a>
+        <a href="#section2-3" class="nav-section">2.3 表关系 ER 图</a>
+        <a href="#section2-4" class="nav-section">2.4 字典数据示例</a>
+
+        <div class="nav-category">后端篇</div>
+        <a href="#chapter3" class="nav-chapter">第三章：后端实现</a>
+        <a href="#section3-1" class="nav-section">3.1 实体类</a>
+        <a href="#section3-2" class="nav-section">3.2 Mapper 层</a>
+        <a href="#section3-3" class="nav-section">3.3 Service 层</a>
+        <a href="#section3-4" class="nav-section">3.4 Controller 层</a>
+
+        <div class="nav-category">注解篇</div>
+        <a href="#chapter4" class="nav-chapter">第四章：@Dict 注解</a>
+        <a href="#section4-1" class="nav-section">4.1 注解定义</a>
+        <a href="#section4-2" class="nav-section">4.2 实体类使用</a>
+        <a href="#section4-3" class="nav-section">4.3 表字典查询</a>
+
+        <div class="nav-category">前端篇</div>
+        <a href="#chapter5" class="nav-chapter">第五章：前端使用</a>
+        <a href="#section5-1" class="nav-section">5.1 JDictSelectUtil</a>
+        <a href="#section5-2" class="nav-section">5.2 字典组件</a>
+        <a href="#section5-3" class="nav-section">5.3 字典翻译</a>
+
+        <div class="nav-category">实战篇</div>
+        <a href="#chapter6" class="nav-chapter">第六章：实战案例</a>
+        <a href="#section6-1" class="nav-section">6.1 创建新字典</a>
+        <a href="#section6-2" class="nav-section">6.2 使用字典</a>
+        <a href="#section6-3" class="nav-section">6.3 常见问题</a>
+      </div>
+    </nav>
+
+    <!-- 进度条 -->
+    <div class="progress-bar">
+      <div class="progress-bar-fill" id="progressBar"></div>
+    </div>
+
+    <!-- 返回顶部按钮 -->
+    <div class="back-to-top" id="backToTop" title="返回顶部">↑</div>
+
+    <!-- 主内容区 -->
+    <main class="main-content">
+      <!-- 页面标题 -->
+      <header class="content-header" id="top">
+        <h1>📚 JeecgBoot 字典机制深入讲解</h1>
+        <p>风电净空监控系统 - 完整教程</p>
+        <p style="margin-top: 15px; font-size: 0.95em; opacity: 0.9">
+          📅 创建日期：2026 年 5 月 16 日 | 📖 文档版本：v1.0
+        </p>
+      </header>
+
+      <!-- 第一章：字典概述 -->
+      <section class="section" id="chapter1">
+        <h2>📖 第一章：字典概述</h2>
+        <p>
+          字典是 JeecgBoot 框架中的核心功能之一，用于统一管理系统中的各种枚举值、状态码、类型标识等固定选项数据。
+          通过字典机制，可以实现数据标准化、界面友好化和维护便捷化。
+        </p>
+
+        <h3 id="section1-1">1.1 什么是字典</h3>
+        <div class="info-card">
+          <h4>📋 字典定义</h4>
+          <p style="margin-top: 10px">
+            <strong>字典（Dictionary）</strong> 是一种用于存储键值对映射关系的数据结构，在 JeecgBoot 中特指系统级别的
+            固定选项数据集合。每个字典包含一个字典定义（sys_dict）和多个字典项（sys_dict_item）。
+          </p>
+          <p style="margin-top: 10px">
+            <strong>举例说明：</strong> "性别"字典包含两个字典项：{"男": "1", "女": "0"}，
+            数据库中存储值 "1"，前端显示文本 "男"。
+          </p>
+        </div>
+
+        <h3 id="section1-2">1.2 字典的作用</h3>
+        <ul style="margin-left: 20px">
+          <li><strong>数据标准化</strong>：统一管理系统中的枚举值、状态码等固定选项</li>
+          <li><strong>界面友好化</strong>：数据库存储代码值，前端显示友好文本</li>
+          <li><strong>维护便捷化</strong>：集中管理，一处修改，多处生效</li>
+          <li><strong>国际化支持</strong>：为多语言系统提供基础数据支持</li>
+          <li><strong>缓存优化</strong>：字典数据加载后缓存，减少数据库查询</li>
+        </ul>
+
+        <h3 id="section1-3">1.3 应用场景</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>场景</th>
+              <th>字典 Code</th>
+              <th>字典项示例</th>
+              <th>应用位置</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>性别</td>
+              <td>sex</td>
+              <td>男/女</td>
+              <td>用户管理、员工信息</td>
+            </tr>
+            <tr>
+              <td>状态</td>
+              <td>status</td>
+              <td>启用/禁用</td>
+              <td>所有业务表状态字段</td>
+            </tr>
+            <tr>
+              <td>删除标记</td>
+              <td>del_flag</td>
+              <td>已删除/未删除</td>
+              <td>逻辑删除字段</td>
+            </tr>
+            <tr>
+              <td>告警级别</td>
+              <td>alarm_level</td>
+              <td>一般/严重/紧急</td>
+              <td>预警信息管理</td>
+            </tr>
+            <tr>
+              <td>净空等级</td>
+              <td>clearance_level</td>
+              <td>优秀/良好/一般/警告/危险</td>
+              <td>净空检测报告</td>
+            </tr>
+            <tr>
+              <td>不平衡等级</td>
+              <td>unbalance_level</td>
+              <td>无影响/轻微/中度/严重/紧急</td>
+              <td>风机不平衡监测</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- 第二章：数据库表结构 -->
+      <section class="section" id="chapter2">
+        <h2>🗄️ 第二章：数据库表结构</h2>
+        <p>
+          JeecgBoot 的字典系统由两张核心表组成：<code class="inline-code">sys_dict</code>（字典定义表）和
+          <code class="inline-code">sys_dict_item</code>（字典项表），采用主从表结构存储字典数据。
+        </p>
+
+        <h3 id="section2-1">2.1 sys_dict 表（字典定义表）</h3>
+        <p>
+          <code class="inline-code">sys_dict</code> 表用于存储字典的定义信息，即字典的元数据。
+        </p>
+
+        <h4>2.1.1 表结构</h4>
+        <pre><code class="language-sql">CREATE TABLE `sys_dict` (
+  `id` varchar(32) NOT NULL COMMENT '主键 ID',
+  `dict_name` varchar(100) NOT NULL COMMENT '字典名称',
+  `dict_code` varchar(100) NOT NULL COMMENT '字典编码',
+  `description` varchar(255) DEFAULT NULL COMMENT '描述',
+  `del_flag` int(1) DEFAULT NULL COMMENT '删除状态',
+  `create_by` varchar(32) DEFAULT NULL COMMENT '创建人',
+  `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+  `update_by` varchar(32) DEFAULT NULL COMMENT '更新人',
+  `update_time` datetime DEFAULT NULL COMMENT '更新时间',
+  `type` int(1) UNSIGNED ZEROFILL DEFAULT 0 COMMENT '字典类型 0:string,1:number',
+  PRIMARY KEY (`id`),
+  UNIQUE INDEX `uk_sd_dict_code` (`dict_code`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='字典表';</code></pre>
+
+        <h4>2.1.2 字段说明</h4>
+        <table>
+          <thead>
+            <tr>
+              <th>字段名</th>
+              <th>类型</th>
+              <th>长度</th>
+              <th>必填</th>
+              <th>说明</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>id</td>
+              <td>VARCHAR</td>
+              <td>32</td>
+              <td>是</td>
+              <td>主键 ID，使用 ASSIGN_ID 生成策略</td>
+            </tr>
+            <tr>
+              <td>dict_name</td>
+              <td>VARCHAR</td>
+              <td>100</td>
+              <td>是</td>
+              <td>字典名称，如"性别"、"状态"</td>
+            </tr>
+            <tr>
+              <td>dict_code</td>
+              <td>VARCHAR</td>
+              <td>100</td>
+              <td>是</td>
+              <td>字典编码，如"sex"、"status"，唯一索引</td>
+            </tr>
+            <tr>
+              <td>description</td>
+              <td>VARCHAR</td>
+              <td>255</td>
+              <td>否</td>
+              <td>字典描述信息</td>
+            </tr>
+            <tr>
+              <td>del_flag</td>
+              <td>INT</td>
+              <td>1</td>
+              <td>否</td>
+              <td>删除状态（0-未删除，1-已删除）</td>
+            </tr>
+            <tr>
+              <td>type</td>
+              <td>INT</td>
+              <td>1</td>
+              <td>否</td>
+              <td>字典类型（0-string 类型，1-number 类型）</td>
+            </tr>
+            <tr>
+              <td>create_by</td>
+              <td>VARCHAR</td>
+              <td>32</td>
+              <td>否</td>
+              <td>创建人</td>
+            </tr>
+            <tr>
+              <td>create_time</td>
+              <td>DATETIME</td>
+              <td>-</td>
+              <td>否</td>
+              <td>创建时间</td>
+            </tr>
+            <tr>
+              <td>update_by</td>
+              <td>VARCHAR</td>
+              <td>32</td>
+              <td>否</td>
+              <td>更新人</td>
+            </tr>
+            <tr>
+              <td>update_time</td>
+              <td>DATETIME</td>
+              <td>-</td>
+              <td>否</td>
+              <td>更新时间</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3 id="section2-2">2.2 sys_dict_item 表（字典项表）</h3>
+        <p>
+          <code class="inline-code">sys_dict_item</code> 表用于存储字典的具体项，即字典的值列表。
+        </p>
+
+        <h4>2.2.1 表结构</h4>
+        <pre><code class="language-sql">CREATE TABLE `sys_dict_item` (
+  `id` varchar(32) NOT NULL COMMENT '主键 ID',
+  `dict_id` varchar(32) DEFAULT NULL COMMENT '字典 ID（外键关联 sys_dict.id）',
+  `item_text` varchar(100) NOT NULL COMMENT '字典项文本（显示值）',
+  `item_value` varchar(100) NOT NULL COMMENT '字典项值（存储值）',
+  `description` varchar(255) DEFAULT NULL COMMENT '描述',
+  `sort_order` int(10) DEFAULT NULL COMMENT '排序',
+  `status` int(11) DEFAULT NULL COMMENT '状态（1-启用，0-禁用）',
+  `create_by` varchar(32) DEFAULT NULL COMMENT '创建人',
+  `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+  `update_by` varchar(32) DEFAULT NULL COMMENT '更新人',
+  `update_time` datetime DEFAULT NULL COMMENT '更新时间',
+  PRIMARY KEY (`id`),
+  INDEX `idx_sdi_role_dict_id` (`dict_id`) USING BTREE,
+  INDEX `idx_sdi_role_sort_order` (`sort_order`) USING BTREE,
+  INDEX `idx_sdi_status` (`status`) USING BTREE,
+  INDEX `idx_sdi_dict_val` (`dict_id`, `item_value`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='字典项表';</code></pre>
+
+        <h4>2.2.2 字段说明</h4>
+        <table>
+          <thead>
+            <tr>
+              <th>字段名</th>
+              <th>类型</th>
+              <th>长度</th>
+              <th>必填</th>
+              <th>说明</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>id</td>
+              <td>VARCHAR</td>
+              <td>32</td>
+              <td>是</td>
+              <td>主键 ID</td>
+            </tr>
+            <tr>
+              <td>dict_id</td>
+              <td>VARCHAR</td>
+              <td>32</td>
+              <td>是</td>
+              <td>外键，关联 sys_dict 表的 id 字段</td>
+            </tr>
+            <tr>
+              <td>item_text</td>
+              <td>VARCHAR</td>
+              <td>100</td>
+              <td>是</td>
+              <td>字典项文本，前端显示的友好文本</td>
+            </tr>
+            <tr>
+              <td>item_value</td>
+              <td>VARCHAR</td>
+              <td>100</td>
+              <td>是</td>
+              <td>字典项值，数据库存储的实际值</td>
+            </tr>
+            <tr>
+              <td>description</td>
+              <td>VARCHAR</td>
+              <td>255</td>
+              <td>否</td>
+              <td>字典项描述</td>
+            </tr>
+            <tr>
+              <td>sort_order</td>
+              <td>INT</td>
+              <td>10</td>
+              <td>否</td>
+              <td>排序，用于控制字典项的显示顺序</td>
+            </tr>
+            <tr>
+              <td>status</td>
+              <td>INT</td>
+              <td>11</td>
+              <td>否</td>
+              <td>状态（1-启用，0-禁用）</td>
+            </tr>
+            <tr>
+              <td>create_by</td>
+              <td>VARCHAR</td>
+              <td>32</td>
+              <td>否</td>
+              <td>创建人</td>
+            </tr>
+            <tr>
+              <td>create_time</td>
+              <td>DATETIME</td>
+              <td>-</td>
+              <td>否</td>
+              <td>创建时间</td>
+            </tr>
+            <tr>
+              <td>update_by</td>
+              <td>VARCHAR</td>
+              <td>32</td>
+              <td>否</td>
+              <td>更新人</td>
+            </tr>
+            <tr>
+              <td>update_time</td>
+              <td>DATETIME</td>
+              <td>-</td>
+              <td>否</td>
+              <td>更新时间</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3 id="section2-3">2.3 表关系 ER 图</h3>
+        <pre><code>┌─────────────────────────┐         ┌─────────────────────────┐
+│     sys_dict            │         │    sys_dict_item        │
+│  （字典定义表）          │  1:N    │  （字典项表）           │
+├─────────────────────────┤         ├─────────────────────────┤
+│ PK id                   │◄────────│ FK dict_id              │
+│    dict_name            │         │ PK id                   │
+│    dict_code            │         │    item_text            │
+│    description          │         │    item_value           │
+│    del_flag             │         │    sort_order           │
+│    type                 │         │    status               │
+│    create_by            │         │    description          │
+│    create_time          │         │    create_by            │
+│    update_by            │         │    create_time          │
+│    update_time          │         │    update_by            │
+└─────────────────────────┘         │    update_time          │
+                                    └─────────────────────────┘
+
+关系说明：
+- 一个字典定义（sys_dict）对应多个字典项（sys_dict_item）
+- 通过 sys_dict_item.dict_id 关联到 sys_dict.id
+- 字典项按照 sort_order 排序显示</code></pre>
+
+        <h3 id="section2-4">2.4 字典数据示例</h3>
+        <h4>2.4.1 性别字典（dict_code: sex）</h4>
+        <pre><code>-- sys_dict 表记录
+id: 3d9a351be3436fbefb1307d4cfb49bf2
+dict_name: 性别
+dict_code: sex
+description: NULL
+type: 1 (number 类型)
+
+-- sys_dict_item 表记录
+┌──────────────────────────────────┬─────────┬────────────┬─────────────┬────────┬────────┐
+│ id                               │ dict_id │ item_text  │ item_value  │ status │ sort   │
+├──────────────────────────────────┼─────────┼────────────┼─────────────┼────────┼────────┤
+│ 11e5c8a7e6a3a0e7016e981400000001 │ ...bf2  │ 男         │ 1           │ 1      │ 1      │
+│ 11e5c8a7e6a3a0e7016e981400000002 │ ...bf2  │ 女         │ 2           │ 1      │ 2      │
+└──────────────────────────────────┴─────────┴────────────┴─────────────┴────────┴────────┘</code></pre>
+
+        <h4>2.4.2 告警级别字典（dict_code: alarm_level）</h4>
+        <pre><code>-- sys_dict 表记录
+id: 1993166053881470977
+dict_name: 告警级别
+dict_code: alarm_level
+type: 0 (string 类型)
+
+-- sys_dict_item 表记录
+┌──────────────────────────────────┬─────────┬────────────┬─────────────┬────────┬────────┐
+│ id                               │ dict_id │ item_text  │ item_value  │ status │ sort   │
+├──────────────────────────────────┼─────────┼────────────┼─────────────┼────────┼────────┤
+│ ...001                           │ ...977  │ 一般告警   │ LEVEL_1     │ 1      │ 1      │
+│ ...002                           │ ...977  │ 严重告警   │ LEVEL_2     │ 1      │ 2      │
+│ ...003                           │ ...977  │ 紧急告警   │ LEVEL_3     │ 1      │ 3      │
+└──────────────────────────────────┴─────────┴────────────┴─────────────┴────────┴────────┘</code></pre>
+      </section>
+
+      <!-- 第三章：后端实现 -->
+      <section class="section" id="chapter3">
+        <h2>🔧 第三章：后端实现</h2>
+        <p>
+          后端采用标准的三层架构（Entity、Mapper、Service、Controller），
+          提供完整的字典 CRUD 功能和查询接口。
+        </p>
+
+        <h3 id="section3-1">3.1 实体类（Entity）</h3>
+
+        <h4>3.1.1 SysDict 实体类</h4>
+        <pre><code class="language-java">package org.jeecg.modules.system.entity;
+
+import java.io.Serializable;
+import java.util.Date;
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableLogic;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.experimental.Accessors;
+
+/**
+ * &lt;p&gt;
+ * 字典表
+ * &lt;/p&gt;
+ *
+ * @Author zhangweijian
+ * @since 2018-12-28
+ */
+@Data
+@EqualsAndHashCode(callSuper = false)
+@Accessors(chain = true)
+public class SysDict implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
+    /**
+     * id
+     */
+    @TableId(type = IdType.ASSIGN_ID)
+    private String id;
+    
+    /**
+     * 字典类型，0 string,1 number 类型，2 boolean
+     * 前端 js 对 string 类型和 number 类型 boolean 类型敏感，需要区分。
+     * 在 select 标签匹配的时候会用到，默认为 string 类型
+     */
+    private Integer type;
+    
+    /**
+     * 字典名称
+     */
+    private String dictName;
+
+    /**
+     * 字典编码
+     */
+    private String dictCode;
+
+    /**
+     * 描述
+     */
+    private String description;
+
+    /**
+     * 删除状态
+     */
+    @TableLogic
+    private Integer delFlag;
+
+    /**
+     * 创建人
+     */
+    private String createBy;
+
+    /**
+     * 创建时间
+     */
+    private Date createTime;
+
+    /**
+     * 更新人
+     */
+    private String updateBy;
+
+    /**
+     * 更新时间
+     */
+    private Date updateTime;
+}</code></pre>
+
+        <h4>3.1.2 SysDictItem 实体类</h4>
+        <pre><code class="language-java">package org.jeecg.modules.system.entity;
+
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.util.Date;
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.experimental.Accessors;
+import org.jeecg.common.aspect.annotation.Dict;
+import org.jeecgframework.poi.excel.annotation.Excel;
+
+/**
+ * &lt;p&gt;
+ * 字典项实体
+ * &lt;/p&gt;
+ *
+ * @Author zhangweijian
+ * @since 2018-12-28
+ */
+@Data
+@EqualsAndHashCode(callSuper = false)
+@Accessors(chain = true)
+public class SysDictItem implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
+    /**
+     * id
+     */
+    @TableId(type = IdType.ASSIGN_ID)
+    private String id;
+
+    /**
+     * 字典 id
+     */
+    private String dictId;
+
+    /**
+     * 字典项文本
+     */
+    @Excel(name = "字典项文本", width = 20)
+    private String itemText;
+
+    /**
+     * 字典项值
+     */
+    @Excel(name = "字典项值", width = 30)
+    private String itemValue;
+
+    /**
+     * 描述
+     */
+    @Excel(name = "描述", width = 40)
+    private String description;
+
+    /**
+     * 排序
+     */
+    @Excel(name = "排序", width = 15, type=4)
+    private Integer sortOrder;
+
+    /**
+     * 状态（1 启用 0 不启用）
+     */
+    @Dict(dicCode = "dict_item_status")
+    private Integer status;
+
+    private String createBy;
+    private Date createTime;
+    private String updateBy;
+    private Date updateTime;
+}</code></pre>
+
+        <h3 id="section3-2">3.2 Mapper 层</h3>
+
+        <h4>3.2.1 SysDictItemMapper</h4>
+        <pre><code class="language-java">package org.jeecg.modules.system.mapper;
+
+import org.apache.ibatis.annotations.Select;
+import org.jeecg.modules.system.entity.SysDictItem;
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+
+import java.util.List;
+
+/**
+ * &lt;p&gt;
+ * 字典项 Mapper 接口
+ * &lt;/p&gt;
+ *
+ * @Author zhangweijian
+ * @since 2018-12-28
+ */
+public interface SysDictItemMapper extends BaseMapper&lt;SysDictItem&gt; {
+
+    /**
+     * 通过字典 id 查询字典项
+     * @param mainId 字典 id
+     * @return 字典项列表（按 sort_order 和 item_value 排序）
+     */
+    @Select("SELECT * FROM sys_dict_item WHERE DICT_ID = #{mainId} ORDER BY sort_order ASC, item_value ASC")
+    public List&lt;SysDictItem&gt; selectItemsByMainId(String mainId);
+}</code></pre>
+
+        <div class="tip">
+          <strong>💡 提示：</strong> MyBatis-Plus 的 <code class="inline-code">@Select</code> 注解可以直接编写 SQL，
+          适用于简单查询，复杂查询建议使用 XML 配置。
+        </div>
+
+        <h3 id="section3-3">3.3 Service 层</h3>
+
+        <h4>3.3.1 ISysDictService 接口</h4>
+        <pre><code class="language-java">package org.jeecg.modules.system.service;
+
+import org.jeecg.modules.system.entity.SysDict;
+import com.baomidou.mybatisplus.extension.service.IService;
+
+import java.util.List;
+import java.util.Map;
+
+/**
+ * &lt;p&gt;
+ * 字典表 服务类
+ * &lt;/p&gt;
+ *
+ * @Author zhangweijian
+ * @since 2018-12-28
+ */
+public interface ISysDictService extends IService&lt;SysDict&gt; {
+
+    /**
+     * 通过字典 code 获取字典数据
+     * @param code 字典编码
+     * @return 字典项列表
+     */
+    public List&lt;DictModel&gt; queryDictItemsByCode(String code);
+
+    /**
+     * 查询有效的数据字典项
+     * @param code 字典编码
+     * @return 有效的字典项列表
+     */
+    List&lt;DictModel&gt; queryEnableDictItemsByCode(String code);
+
+    /**
+     * 通过多个字典 code 获取字典数据
+     * @param dictCodeList 字典编码列表
+     * @return key = 字典 code，value=对应的字典选项
+     */
+    Map&lt;String, List&lt;DictModel&gt;&gt; queryDictItemsByCodeList(List&lt;String&gt; dictCodeList);
+
+    /**
+     * 登录加载系统字典
+     * @return 所有字典数据
+     */
+    public Map&lt;String,List&lt;DictModel&gt;&gt; queryAllDictItems();
+}</code></pre>
+
+        <h4>3.3.2 SysDictServiceImpl 实现（核心方法）</h4>
+        <pre><code class="language-java">package org.jeecg.modules.system.service.impl;
+
+import org.jeecg.common.constant.CacheConstant;
+import org.jeecg.modules.system.entity.SysDict;
+import org.jeecg.modules.system.entity.SysDictItem;
+import org.jeecg.modules.system.mapper.SysDictMapper;
+import org.jeecg.modules.system.mapper.SysDictItemMapper;
+import org.jeecg.modules.system.model.DictModel;
+import org.jeecg.modules.system.service.ISysDictService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.stereotype.Service;
+
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+
+import java.util.*;
+import java.util.stream.Collectors;
+
+/**
+ * 字典服务实现类
+ */
+@Service
+public class SysDictServiceImpl extends ServiceImpl&lt;SysDictMapper, SysDict&gt; implements ISysDictService {
+
+    @Autowired
+    private SysDictMapper sysDictMapper;
+
+    @Autowired
+    private SysDictItemMapper sysDictItemMapper;
+
+    /**
+     * 通过查询指定 code 获取字典（带缓存）
+     * @param code 字典编码
+     * @return 字典项列表
+     */
+    @Override
+    @Cacheable(value = CacheConstant.SYS_DICT_CACHE, key = "#code", unless = "#result == null")
+    public List&lt;DictModel&gt; queryDictItemsByCode(String code) {
+        log.debug("无缓存 dictCache 的时候调用这里！");
+        return sysDictMapper.queryDictItemsByCode(code);
+    }
+
+    /**
+     * 查询有效的数据字典项（带缓存）
+     * @param code 字典编码
+     * @return 有效的字典项列表
+     */
+    @Override
+    @Cacheable(value = CacheConstant.SYS_ENABLE_DICT_CACHE, key = "#code", unless = "#result == null")
+    public List&lt;DictModel&gt; queryEnableDictItemsByCode(String code) {
+        return sysDictMapper.queryEnableDictItemsByCode(code);
+    }
+
+    /**
+     * 登录加载系统字典（一次性加载所有字典）
+     * @return 所有字典数据
+     */
+    @Override
+    public Map&lt;String, List&lt;DictModel&gt;&gt; queryAllDictItems() {
+        Map&lt;String, List&lt;DictModel&gt;&gt; res = new HashMap(5);
+        List&lt;SysDict&gt; ls = sysDictMapper.selectList(null);
+        
+        // 查询所有启用的字典项（status=1）
+        LambdaQueryWrapper&lt;SysDictItem&gt; queryWrapper = new LambdaQueryWrapper&lt;SysDictItem&gt;();
+        queryWrapper.eq(SysDictItem::getStatus, 1);
+        queryWrapper.orderByAsc(SysDictItem::getSortOrder);
+        List&lt;SysDictItem&gt; sysDictItemList = sysDictItemMapper.selectList(queryWrapper);
+
+        // 按字典 ID 分组
+        for (SysDict d : ls) {
+            List&lt;DictModel&gt; dictModelList = sysDictItemList.stream()
+                .filter(s -&gt; d.getId().equals(s.getDictId()))
+                .map(item -&gt; {
+                    DictModel dictModel = new DictModel();
+                    dictModel.setText(item.getItemText());
+                    dictModel.setValue(item.getItemValue());
+                    return dictModel;
+                }).collect(Collectors.toList());
+            res.put(d.getDictCode(), dictModelList);
+        }
+
+        log.debug("-------登录加载系统字典-----" + res.toString());
+        return res;
+    }
+}</code></pre>
+
+        <h3 id="section3-4">3.4 Controller 层</h3>
+
+        <h4>3.4.1 SysDictController（核心接口）</h4>
+        <pre><code class="language-java">package org.jeecg.modules.system.controller;
+
+import org.jeecg.common.api.vo.Result;
+import org.jeecg.common.system.query.QueryGenerator;
+import org.jeecg.modules.system.entity.SysDict;
+import org.jeecg.modules.system.entity.SysDictItem;
+import org.jeecg.modules.system.service.ISysDictItemService;
+import org.jeecg.modules.system.service.ISysDictService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import lombok.extern.slf4j.Slf4j;
+
+import java.util.Arrays;
+import java.util.List;
+
+/**
+ * &lt;p&gt;
+ * 字典表 前端控制器
+ * &lt;/p&gt;
+ *
+ * @Author zhangweijian
+ * @since 2018-12-28
+ */
+@Api(tags="字典管理")
+@RestController
+@RequestMapping("/sys/dict")
+@Slf4j
+public class SysDictController {
+
+    @Autowired
+    private ISysDictService sysDictService;
+
+    @Autowired
+    private ISysDictItemService sysDictItemService;
+
+    /**
+     * 通过字典 id 获取字典项
+     * @param id 字典 id
+     * @return 字典项列表
+     */
+    @GetMapping("/getDictItemsByMainId")
+    public Result&lt;List&lt;SysDictItem&gt;&gt; getDictItemsByMainId(@RequestParam(name="id",required=true) String id) {
+        List&lt;SysDictItem&gt; list = sysDictItemService.selectItemsByMainId(id);
+        return Result.OK(list);
+    }
+
+    /**
+     * 分页列表查询
+     */
+    @GetMapping("/list")
+    public Result&lt;IPage&lt;SysDict&gt;&gt; queryPageList(
+            @RequestParam(name="pageNo", defaultValue="1") Integer pageNo,
+            @RequestParam(name="pageSize", defaultValue="10") Integer pageSize,
+            HttpServletRequest req) {
+        
+        QueryWrapper&lt;SysDict&gt; queryWrapper = QueryGenerator.initQueryWrapper(new SysDict(), req.getParameterMap());
+        Page&lt;SysDict&gt; page = new Page&lt;SysDict&gt;(pageNo, pageSize);
+        IPage&lt;SysDict&gt; pageList = sysDictService.page(page, queryWrapper);
+        return Result.OK(pageList);
+    }
+
+    /**
+     * 添加字典
+     */
+    @PostMapping("/add")
+    public Result&lt;String&gt; add(@RequestBody SysDict sysDict) {
+        sysDictService.save(sysDict);
+        return Result.OK("添加成功！");
+    }
+
+    /**
+     * 编辑字典
+     */
+    @RequestMapping(value = "/edit", method = {RequestMethod.PUT, RequestMethod.POST})
+    public Result&lt;String&gt; edit(@RequestBody SysDict sysDict) {
+        sysDictService.updateById(sysDict);
+        return Result.OK("编辑成功!");
+    }
+
+    /**
+     * 通过 id 删除
+     */
+    @DeleteMapping("/delete")
+    public Result&lt;String&gt; delete(@RequestParam(name="id",required=true) String id) {
+        sysDictService.removeById(id);
+        return Result.OK("删除成功!");
+    }
+
+    /**
+     * 批量删除
+     */
+    @DeleteMapping("/deleteBatch")
+    public Result&lt;String&gt; deleteBatch(@RequestParam(name="ids",required=true) String ids) {
+        this.sysDictService.removeByIds(Arrays.asList(ids.split(",")));
+        return Result.OK("批量删除成功!");
+    }
+}</code></pre>
+      </section>
+
+      <!-- 第四章：@Dict 注解 -->
+      <section class="section" id="chapter4">
+        <h2>📝 第四章：@Dict 注解详解</h2>
+        <p>
+          <code class="inline-code">@Dict</code> 注解是 JeecgBoot 字典机制的核心，
+          用于在实体类字段上标注字典信息，实现自动翻译功能。
+        </p>
+
+        <h3 id="section4-1">4.1 注解定义</h3>
+        <pre><code class="language-java">package org.jeecg.common.aspect.annotation;
+
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+/**
+ * 字典注解
+ * @author: dangzhenghui
+ * @date: 2019 年 03 月 17 日 - 下午 9:37:16
+ */
+@Target(ElementType.FIELD)
+@Retention(RetentionPolicy.RUNTIME)
+public @interface Dict {
+    /**
+     * 数据 code（必填）
+     * 用于指定字典编码，如"sex"、"status"
+     */
+    String dicCode();
+
+    /**
+     * 数据 Text（可选）
+     * 用于表字典查询时指定显示文本字段
+     */
+    String dicText() default "";
+
+    /**
+     * 数据字典表（可选）
+     * 用于指定表字典的表名，支持复杂查询
+     */
+    String dictTable() default "";
+}</code></pre>
+
+        <div class="info-card">
+          <h4>📋 注解参数说明</h4>
+          <table>
+            <thead>
+              <tr>
+                <th>参数</th>
+                <th>必填</th>
+                <th>说明</th>
+                <th>示例</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>dicCode</td>
+                <td>是</td>
+                <td>字典编码，对应 sys_dict.dict_code</td>
+                <td>"sex"、"status"</td>
+              </tr>
+              <tr>
+                <td>dicText</td>
+                <td>否</td>
+                <td>表字典的显示文本字段</td>
+                <td>"realname"、"org_name"</td>
+              </tr>
+              <tr>
+                <td>dictTable</td>
+                <td>否</td>
+                <td>表字典的表名</td>
+                <td>"sys_user"、"sys_org"</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 id="section4-2">4.2 实体类使用示例</h3>
+
+        <h4>4.2.1 使用系统字典</h4>
+        <pre><code class="language-java">package org.jeecg.modules.fengji.info.entity;
+
+import com.baomidou.mybatisplus.annotation.TableName;
+import lombok.Data;
+import org.jeecg.common.aspect.annotation.Dict;
+import org.jeecgframework.poi.excel.annotation.Excel;
+
+/**
+ * 边缘设备信息实体
+ */
+@Data
+@TableName("fengdian_device_info")
+public class FengdianDeviceInfo {
+
+    /**主键*/
+    @TableId(type = IdType.ASSIGN_ID)
+    private String id;
+
+    /**设备编号*/
+    @Excel(name = "设备编号", width = 15)
+    private String deviceNo;
+
+    /**设备名称*/
+    @Excel(name = "设备名称", width = 15)
+    private String deviceName;
+
+    /**
+     * 设备状态
+     * 使用@Dict 注解，自动翻译字典值
+     * dicCode: 对应 sys_dict.dict_code
+     */
+    @Excel(name = "设备状态", width = 15)
+    @Dict(dicCode = "run_status")
+    private Integer status;
+
+    /**
+     * 删除标记
+     * 使用系统预定义字典 del_flag
+     */
+    @Dict(dicCode = "del_flag")
+    private Integer delFlag;
+}</code></pre>
+
+        <h4>4.2.2 使用表字典（关联查询）</h4>
+        <pre><code class="language-java">package org.jeecg.modules.fengji.info.entity;
+
+import com.baomidou.mybatisplus.annotation.TableName;
+import lombok.Data;
+import org.jeecg.common.aspect.annotation.Dict;
+
+/**
+ * 风机信息实体
+ */
+@Data
+@TableName("patrol_fan_info")
+public class PatrolFanInfo {
+
+    /**主键*/
+    @TableId(type = IdType.ASSIGN_ID)
+    private String id;
+
+    /**风机编号*/
+    private String fanNo;
+
+    /**风机名称*/
+    private String fanName;
+
+    /**
+     * 所属风场
+     * 使用表字典，关联 patrol_fan_scope 表
+     * dictTable: 关联表名
+     * dicText: 显示字段
+     * dicCode: 关联字段
+     */
+    @Dict(dictTable = "patrol_fan_scope", dicText = "name", dicCode = "id")
+    private String region;
+
+    /**
+     * 创建人
+     * 关联 sys_user 表，显示 realname
+     */
+    @Dict(dictTable = "sys_user", dicText = "realname", dicCode = "username")
+    private String createBy;
+}</code></pre>
+
+        <h3 id="section4-3">4.3 表字典查询</h3>
+        <p>
+          表字典是一种特殊的字典类型，用于关联其他业务表的数据。
+          通过 <code class="inline-code">dictTable</code>、<code class="inline-code">dicText</code>、
+          <code class="inline-code">dicCode</code> 三个参数实现跨表关联查询。
+        </p>
+
+        <h4>4.3.1 表字典查询流程</h4>
+        <div class="flow-chart">┌──────────────┐
+│ 前端请求     │
+│ /api/list  │
+└──────┬───────┘
+       │
+       ▼
+┌──────────────┐
+│ Controller   │
+│ queryList()  │
+└──────┬───────┘
+       │
+       ▼
+┌──────────────┐
+│ Service      │
+│ page(page, wrapper) │
+└──────┬───────┘
+       │
+       ▼
+┌──────────────┐
+│ MyBatis-Plus │
+│ 执行查询     │
+└──────┬───────┘
+       │
+       ▼
+┌──────────────┐
+│ 返回结果     │
+│ 包含原始值   │
+└──────┬───────┘
+       │
+       ▼
+┌──────────────┐
+│ Dict 注解处理 │
+│ 解析@Dict    │
+└──────┬───────┘
+       │
+       ▼
+┌─────────────────────────────┐
+│ 表字典查询                   │
+│ SELECT name FROM            │
+│ patrol_fan_scope            │
+│ WHERE id = region           │
+└──────┬──────────────────────┘
+       │
+       ▼
+┌──────────────┐
+│ 翻译结果     │
+│ region -&gt; 风场名称 │
+└──────┬───────┘
+       │
+       ▼
+┌──────────────┐
+│ 返回前端     │
+│ JSON 数据     │
+└──────────────┘</div>
+
+        <h4>4.3.2 表字典 SQL 示例</h4>
+        <pre><code class="language-sql">-- 原始查询
+SELECT
+    id,
+    fan_no,
+    fan_name,
+    region,  -- 存储的是风场 ID
+    create_by  -- 存储的是用户 username
+FROM
+    patrol_fan_info
+
+-- 字典翻译后的结果（逻辑上）
+SELECT
+    a.id,
+    a.fan_no,
+    a.fan_name,
+    b.name AS region_text,  -- 翻译后的风场名称
+    c.realname AS create_by_text  -- 翻译后的创建人文名称
+FROM
+    patrol_fan_info a
+LEFT JOIN patrol_fan_scope b ON a.region = b.id
+LEFT JOIN sys_user c ON a.create_by = c.username</code></pre>
+      </section>
+
+      <!-- 第五章：前端使用 -->
+      <section class="section" id="chapter5">
+        <h2>🎨 第五章：前端使用</h2>
+        <p>
+          前端通过封装的工具类 <code class="inline-code">JDictSelectUtil.js</code> 和字典组件，
+          实现字典数据的加载和翻译。
+        </p>
+
+        <h3 id="section5-1">5.1 JDictSelectUtil 工具类</h3>
+
+        <h4>5.1.1 获取字典数据</h4>
+        <pre><code class="language-javascript">/**
+ * 通过 code 获取字典数组
+ * @param {string} dictCode - 字典编码
+ * @param {object} params - 查询参数（可选）
+ * @returns {Promise<Array>} - 字典数据数组
+ */
+export async function getDictItems(dictCode, params) {
+    // 优先从缓存中读取字典配置
+    if (getDictItemsFromCache(dictCode)) {
+        let desformDictItems = getDictItemsFromCache(dictCode).map(item => ({
+            ...item,
+            label: item.text
+        }))
+        return desformDictItems
+    }
+
+    // 缓存中没有，就请求后台
+    return await ajaxGetDictItems(dictCode, params).then(({success, result}) => {
+        if (success) {
+            let res = result.map(item => ({...item, label: item.text}))
+            console.log('------- 从 DB 中获取到了字典 -------dictCode : ', dictCode, res)
+            return Promise.resolve(res)
+        } else {
+            console.error('getDictItems error: : ', res)
+            return Promise.resolve([])
+        }
+    }).catch((res) => {
+        console.error('getDictItems error: ', res)
+        return Promise.resolve([])
+    })
+}</code></pre>
+
+        <h4>5.1.2 使用示例</h4>
+        <pre><code class="language-vue">&lt;script&gt;
+import { getDictItems } from '@/components/dict/JDictSelectUtil'
+
+export default {
+  data() {
+    return {
+      // 性别字典数据
+      sexDictData: [],
+      // 状态字典数据
+      statusDictData: []
+    }
+  },
+  async mounted() {
+    // 加载性别字典
+    this.sexDictData = await getDictItems('sex')
+    // 加载状态字典
+    this.statusDictData = await getDictItems('status')
+  },
+  methods: {
+    // 使用字典数据
+    getSexText(value) {
+      const item = this.sexDictData.find(d => d.value === value)
+      return item ? item.text : '未知'
+    }
+  }
+}
+&lt;/script&gt;</code></pre>
+
+        <h3 id="section5-2">5.2 字典组件</h3>
+
+        <h4>5.2.1 j-dict-select-tag 组件</h4>
+        <pre><code class="language-vue">&lt;template&gt;
+  &lt;a-form-model-item label="设备状态"&gt;
+    &lt;j-dict-select-tag
+      v-model="formData.status"
+      dict-code="run_status"
+      placeholder="请选择设备状态"
+    /&gt;
+  &lt;/a-form-model-item&gt;
+&lt;/template&gt;
+
+&lt;script&gt;
+import JDictSelectTag from '@/components/jeecg/JDictSelectTag'
+
+export default {
+  components: {
+    JDictSelectTag
+  },
+  data() {
+    return {
+      formData: {
+        status: undefined
+      }
+    }
+  }
+}
+&lt;/script&gt;</code></pre>
+
+        <h4>5.2.2 表字典组件</h4>
+        <pre><code class="language-vue">&lt;template&gt;
+  &lt;a-form-model-item label="所属风场"&gt;
+    &lt;j-dict-select-tag
+      v-model="formData.region"
+      dict-code="patrol_fan_scope,name,id"
+      placeholder="请选择风场"
+    /&gt;
+  &lt;/a-form-model-item&gt;
+&lt;/template&gt;
+
+&lt;script&gt;
+/**
+ * dict-code 格式说明：
+ * 表字典格式：表名，显示字段，关联字段
+ * 例如："patrol_fan_scope,name,id"
+ * - patrol_fan_scope: 表名
+ * - name: 显示字段（item_text）
+ * - id: 关联字段（item_value）
+ */
+export default {
+  data() {
+    return {
+      formData: {
+        region: ''  // 存储的是风场 ID
+      }
+    }
+  }
+}
+&lt;/script&gt;</code></pre>
+
+        <h3 id="section5-3">5.3 字典翻译</h3>
+        <p>
+          前端接收后端返回的数据后，需要根据字典配置将值（value）翻译为文本（text）。
+        </p>
+
+        <h4>5.3.1 字典翻译方法</h4>
+        <pre><code class="language-javascript">/**
+ * 字典翻译工具方法
+ * @param {string} dictCode - 字典编码
+ * @param {string} value - 要翻译的值
+ * @param {Array} dictData - 字典数据数组
+ * @returns {string} - 翻译后的文本
+ */
+export function translateDictValue(dictCode, value, dictData) {
+    if (!dictData || !Array.isArray(dictData)) {
+        return value
+    }
+    const item = dictData.find(d => d.value === String(value))
+    return item ? item.text : value
+}
+
+// 使用示例
+import { getDictItems, translateDictValue } from '@/components/dict/JDictSelectUtil'
+
+// 在组件中使用
+export default {
+  methods: {
+    async getStatusText(statusValue) {
+        const statusDict = await getDictItems('status')
+        return translateDictValue('status', statusValue, statusDict)
+    }
+  }
+}</code></pre>
+      </section>
+
+      <!-- 第六章：实战案例 -->
+      <section class="section" id="chapter6">
+        <h2>⚔️ 第六章：实战案例</h2>
+        <p>
+          本章通过完整案例演示如何创建新字典、在实体类中使用字典、以及在前端展示字典数据。
+        </p>
+
+        <h3 id="section6-1">6.1 创建新字典</h3>
+        <p>
+          以创建"净空等级"字典为例，演示完整的创建流程。
+        </p>
+
+        <h4>6.1.1 SQL 插入字典定义</h4>
+        <pre><code class="language-sql">-- 1. 插入字典定义到 sys_dict 表
+INSERT INTO `sys_dict` (
+    `id`, 
+    `dict_name`, 
+    `dict_code`, 
+    `description`, 
+    `del_flag`, 
+    `type`, 
+    `create_by`, 
+    `create_time`
+) VALUES (
+    REPLACE(UUID(), '-', ''),  -- 生成 UUID 主键
+    '净空等级',                -- 字典名称
+    'clearance_level',         -- 字典编码（英文命名）
+    '风机净空距离等级划分',     -- 描述
+    0,                         -- 未删除
+    0,                         -- string 类型
+    'admin',                   -- 创建人
+    NOW()                      -- 创建时间
+);</code></pre>
+
+        <h4>6.1.2 SQL 插入字典项</h4>
+        <pre><code class="language-sql">-- 2. 查询刚插入的字典 ID
+SET @dict_id = (SELECT id FROM sys_dict WHERE dict_code = 'clearance_level');
+
+-- 3. 插入字典项到 sys_dict_item 表
+INSERT INTO `sys_dict_item` (
+    `id`, 
+    `dict_id`, 
+    `item_text`, 
+    `item_value`, 
+    `description`, 
+    `sort_order`, 
+    `status`, 
+    `create_by`, 
+    `create_time`
+) VALUES
+(REPLACE(UUID(), '-', ''), @dict_id, '优秀', 'EXCELLENT', '净空距离优秀', 1, 1, 'admin', NOW()),
+(REPLACE(UUID(), '-', ''), @dict_id, '良好', 'GOOD', '净空距离良好', 2, 1, 'admin', NOW()),
+(REPLACE(UUID(), '-', ''), @dict_id, '一般', 'MEDIUM', '净空距离一般', 3, 1, 'admin', NOW()),
+(REPLACE(UUID(), '-', ''), @dict_id, '警告', 'WARNING', '净空距离警告', 4, 1, 'admin', NOW()),
+(REPLACE(UUID(), '-', ''), @dict_id, '危险', 'DANGER', '净空距离危险', 5, 1, 'admin', NOW());</code></pre>
+
+        <h3 id="section6-2">6.2 在实体类中使用字典</h3>
+
+        <h4>6.2.1 后端实体类</h4>
+        <pre><code class="language-java">package org.jeecg.modules.fengji.stats.entity;
+
+import com.baomidou.mybatisplus.annotation.TableName;
+import lombok.Data;
+import org.jeecg.common.aspect.annotation.Dict;
+import org.jeecgframework.poi.excel.annotation.Excel;
+
+/**
+ * 净空检测报告实体
+ */
+@Data
+@TableName("clearance_report")
+public class ClearanceReport {
+
+    /**主键*/
+    @TableId(type = IdType.ASSIGN_ID)
+    private String id;
+
+    /**报告编号*/
+    @Excel(name = "报告编号", width = 15)
+    private String reportNo;
+
+    /**报告日期*/
+    @Excel(name = "报告日期", width = 15, format = "yyyy-MM-dd")
+    private Date reportDate;
+
+    /**
+     * 净空等级
+     * 使用@Dict 注解，自动翻译为文本
+     */
+    @Excel(name = "净空等级", width = 15)
+    @Dict(dicCode = "clearance_level")
+    private String clearanceLevel;
+
+    /**
+     * 审核状态
+     * 使用系统字典 status
+     */
+    @Excel(name = "审核状态", width = 15)
+    @Dict(dicCode = "status")
+    private Integer auditStatus;
+}</code></pre>
+
+        <h4>6.2.2 前端列表页使用</h4>
+        <pre><code class="language-vue">&lt;template&gt;
+  &lt;a-table
+    :columns="columns"
+    :dataSource="dataSource"
+    :pagination="ipagination"
+    :loading="loading"
+  &gt;
+    &lt;!-- 净空等级列：使用字典翻译 --&gt;
+    &lt;template slot="clearanceLevel" slot-scope="text"&gt;
+      &lt;a-badge :status="getLevelStatus(text)" :text="text" /&gt;
+    &lt;/template&gt;
+
+    &lt;!-- 审核状态列：使用字典翻译 --&gt;
+    &lt;template slot="auditStatus" slot-scope="text"&gt;
+      &lt;a-badge :status="text === '1' ? 'success' : 'default'" 
+               :text="text === '1' ? '已通过' : '待审核'" /&gt;
+    &lt;/template&gt;
+  &lt;/a-table&gt;
+&lt;/template&gt;
+
+&lt;script&gt;
+export default {
+  name: "ClearanceReportList",
+  data() {
+    return {
+      columns: [
+        {
+          title: "报告编号",
+          align: "center",
+          dataIndex: "reportNo"
+        },
+        {
+          title: "报告日期",
+          align: "center",
+          dataIndex: "reportDate"
+        },
+        {
+          title: "净空等级",
+          align: "center",
+          dataIndex: "clearanceLevel",
+          scopedSlots: { customRender: "clearanceLevel" }
+        },
+        {
+          title: "审核状态",
+          align: "center",
+          dataIndex: "auditStatus",
+          scopedSlots: { customRender: "auditStatus" }
+        }
+      ]
+    }
+  }
+}
+&lt;/script&gt;</code></pre>
+
+        <h3 id="section6-3">6.3 常见问题</h3>
+
+        <div class="info-card">
+          <h4>❓ 问题 1：字典数据不生效</h4>
+          <p><strong>现象：</strong>实体类字段上添加了 <code class="inline-code">@Dict</code> 注解，但查询结果没有翻译。</p>
+          <p><strong>原因：</strong></p>
+          <ul style="margin-left: 20px; margin-top: 10px">
+            <li>JeecgBoot 的字典翻译是在 Controller 层统一处理的，需要继承 <code class="inline-code">JeecgController</code></li>
+            <li>如果是自定义的 Service，需要手动调用字典翻译方法</li>
+            <li>字典编码拼写错误，检查 <code class="inline-code">dicCode</code> 是否与 <code class="inline-code">sys_dict.dict_code</code> 一致</li>
+          </ul>
+          <p><strong>解决方案：</strong>确保 Controller 继承 <code class="inline-code">JeecgController</code>，或手动调用翻译方法。</p>
+        </div>
+
+        <div class="info-card">
+          <h4>❓ 问题 2：表字典查询失败</h4>
+          <p><strong>现象：</strong>使用 <code class="inline-code">@Dict(dictTable="...")</code> 后查询报错。</p>
+          <p><strong>原因：</strong></p>
+          <ul style="margin-left: 20px; margin-top: 10px">
+            <li>表名或字段名拼写错误</li>
+            <li>关联字段数据类型不匹配</li>
+            <li>表字典格式不正确（应该是：表名，显示字段，关联字段）</li>
+          </ul>
+          <p><strong>解决方案：</strong>检查 <code class="inline-code">dictTable</code>、<code class="inline-code">dicText</code>、<code class="inline-code">dicCode</code> 三个参数的格式和值。</p>
+        </div>
+
+        <div class="info-card">
+          <h4>❓ 问题 3：字典缓存不更新</h4>
+          <p><strong>现象：</strong>修改了字典数据，但查询结果还是旧值。</p>
+          <p><strong>原因：</strong>字典数据有 Redis 缓存，修改后缓存没有清除。</p>
+          <p><strong>解决方案：</strong></p>
+          <ul style="margin-left: 20px; margin-top: 10px">
+            <li>手动清除 Redis 缓存： <code class="inline-code">redisTemplate.delete(CacheConstant.SYS_DICT_CACHE + ":" + dictCode)</code></li>
+            <li>重启服务，缓存会自动重新加载</li>
+            <li>修改 <code class="inline-code">SysDictServiceImpl</code> 中的缓存策略</li>
+          </ul>
+        </div>
+
+        <div class="tip">
+          <strong>💡 最佳实践：</strong>
+          <ul style="margin-left: 20px; margin-top: 10px">
+            <li>字典编码使用英文命名，遵循蛇形命名法（如 <code class="inline-code">clearance_level</code>）</li>
+            <li>字典项值使用大写英文或数字（如 <code class="inline-code">EXCELLENT</code>、<code class="inline-code">1</code>）</li>
+            <li>合理设置 <code class="inline-code">sort_order</code> 控制字典项显示顺序</li>
+            <li>对于不常变化的字典数据，启用 Redis 缓存优化性能</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- 页脚 -->
+      <footer style="text-align: center; padding: 40px 0; color: #666; font-size: 0.9em">
+        <p>© 2026 风电净空监控系统 | 技术文档</p>
+        <p style="margin-top: 10px">
+          最后更新：2026 年 5 月 16 日 | 文档版本：v1.0
+        </p>
+      </footer>
+    </main>
+
+    <!-- JavaScript 交互 -->
+    <script>
+      // 平滑滚动
+      document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+          e.preventDefault()
+          const target = document.querySelector(this.getAttribute('href'))
+          if (target) {
+            target.scrollIntoView({
+              behavior: 'smooth',
+              block: 'start'
+            })
+          }
+        })
+      })
+
+      // 进度条更新
+      function updateProgressBar() {
+        const scrollTop = window.pageYOffset || document.documentElement.scrollTop
+        const scrollHeight = document.documentElement.scrollHeight - window.innerHeight
+        const progress = (scrollTop / scrollHeight) * 100
+        document.getElementById('progressBar').style.width = progress + '%'
+      }
+
+      // 返回顶部
+      function toggleBackToTop() {
+        const backToTop = document.getElementById('backToTop')
+        if (window.pageYOffset > 300) {
+          backToTop.style.display = 'flex'
+        } else {
+          backToTop.style.display = 'none'
+        }
+        updateProgressBar()
+      }
+
+      document.getElementById('backToTop').addEventListener('click', function () {
+        window.scrollTo({
+          top: 0,
+          behavior: 'smooth'
+        })
+      })
+
+      // 导航激活状态
+      function updateActiveNav() {
+        const sections = document.querySelectorAll('.section')
+        const navLinks = document.querySelectorAll('.sidebar-nav a')
+
+        let current = ''
+        sections.forEach(section => {
+          const sectionTop = section.offsetTop
+          const sectionHeight = section.clientHeight
+          if (window.pageYOffset >= sectionTop - 100) {
+            current = section.getAttribute('id')
+          }
+        })
+
+        navLinks.forEach(link => {
+          link.classList.remove('active')
+          if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active')
+          }
+        })
+      }
+
+      // 监听滚动事件
+      window.addEventListener('scroll', () => {
+        updateProgressBar()
+        toggleBackToTop()
+        updateActiveNav()
+      })
+
+      // 初始化
+      toggleBackToTop()
+      updateActiveNav()
+    </script>
+  </body>
+</html>

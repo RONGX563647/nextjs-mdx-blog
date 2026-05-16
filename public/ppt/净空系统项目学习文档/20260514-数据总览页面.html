@@ -1,0 +1,2129 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>风电净空监控系统 - 数据总览页面全链路教程</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, sans-serif;
+        line-height: 1.8;
+        color: #333;
+        background: #f0f7f0;
+      }
+      .sidebar {
+        position: fixed;
+        left: 0;
+        top: 0;
+        width: 300px;
+        height: 100vh;
+        background: linear-gradient(180deg, #2d6a4f 0%, #40916c 100%);
+        overflow-y: auto;
+        z-index: 1000;
+        box-shadow: 2px 0 12px rgba(0, 0, 0, 0.15);
+      }
+      .sidebar-header {
+        padding: 25px 20px;
+        text-align: center;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+      }
+      .sidebar-header h1 {
+        color: #fff;
+        font-size: 1.3em;
+        margin-bottom: 8px;
+      }
+      .sidebar-header p {
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 0.85em;
+      }
+      .sidebar-nav {
+        padding: 15px 0;
+      }
+      .sidebar-nav .nav-category {
+        padding: 10px 20px 5px;
+        color: rgba(255, 255, 255, 0.5);
+        font-size: 0.75em;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+      .sidebar-nav a {
+        display: block;
+        padding: 8px 20px;
+        color: rgba(255, 255, 255, 0.85);
+        text-decoration: none;
+        font-size: 0.9em;
+        transition: all 0.3s;
+        border-left: 3px solid transparent;
+      }
+      .sidebar-nav a:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: #fff;
+        border-left-color: #95d5b2;
+      }
+      .sidebar-nav a.active {
+        background: rgba(255, 255, 255, 0.15);
+        color: #fff;
+        border-left-color: #b7e4c7;
+      }
+      .sidebar-nav .nav-chapter {
+        font-weight: 600;
+        padding-left: 20px;
+      }
+      .sidebar-nav .nav-section {
+        padding-left: 35px;
+        font-size: 0.85em;
+      }
+      .main-content {
+        margin-left: 300px;
+        padding: 30px 40px;
+        min-height: 100vh;
+      }
+      .content-header {
+        text-align: center;
+        padding: 50px 30px;
+        background: linear-gradient(
+          135deg,
+          #95d5b2 0%,
+          #74c69d 50%,
+          #52b788 100%
+        );
+        color: white;
+        margin-bottom: 35px;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(82, 183, 136, 0.3);
+      }
+      .content-header h1 {
+        font-size: 2.2em;
+        margin-bottom: 12px;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+      .content-header p {
+        font-size: 1.1em;
+        opacity: 0.95;
+      }
+      .section {
+        background: white;
+        padding: 35px;
+        border-radius: 12px;
+        margin-bottom: 30px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+        border: 1px solid #e8f5e8;
+      }
+      .section h2 {
+        color: #2d6a4f;
+        font-size: 1.8em;
+        margin-bottom: 25px;
+        padding-bottom: 12px;
+        border-bottom: 3px solid #95d5b2;
+      }
+      .section h3 {
+        color: #40916c;
+        font-size: 1.4em;
+        margin: 25px 0 15px 0;
+        padding-left: 12px;
+        border-left: 4px solid #95d5b2;
+      }
+      .section h4 {
+        color: #555;
+        font-size: 1.15em;
+        margin: 20px 0 12px 0;
+      }
+      .section p {
+        margin-bottom: 15px;
+        text-align: justify;
+      }
+      pre {
+        background: #1e1e1e;
+        color: #d4d4d4;
+        padding: 20px;
+        border-radius: 8px;
+        overflow-x: auto;
+        margin: 20px 0;
+        font-size: 13px;
+        line-height: 1.6;
+        border: 1px solid #333;
+      }
+      code {
+        font-family: "Fira Code", "Consolas", "Monaco", monospace;
+      }
+      .inline-code {
+        background: #e8f5e8;
+        padding: 2px 8px;
+        border-radius: 4px;
+        color: #2d6a4f;
+        font-size: 0.88em;
+        border: 1px solid #b7e4c7;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 20px 0;
+        border-radius: 8px;
+        overflow: hidden;
+      }
+      table th {
+        background: linear-gradient(135deg, #52b788 0%, #40916c 100%);
+        color: white;
+        padding: 12px 15px;
+        text-align: left;
+        font-weight: 600;
+      }
+      table td {
+        padding: 10px 15px;
+        border-bottom: 1px solid #e8f5e8;
+      }
+      table tr:hover {
+        background: #f0f7f0;
+      }
+      table tr:nth-child(even) {
+        background: #f8fdf8;
+      }
+      .note {
+        background: #fff8e1;
+        border-left: 4px solid #ffc107;
+        padding: 15px 20px;
+        margin: 20px 0;
+        border-radius: 0 8px 8px 0;
+      }
+      .note strong {
+        color: #856404;
+      }
+      .tip {
+        background: #e8f5e8;
+        border-left: 4px solid #40916c;
+        padding: 15px 20px;
+        margin: 20px 0;
+        border-radius: 0 8px 8px 0;
+      }
+      .tip strong {
+        color: #2d6a4f;
+      }
+      .warning {
+        background: #fde8e8;
+        border-left: 4px solid #e74c3c;
+        padding: 15px 20px;
+        margin: 20px 0;
+        border-radius: 0 8px 8px 0;
+      }
+      .warning strong {
+        color: #c0392b;
+      }
+      .info-box {
+        background: #e8f4fd;
+        border-left: 4px solid #3498db;
+        padding: 15px 20px;
+        margin: 20px 0;
+        border-radius: 0 8px 8px 0;
+      }
+      .info-box strong {
+        color: #2980b9;
+      }
+      .highlight-box {
+        background: linear-gradient(135deg, #e8f5e8 0%, #d4edda 100%);
+        border: 1px solid #95d5b2;
+        padding: 20px;
+        border-radius: 8px;
+        margin: 20px 0;
+      }
+      .step-list {
+        counter-reset: step;
+        list-style: none;
+        padding-left: 0;
+      }
+      .step-list li {
+        counter-increment: step;
+        padding: 15px 15px 15px 60px;
+        position: relative;
+        margin-bottom: 15px;
+        background: #f8fdf8;
+        border-radius: 8px;
+        border: 1px solid #e8f5e8;
+      }
+      .step-list li::before {
+        content: counter(step);
+        position: absolute;
+        left: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 32px;
+        height: 32px;
+        background: linear-gradient(135deg, #52b788 0%, #40916c 100%);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+      }
+      .code-comment {
+        color: #6a9955;
+      }
+      .code-keyword {
+        color: #569cd6;
+      }
+      .code-string {
+        color: #ce9178;
+      }
+      .code-method {
+        color: #dcdcaa;
+      }
+      .code-class {
+        color: #4ec9b0;
+      }
+      .code-number {
+        color: #b5cea8;
+      }
+      .code-type {
+        color: #9cdcfe;
+      }
+      .knowledge-card {
+        background: linear-gradient(135deg, #f8fdf8 0%, #e8f5e8 100%);
+        border: 1px solid #b7e4c7;
+        border-radius: 10px;
+        padding: 20px;
+        margin: 20px 0;
+      }
+      .knowledge-card h5 {
+        color: #2d6a4f;
+        font-size: 1.05em;
+        margin-bottom: 12px;
+        padding-bottom: 8px;
+        border-bottom: 2px solid #95d5b2;
+      }
+      .knowledge-card ul {
+        padding-left: 20px;
+      }
+      .knowledge-card ul li {
+        margin-bottom: 8px;
+      }
+      .progress-indicator {
+        position: fixed;
+        top: 0;
+        left: 300px;
+        right: 0;
+        height: 3px;
+        background: #e8f5e8;
+        z-index: 999;
+      }
+      .progress-bar {
+        height: 100%;
+        background: linear-gradient(90deg, #52b788, #40916c);
+        width: 0%;
+        transition: width 0.3s;
+      }
+      .back-to-top {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        width: 45px;
+        height: 45px;
+        background: linear-gradient(135deg, #52b788 0%, #40916c 100%);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        cursor: pointer;
+        font-size: 1.2em;
+        box-shadow: 0 4px 15px rgba(82, 183, 136, 0.4);
+        transition: all 0.3s;
+        display: none;
+        z-index: 1001;
+      }
+      .back-to-top:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 20px rgba(82, 183, 136, 0.5);
+      }
+      footer {
+        text-align: center;
+        padding: 30px;
+        color: #888;
+        font-size: 0.9em;
+        margin-top: 40px;
+      }
+      .sidebar::-webkit-scrollbar {
+        width: 6px;
+      }
+      .sidebar::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.1);
+      }
+      .sidebar::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 3px;
+      }
+      @media (max-width: 1024px) {
+        .sidebar {
+          width: 260px;
+        }
+        .main-content {
+          margin-left: 260px;
+          padding: 20px;
+        }
+      }
+      @media (max-width: 768px) {
+        .sidebar {
+          display: none;
+        }
+        .main-content {
+          margin-left: 0;
+          padding: 15px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <nav class="sidebar">
+      <div class="sidebar-header">
+        <h1>📊 数据总览教程</h1>
+        <p>风电净空监控系统</p>
+      </div>
+      <div class="sidebar-nav">
+        <div class="nav-category">概述篇</div>
+        <a href="#chapter1" class="nav-chapter">第一章：页面功能概述</a>
+        <a href="#section1-1" class="nav-section">1.1 页面功能介绍</a>
+        <a href="#section1-2" class="nav-section">1.2 页面布局结构</a>
+        <a href="#section1-3" class="nav-section">1.3 技术栈说明</a>
+
+        <div class="nav-category">后端篇</div>
+        <a href="#chapter2" class="nav-chapter">第二章：后端实现详解</a>
+        <a href="#section2-1" class="nav-section"
+          >2.1 控制器层 HomeController</a
+        >
+        <a href="#section2-2" class="nav-section"
+          >2.2 服务接口 IHomeStatsService</a
+        >
+        <a href="#section2-3" class="nav-section"
+          >2.3 服务实现 HomeStatsServiceImpl</a
+        >
+        <a href="#section2-4" class="nav-section"
+          >2.4 数据访问层 HomeStatsMapper</a
+        >
+        <a href="#section2-5" class="nav-section">2.5 数据 VO 类设计</a>
+
+        <div class="nav-category">前端篇</div>
+        <a href="#chapter3" class="nav-chapter">第三章：前端实现详解</a>
+        <a href="#section3-1" class="nav-section">3.1 页面组件 home.vue</a>
+        <a href="#section3-2" class="nav-section">3.2 数据概览卡片组件</a>
+        <a href="#section3-3" class="nav-section">3.3 折线图组件 LineChart</a>
+        <a href="#section3-4" class="nav-section"
+          >3.4 饼图组件 UnbalancedPieChart</a
+        >
+        <a href="#section3-5" class="nav-section"
+          >3.5 柱状图组件 AlarmBarChart</a
+        >
+
+        <div class="nav-category">联调篇</div>
+        <a href="#chapter4" class="nav-chapter">第四章：前后端联调</a>
+        <a href="#section4-1" class="nav-section">4.1 API 请求封装</a>
+        <a href="#section4-2" class="nav-section">4.2 数据流转过程</a>
+        <a href="#section4-3" class="nav-section">4.3 错误处理机制</a>
+
+        <div class="nav-category">实战篇</div>
+        <a href="#chapter5" class="nav-chapter">第五章：核心功能详解</a>
+        <a href="#section5-1" class="nav-section">5.1 净空达标率计算</a>
+        <a href="#section5-2" class="nav-section">5.2 不平衡等级计算</a>
+        <a href="#section5-3" class="nav-section">5.3 告警类型统计</a>
+        <a href="#section5-4" class="nav-section">5.4 时间范围处理</a>
+
+        <div class="nav-category">优化篇</div>
+        <a href="#chapter6" class="nav-chapter">第六章：性能优化与最佳实践</a>
+        <a href="#section6-1" class="nav-section">6.1 数据库查询优化</a>
+        <a href="#section6-2" class="nav-section">6.2 前端渲染优化</a>
+        <a href="#section6-3" class="nav-section">6.3 常见问题排查</a>
+      </div>
+    </nav>
+
+    <div class="progress-indicator">
+      <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <div class="main-content">
+      <div class="content-header">
+        <h1>📊 数据总览页面全链路实现教程</h1>
+        <p>风电净空监控系统 · 2026 年 5 月 14 日</p>
+        <p style="margin-top: 10px; font-size: 0.95em">
+          前后端架构 · 数据流转 · 组件设计 · 联调实战
+        </p>
+      </div>
+
+      <div class="section" id="chapter1">
+        <h2>第一章：页面功能概述</h2>
+
+        <h3 id="section1-1">1.1 页面功能介绍</h3>
+        <p>
+          数据总览页面（home.vue）是风电净空监控系统的核心仪表盘页面，提供以下功能：
+        </p>
+
+        <div class="knowledge-card">
+          <h5>📖 核心功能模块</h5>
+          <table>
+            <tr>
+              <th>模块</th>
+              <th>功能说明</th>
+              <th>数据来源</th>
+            </tr>
+            <tr>
+              <td><strong>顶部筛选栏</strong></td>
+              <td>风场选择、时间范围切换（日/周/月）、数据刷新</td>
+              <td>前端本地状态</td>
+            </tr>
+            <tr>
+              <td><strong>数据概览卡片</strong></td>
+              <td>机组总数、在线机数、异常数、净空达标率、不平衡机数</td>
+              <td>/stats/home/overview</td>
+            </tr>
+            <tr>
+              <td><strong>净空趋势图</strong></td>
+              <td>显示净空值随时间变化的趋势（折线图）</td>
+              <td>/stats/home/clearanceTrend</td>
+            </tr>
+            <tr>
+              <td><strong>不平衡分布图</strong></td>
+              <td>各不平衡等级的机组数量分布（饼图）</td>
+              <td>/stats/home/unbalanceDist</td>
+            </tr>
+            <tr>
+              <td><strong>告警统计图</strong></td>
+              <td>各类告警的数量统计（柱状图）</td>
+              <td>/stats/home/alarmStats</td>
+            </tr>
+            <tr>
+              <td><strong>异常机组提醒</strong></td>
+              <td>列表展示未处理的告警信息，支持分页和详情查看</td>
+              <td>/info/warnInfo/getErrorList</td>
+            </tr>
+          </table>
+        </div>
+
+        <h3 id="section1-2">1.2 页面布局结构</h3>
+        <pre><code>┌─────────────────────────────────────────────────────────────┐
+│                      顶部筛选栏                              │
+│  风场选择下拉框  │  日/周/月切换  │  刷新按钮                │
+├─────────────────────────────────────────────────────────────┤
+│                    数据概览卡片区                            │
+│  ┌──────┐ ┌──────┐ ┌──────┐ ┌──────┐ ┌──────┐             │
+│  │机组  │ │在线  │ │异常  │ │净空  │ │不平衡│             │
+│  │总数  │ │机数  │ │数    │ │达标率│ │机数  │             │
+│  └──────┘ └──────┘ └──────┘ └──────┘ └──────┘             │
+├─────────────────────────────────────────────────────────────┤
+│                      图表区域                                │
+│  ┌────────────┐ ┌────────────┐ ┌────────────┐             │
+│  │净空趋势图  │ │不平衡分布  │ │告警统计图  │             │
+│  │(折线图)    │ │(饼图)      │ │(柱状图)    │             │
+│  └────────────┘ └────────────┘ └────────────┘             │
+├─────────────────────────────────────────────────────────────┤
+│                    异常机组提醒                              │
+│  ┌──────────────────────────────────────────────────────┐  │
+│  │ ⚠️ 1 号风机 净空值过低                    [查看详情] │  │
+│  │ ⚠️ 2 号风机 通讯异常                      [查看详情] │  │
+│  └──────────────────────────────────────────────────────┘  │
+│                    分页条                                   │
+└─────────────────────────────────────────────────────────────┘</code></pre>
+
+        <h3 id="section1-3">1.3 技术栈说明</h3>
+        <table>
+          <tr>
+            <th>层级</th>
+            <th>技术选型</th>
+            <th>版本</th>
+            <th>用途</th>
+          </tr>
+          <tr>
+            <td><strong>后端框架</strong></td>
+            <td>Spring Boot</td>
+            <td>2.6.6</td>
+            <td>REST API 服务</td>
+          </tr>
+          <tr>
+            <td><strong>ORM 框架</strong></td>
+            <td>MyBatis-Plus</td>
+            <td>3.5.1</td>
+            <td>数据库访问</td>
+          </tr>
+          <tr>
+            <td><strong>数据库</strong></td>
+            <td>MySQL</td>
+            <td>5.7+</td>
+            <td>数据存储</td>
+          </tr>
+          <tr>
+            <td><strong>前端框架</strong></td>
+            <td>Vue.js</td>
+            <td>2.6</td>
+            <td>组件化开发</td>
+          </tr>
+          <tr>
+            <td><strong>UI 组件库</strong></td>
+            <td>Ant Design Vue</td>
+            <td>1.7.2</td>
+            <td>UI 组件（按钮、卡片等）</td>
+          </tr>
+          <tr>
+            <td><strong>图表库</strong></td>
+            <td>Viser-vue</td>
+            <td>2.4</td>
+            <td>AntV G2 的 Vue 封装</td>
+          </tr>
+          <tr>
+            <td><strong>HTTP 客户端</strong></td>
+            <td>Axios</td>
+            <td>0.18</td>
+            <td>API 请求</td>
+          </tr>
+        </table>
+      </div>
+
+      <div class="section" id="chapter2">
+        <h2>第二章：后端实现详解</h2>
+
+        <h3 id="section2-1">2.1 控制器层 HomeController</h3>
+        <p>
+          <span class="file-path"
+            >org.jeecg.modules.fengji.stats.controller.HomeController</span
+          >
+          是数据总览页面的 REST API 控制器，提供 4 个核心接口。
+        </p>
+
+        <h4>2.1.1 控制器代码结构</h4>
+        <pre><code class="language-java"><span class="code-keyword">package</span> org.jeecg.modules.fengji.stats.controller;
+
+<span class="code-keyword">import</span> io.swagger.annotations.Api;
+<span class="code-keyword">import</span> io.swagger.annotations.ApiOperation;
+<span class="code-keyword">import</span> io.swagger.annotations.ApiParam;
+<span class="code-keyword">import</span> lombok.extern.slf4j.Slf4j;
+<span class="code-keyword">import</span> org.jeecg.common.api.vo.Result;
+<span class="code-keyword">import</span> org.jeecg.modules.fengji.stats.service.IHomeStatsService;
+<span class="code-keyword">import</span> org.jeecg.modules.fengji.stats.vo.*;
+<span class="code-keyword">import</span> org.springframework.beans.factory.annotation.Autowired;
+<span class="code-keyword">import</span> org.springframework.web.bind.annotation.*;
+
+<span class="code-keyword">import</span> java.util.List;
+
+<span class="code-comment">/**
+ * 首页统计控制器
+ */</span>
+@Api(tags="首页统计")
+@RestController
+@RequestMapping("/stats/home")
+@Slf4j
+public class HomeController {
+
+    @Autowired
+    private IHomeStatsService homeStatsService;
+
+    <span class="code-comment">/**
+     * 接口 1: 获取首页概览统计
+     * URL: GET /stats/home/overview
+     * 参数：windFarmCode(可选), queryType(默认 today)
+     * 返回：HomeOverviewVO
+     */</span>
+    @ApiOperation(value="获取首页概览统计", notes="获取净空达标率、不平衡机组数等概览数据")
+    @GetMapping("/overview")
+    public Result&lt;HomeOverviewVO&gt; getOverview(
+            @ApiParam(value="风场编号") @RequestParam(name="windFarmCode", required=false) String windFarmCode,
+            @ApiParam(value="查询类型：today=当日实时，history=历史汇总") @RequestParam(name="queryType", defaultValue="today") String queryType) {
+        try {
+            HomeOverviewVO result = homeStatsService.getOverview(windFarmCode, queryType);
+            return Result.OK(result);
+        } catch (Exception e) {
+            log.error("获取首页概览统计失败", e);
+            return Result.error("获取数据失败：" + e.getMessage());
+        }
+    }
+
+    <span class="code-comment">/**
+     * 接口 2: 获取净空趋势数据
+     * URL: GET /stats/home/clearanceTrend
+     * 参数：windFarmCode, timeRange(day/week/month)
+     * 返回：List&lt;HomeTrendVO&gt;
+     */</span>
+    @ApiOperation(value="获取净空趋势数据", notes="获取净空值随时间变化的趋势")
+    @GetMapping("/clearanceTrend")
+    public Result&lt;List&lt;HomeTrendVO&gt;&gt; getClearanceTrend(
+            @ApiParam(value="风场编号") @RequestParam(name="windFarmCode", required=false) String windFarmCode,
+            @ApiParam(value="时间范围：day=当日，week=周，month=月") @RequestParam(name="timeRange", defaultValue="day") String timeRange) {
+        try {
+            List&lt;HomeTrendVO&gt; result = homeStatsService.getClearanceTrend(windFarmCode, timeRange);
+            return Result.OK(result);
+        } catch (Exception e) {
+            log.error("获取净空趋势数据失败", e);
+            return Result.error("获取数据失败：" + e.getMessage());
+        }
+    }
+
+    <span class="code-comment">/**
+     * 接口 3: 获取不平衡机组分布
+     * URL: GET /stats/home/unbalanceDist
+     * 参数：windFarmCode, queryType
+     * 返回：List&lt;HomeDistributionVO&gt;
+     */</span>
+    @ApiOperation(value="获取不平衡机组分布", notes="获取各不平衡等级的机组数量分布")
+    @GetMapping("/unbalanceDist")
+    public Result&lt;List&lt;HomeDistributionVO&gt;&gt; getUnbalanceDistribution(
+            @ApiParam(value="风场编号") @RequestParam(name="windFarmCode", required=false) String windFarmCode,
+            @ApiParam(value="查询类型：today=当日实时，history=历史汇总") @RequestParam(name="queryType", defaultValue="today") String queryType) {
+        try {
+            List&lt;HomeDistributionVO&gt; result = homeStatsService.getUnbalanceDistribution(windFarmCode, queryType);
+            return Result.OK(result);
+        } catch (Exception e) {
+            log.error("获取不平衡分布数据失败", e);
+            return Result.error("获取数据失败：" + e.getMessage());
+        }
+    }
+
+    <span class="code-comment">/**
+     * 接口 4: 获取告警类型统计
+     * URL: GET /stats/home/alarmStats
+     * 参数：timeRange(day/week/month)
+     * 返回：List&lt;HomeAlarmStatsVO&gt;
+     */</span>
+    @ApiOperation(value="获取告警类型统计", notes="获取各类型告警的数量统计")
+    @GetMapping("/alarmStats")
+    public Result&lt;List&lt;HomeAlarmStatsVO&gt;&gt; getAlarmStats(
+            @ApiParam(value="时间范围：day=当日，week=周，month=月") @RequestParam(name="timeRange", defaultValue="day") String timeRange) {
+        try {
+            List&lt;HomeAlarmStatsVO&gt; result = homeStatsService.getAlarmStats(timeRange);
+            return Result.OK(result);
+        } catch (Exception e) {
+            log.error("获取告警统计数据失败", e);
+            return Result.error("获取数据失败：" + e.getMessage());
+        }
+    }
+}</code></pre>
+
+        <div class="knowledge-card">
+          <h5>📖 控制器设计要点</h5>
+          <ul>
+            <li>
+              <strong>统一返回格式</strong>：所有接口返回
+              <span class="inline-code">Result&lt;T&gt;</span> 包装类，包含
+              success、message、code、result 字段
+            </li>
+            <li>
+              <strong>参数可选</strong>：风场参数设置为可选，未传时查询全部风场
+            </li>
+            <li>
+              <strong>异常处理</strong>：try-catch
+              捕获所有异常，返回友好的错误信息
+            </li>
+            <li>
+              <strong>日志记录</strong>：使用 @Slf4j
+              注解，记录错误日志便于排查问题
+            </li>
+            <li>
+              <strong>API 文档</strong>：@ApiOperation 和 @ApiParam 注解提供
+              Swagger 文档说明
+            </li>
+          </ul>
+        </div>
+
+        <h3 id="section2-2">2.2 服务接口 IHomeStatsService</h3>
+        <pre><code class="language-java"><span class="code-keyword">package</span> org.jeecg.modules.fengji.stats.service;
+
+<span class="code-keyword">import</span> org.jeecg.modules.fengji.stats.vo.*;
+<span class="code-keyword">import</span> java.util.List;
+
+<span class="code-comment">/**
+ * 首页统计服务接口
+ * 定义 4 个核心业务方法
+ */</span>
+public interface IHomeStatsService {
+
+    <span class="code-comment">/**
+     * 获取首页概览统计
+     * @param windFarmCode 风场编号（可选）
+     * @param queryType 查询类型：today=当日实时，history=历史汇总
+     * @return HomeOverviewVO 包含 5 个统计指标
+     */</span>
+    HomeOverviewVO getOverview(String windFarmCode, String queryType);
+
+    <span class="code-comment">/**
+     * 获取净空趋势数据
+     * @param windFarmCode 风场编号（可选）
+     * @param timeRange 时间范围：day=当日，week=周，month=月
+     * @return List&lt;HomeTrendVO&gt; 时间 - 值对列表
+     */</span>
+    List&lt;HomeTrendVO&gt; getClearanceTrend(String windFarmCode, String timeRange);
+
+    <span class="code-comment">/**
+     * 获取不平衡分布数据
+     * @param windFarmCode 风场编号（可选）
+     * @param queryType 查询类型：today=当日实时，history=历史汇总
+     * @return List&lt;HomeDistributionVO&gt; 等级 - 数量列表
+     */</span>
+    List&lt;HomeDistributionVO&gt; getUnbalanceDistribution(String windFarmCode, String queryType);
+
+    <span class="code-comment">/**
+     * 获取告警类型统计
+     * @param timeRange 时间范围：day=当日，week=周，month=月
+     * @return List&lt;HomeAlarmStatsVO&gt; 类型 - 数量列表
+     */</span>
+    List&lt;HomeAlarmStatsVO&gt; getAlarmStats(String timeRange);
+}</code></pre>
+
+        <h3 id="section2-3">2.3 服务实现 HomeStatsServiceImpl</h3>
+        <p>服务实现层是业务逻辑的核心，负责数据处理、计算和转换。</p>
+
+        <h4>2.3.1 概览统计实现</h4>
+        <pre><code class="language-java"><span class="code-keyword">@Override</span>
+public HomeOverviewVO getOverview(String windFarmCode, String queryType) {
+    HomeOverviewVO overview = new HomeOverviewVO();
+    try {
+        <span class="code-comment">// 1. 获取阈值配置（从系统配置表）</span>
+        ClearanceThresholdVO thresholds = getThresholds();
+        Double warningThreshold = thresholds.getWarning();
+
+        <span class="code-comment">// 2. 获取风场设备列表</span>
+        List&lt;FengdianDeviceInfo&gt; devices = getDevicesByWindFarm(windFarmCode);
+
+        <span class="code-comment">// 3. 计算时间范围</span>
+        Date endDate = new Date();
+        Date startDate = calculateStartDate(queryType);
+
+        <span class="code-comment">// 4. 从日报表查询统计数据</span>
+        List&lt;DeviceDailyStats&gt; statsList = deviceDailyStatsService.getDailyStats(
+            null, windFarmCode, startDate, endDate
+        );
+
+        <span class="code-comment">// 5. 统计机组状态</span>
+        int totalMachines = devices.size();
+        int onlineMachines = 0;
+        int abnormalMachines = 0;
+
+        for (FengdianDeviceInfo device : devices) {
+            if ("1".equals(device.getRunStatus())) {
+                onlineMachines++;
+            } else if ("2".equals(device.getRunStatus())) {
+                abnormalMachines++;
+            }
+        }
+
+        overview.setTotalMachines(totalMachines);
+        overview.setOnlineMachines(onlineMachines);
+        overview.setAbnormalMachines(abnormalMachines);
+
+        <span class="code-comment">// 6. 处理空数据</span>
+        if (statsList.isEmpty()) {
+            overview.setClearanceRate(0.0);
+            overview.setUnbalancedMachines(0);
+            return overview;
+        }
+
+        <span class="code-comment">// 7. 计算净空达标率和不平衡机数</span>
+        long totalRecords = 0;
+        long qualifiedDays = 0;
+        Set&lt;String&gt; unbalancedDevices = new HashSet&lt;&gt;();
+
+        for (DeviceDailyStats stats : statsList) {
+            if (stats.getTotalRecords() != null && stats.getTotalRecords() > 0) {
+                totalRecords += stats.getTotalRecords();
+
+                <span class="code-comment">// 净空达标判断</span>
+                if (stats.getAvgClearanceValue() != null &&
+                    stats.getAvgClearanceValue().doubleValue() >= warningThreshold) {
+                    qualifiedDays++;
+                }
+
+                <span class="code-comment">// 不平衡判断</span>
+                if (stats.getMinClearanceValue() != null &&
+                    stats.getMinClearanceValue().doubleValue() < warningThreshold) {
+                    unbalancedDevices.add(stats.getDeviceNo());
+                }
+            }
+        }
+
+        overview.setUnbalancedMachines(unbalancedDevices.size());
+
+        <span class="code-comment">// 8. 计算达标率</span>
+        long totalDays = statsList.stream()
+            .filter(s -> s.getTotalRecords() != null && s.getTotalRecords() > 0)
+            .count();
+
+        if (totalDays > 0) {
+            overview.setClearanceRate(BigDecimal.valueOf(qualifiedDays * 100.0 / totalDays)
+                .setScale(2, RoundingMode.HALF_UP).doubleValue());
+        } else {
+            overview.setClearanceRate(0.0);
+        }
+
+    } catch (Exception e) {
+        log.error("获取首页概览统计失败", e);
+        <span class="code-comment">// 异常时返回默认值，防止前端渲染失败</span>
+        overview.setClearanceRate(0.0);
+        overview.setUnbalancedMachines(0);
+        overview.setTotalMachines(0);
+        overview.setOnlineMachines(0);
+        overview.setAbnormalMachines(0);
+    }
+    return overview;
+}</code></pre>
+
+        <h4>2.3.2 净空趋势计算</h4>
+        <pre><code class="language-java"><span class="code-keyword">@Override</span>
+public List&lt;HomeTrendVO&gt; getClearanceTrend(String windFarmCode, String timeRange) {
+    try {
+        Date endDate = new Date();
+        Date startDate = calculateStartDate(timeRange);
+
+        <span class="code-comment">// 从日报表查询数据</span>
+        List&lt;DeviceDailyStats&gt; statsList = deviceDailyStatsService.getDailyStats(
+            null, windFarmCode, startDate, endDate
+        );
+
+        if (statsList.isEmpty()) {
+            return new ArrayList&lt;&gt;();
+        }
+
+        <span class="code-comment">// 根据时间范围选择计算方式</span>
+        if ("day".equals(timeRange)) {
+            <span class="code-comment">// 当日小时趋势</span>
+            return calculateHourlyTrendFromDailyStats(statsList);
+        } else {
+            <span class="code-comment">// 周/月趋势（按天）</span>
+            return calculateDailyTrend(statsList);
+        }
+    } catch (Exception e) {
+        log.error("获取净空趋势数据失败", e);
+        return new ArrayList&lt;&gt;();
+    }
+}
+
+<span class="code-keyword">private</span> List&lt;HomeTrendVO&gt; calculateHourlyTrendFromDailyStats(List&lt;DeviceDailyStats&gt; statsList) {
+    HomeTrendVO vo = new HomeTrendVO();
+    vo.setTime(new SimpleDateFormat("HH:00").format(new Date()));
+    
+    <span class="code-comment">// 计算平均值</span>
+    double avg = statsList.stream()
+        .filter(s -> s.getAvgClearanceValue() != null)
+        .mapToDouble(s -> s.getAvgClearanceValue().doubleValue())
+        .average().orElse(0.0);
+    vo.setValue(Math.round(avg * 100.0) / 100.0);
+
+    List&lt;HomeTrendVO&gt; result = new ArrayList&lt;&gt;();
+    result.add(vo);
+    return result;
+}
+
+<span class="code-keyword">private</span> List&lt;HomeTrendVO&gt; calculateDailyTrend(List&lt;DeviceDailyStats&gt; statsList) {
+    <span class="code-comment">// 按日期分组</span>
+    Map&lt;String, List&lt;DeviceDailyStats&gt;&gt; groupedByDate = statsList.stream()
+        .filter(s -> s.getStatsDate() != null)
+        .collect(Collectors.groupingBy(
+            s -> new SimpleDateFormat("MM-dd").format(s.getStatsDate())
+        ));
+
+    List&lt;HomeTrendVO&gt; result = new ArrayList&lt;&gt;();
+    for (Map.Entry&lt;String, List&lt;DeviceDailyStats&gt;&gt; entry : groupedByDate.entrySet()) {
+        HomeTrendVO vo = new HomeTrendVO();
+        vo.setTime(entry.getKey());
+        
+        <span class="code-comment">// 计算该日平均值</span>
+        double avg = entry.getValue().stream()
+            .filter(s -> s.getAvgClearanceValue() != null)
+            .mapToDouble(s -> s.getAvgClearanceValue().doubleValue())
+            .average().orElse(0.0);
+        vo.setValue(Math.round(avg * 100.0) / 100.0);
+        result.add(vo);
+    }
+
+    <span class="code-comment">// 按时间排序</span>
+    result.sort(Comparator.comparing(HomeTrendVO::getTime));
+    return result;
+}</code></pre>
+
+        <h4>2.3.3 不平衡等级计算（最新实现）</h4>
+        <pre><code class="language-java"><span class="code-keyword">@Override</span>
+public List&lt;HomeDistributionVO&gt; getUnbalanceDistribution(String windFarmCode, String timeRange) {
+    try {
+        Date endDate = new Date();
+        Date startDate = calculateStartDate(timeRange);
+
+        <span class="code-comment">// 从 device_daily_stats 表查询统计数据</span>
+        List&lt;DeviceDailyStats&gt; statsList = deviceDailyStatsService.getDailyStatsByWindFarm(
+            windFarmCode, startDate, endDate
+        );
+
+        log.info("不平衡分布查询：windFarmCode={}, timeRange={}, statsCount={}",
+            windFarmCode, timeRange, statsList.size());
+
+        if (statsList.isEmpty()) {
+            return getDefaultDistribution();
+        }
+
+        <span class="code-comment">// 直接累加等级统计字段（不再重新计算）</span>
+        int level1Count = statsList.stream()
+            .mapToInt(s -> s.getExcellentCount() != null ? s.getExcellentCount() : 0)
+            .sum();
+        
+        int level2Count = statsList.stream()
+            .mapToInt(s -> s.getGoodCount() != null ? s.getGoodCount() : 0)
+            .sum();
+        
+        int level3Count = statsList.stream()
+            .mapToInt(s -> s.getMediumCount() != null ? s.getMediumCount() : 0)
+            .sum();
+        
+        int level4Count = statsList.stream()
+            .mapToInt(s -> s.getWarningCount() != null ? s.getWarningCount() : 0)
+            .sum();
+        
+        int level5Count = statsList.stream()
+            .mapToInt(s -> s.getDangerCount() != null ? s.getDangerCount() : 0)
+            .sum();
+
+        <span class="code-comment">// 构建返回结果（确保 1-5 级都有数据）</span>
+        List&lt;HomeDistributionVO&gt; result = new ArrayList&lt;&gt;();
+        
+        HomeDistributionVO vo1 = new HomeDistributionVO();
+        vo1.setItem("1 级");
+        vo1.setCount(level1Count);
+        result.add(vo1);
+        
+        HomeDistributionVO vo2 = new HomeDistributionVO();
+        vo2.setItem("2 级");
+        vo2.setCount(level2Count);
+        result.add(vo2);
+        
+        HomeDistributionVO vo3 = new HomeDistributionVO();
+        vo3.setItem("3 级");
+        vo3.setCount(level3Count);
+        result.add(vo3);
+        
+        HomeDistributionVO vo4 = new HomeDistributionVO();
+        vo4.setItem("4 级");
+        vo4.setCount(level4Count);
+        result.add(vo4);
+        
+        HomeDistributionVO vo5 = new HomeDistributionVO();
+        vo5.setItem("5 级");
+        vo5.setCount(level5Count);
+        result.add(vo5);
+
+        log.info("不平衡分布结果：1 级={}, 2 级={}, 3 级={}, 4 级={}, 5 级={}", 
+            level1Count, level2Count, level3Count, level4Count, level5Count);
+        return result;
+    } catch (Exception e) {
+        log.error("获取不平衡分布数据失败", e);
+        return getDefaultDistribution();
+    }
+}</code></pre>
+
+        <div class="tip">
+          <strong>💡 关键设计点（2026 年 5 月更新）：</strong>
+          <ul style="margin-top: 10px">
+            <li>
+              <strong>性能优化</strong>：直接使用 device_daily_stats
+              表中预计算的等级统计字段 （excellentCount, goodCount, mediumCount,
+              warningCount, dangerCount）
+            </li>
+            <li>
+              <strong>不再重新计算</strong
+              >：避免了重复的阈值判断和等级计算逻辑，提升查询性能
+            </li>
+            <li>
+              <strong>数据补全</strong>：即使某等级数量为 0，也返回完整数据（1-5
+              级）
+            </li>
+            <li><strong>日志完善</strong>：添加详细的日志记录，便于排查问题</li>
+          </ul>
+        </div>
+
+        <h3 id="section2-4">2.4 数据访问层 HomeStatsMapper</h3>
+        <p>
+          Mapper 层使用 MyBatis @Select 注解直接编写 SQL，主要用于告警统计查询。
+        </p>
+
+        <pre><code class="language-java"><span class="code-keyword">@Mapper</span>
+public interface HomeStatsMapper {
+
+    <span class="code-comment">/**
+     * 获取告警类型统计
+     * 关联字典表获取告警类型名称
+     */</span>
+    @Select("SELECT " +
+            "COALESCE(d.item_text, w.alarm_type) as type, " +
+            "COUNT(*) as count " +
+            "FROM warn_info w " +
+            "LEFT JOIN sys_dict_item d ON d.item_value = w.alarm_type " +
+            "  AND d.dict_id = (SELECT id FROM sys_dict WHERE dict_code = 'alarm_type' LIMIT 1) " +
+            "WHERE w.alarm_time &gt;= #{startTime} AND w.alarm_time &lt; #{endTime} " +
+            "GROUP BY w.alarm_type, d.item_text " +
+            "ORDER BY count DESC")
+    List&lt;HomeAlarmStatsVO&gt; selectAlarmStats(
+        @Param("startTime") Date startTime,
+        @Param("endTime") Date endTime
+    );
+}</code></pre>
+
+        <div class="note">
+          <strong>📌 SQL 设计要点：</strong>
+          <ul style="margin-top: 10px">
+            <li>
+              <strong>LEFT JOIN</strong
+              >：即使字典表中没有配置，也能返回告警类型（使用原始值）
+            </li>
+            <li><strong>COALESCE</strong>：确保 type 字段不为 NULL</li>
+            <li>
+              <strong>时间范围</strong>：使用
+              <span class="inline-code">&gt;= startTime AND &lt; endTime</span>
+              避免时间边界问题
+            </li>
+          </ul>
+        </div>
+
+        <h3 id="section2-5">2.5 数据 VO 类设计</h3>
+        <table>
+          <tr>
+            <th>VO 类</th>
+            <th>用途</th>
+            <th>字段说明</th>
+          </tr>
+          <tr>
+            <td><strong>HomeOverviewVO</strong></td>
+            <td>首页概览统计</td>
+            <td>
+              clearanceRate(达标率), unbalancedMachines(不平衡数),
+              totalMachines(总数), onlineMachines(在线数),
+              abnormalMachines(异常数)
+            </td>
+          </tr>
+          <tr>
+            <td><strong>HomeTrendVO</strong></td>
+            <td>净空趋势数据</td>
+            <td>time(时间点), value(净空值)</td>
+          </tr>
+          <tr>
+            <td><strong>HomeDistributionVO</strong></td>
+            <td>不平衡分布</td>
+            <td>item(等级名称), count(机组数量)</td>
+          </tr>
+          <tr>
+            <td><strong>HomeAlarmStatsVO</strong></td>
+            <td>告警统计</td>
+            <td>type(告警类型), count(数量)</td>
+          </tr>
+        </table>
+
+        <pre><code class="language-java"><span class="code-comment">// HomeOverviewVO.java</span>
+@Data
+@ApiModel(value="HomeOverviewVO", description="首页概览统计")
+public class HomeOverviewVO implements Serializable {
+    @ApiModelProperty(value = "净空达标率 (%)")
+    private Double clearanceRate;
+
+    @ApiModelProperty(value = "不平衡机组数 (等级>=3)")
+    private Integer unbalancedMachines;
+
+    @ApiModelProperty(value = "机组总数")
+    private Integer totalMachines;
+
+    @ApiModelProperty(value = "在线机组数")
+    private Integer onlineMachines;
+
+    @ApiModelProperty(value = "异常机组数")
+    private Integer abnormalMachines;
+}</code></pre>
+      </div>
+
+      <div class="section" id="chapter3">
+        <h2>第三章：前端实现详解</h2>
+
+        <h3 id="section3-1">3.1 页面组件 home.vue</h3>
+        <p>
+          <span class="file-path"
+            >fengji-system-vue/src/views/dataCenter/home.vue</span
+          >
+          是数据总览页面的核心组件。
+        </p>
+
+        <h4>3.1.1 组件结构</h4>
+        <pre><code class="language-vue">&lt;template&gt;
+  &lt;div class="data-center-home"&gt;
+    &lt;!-- 1. 顶部筛选栏 --&gt;
+    &lt;div class="filter-bar"&gt;
+      &lt;div class="filter-left"&gt;
+        &lt;span class="filter-label"&gt;风场：&lt;/span&gt;
+        &lt;j-dict-select-tag 
+          v-model="selectedFanScope" 
+          dictCode="patrol_fan_scope,name,id,del_flag = 0"  
+          placeholder="请选择风场" /&gt;
+      &lt;/div&gt;
+      &lt;div class="filter-center"&gt;
+        &lt;a-radio-group v-model="homeTimeRange" button-style="solid"&gt;
+          &lt;a-radio-button value="day"&gt;日&lt;/a-radio-button&gt;
+          &lt;a-radio-button value="week"&gt;周&lt;/a-radio-button&gt;
+          &lt;a-radio-button value="month"&gt;月&lt;/a-radio-button&gt;
+        &lt;/a-radio-group&gt;
+        &lt;a-button type="text" icon="sync" @click="handleRefresh"&gt;刷新&lt;/a-button&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+
+    &lt;!-- 2. 数据概览卡片 --&gt;
+    &lt;div class="overview-cards"&gt;
+      &lt;div class="overview-card"&gt;
+        &lt;div class="card-title"&gt;机组总数&lt;/div&gt;
+        &lt;div class="card-value"&gt;{{homeOverview.totalMachines}}&lt;/div&gt;
+      &lt;/div&gt;
+      &lt;!-- ... 其他 4 个卡片 --&gt;
+    &lt;/div&gt;
+
+    &lt;!-- 3. 图表区域 --&gt;
+    &lt;div class="charts-container"&gt;
+      &lt;div class="chart-card"&gt;
+        &lt;div class="chart-header"&gt;净空随时间变化&lt;/div&gt;
+        &lt;div class="chart-content"&gt;
+          &lt;line-chart :dataSource="clearanceData" :height="220" /&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+      &lt;div class="chart-card"&gt;
+        &lt;div class="chart-header"&gt;不平衡机组分布&lt;/div&gt;
+        &lt;div class="chart-content"&gt;
+          &lt;unbalanced-pie-chart :dataSource="unbalancedData" :height="220" /&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+      &lt;div class="chart-card"&gt;
+        &lt;div class="chart-header"&gt;告警类型统计&lt;/div&gt;
+        &lt;div class="chart-content"&gt;
+          &lt;alarm-bar-chart :dataSource="alarmData" :height="220" /&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+
+    &lt;!-- 4. 异常机组提醒 --&gt;
+    &lt;div class="warning-section"&gt;
+      &lt;div class="section-title"&gt;异常机组提醒&lt;/div&gt;
+      &lt;div class="warning-list"&gt;
+        &lt;div class="warning-item" v-for="item in errorList" :key="item.alarmId"&gt;
+          &lt;span class="warning-icon"&gt;⚠️&lt;/span&gt;
+          &lt;span class="warning-content"&gt;{{item.unitCode_dictText}} {{item.alarmContent}}&lt;/span&gt;
+          &lt;a-button type="link" size="small" @click="showDetail(item)"&gt;查看详情&lt;/a-button&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+      &lt;a-pagination v-model="errorPageNo" :total="errorTotal" /&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+&lt;/template&gt;</code></pre>
+
+        <h4>3.1.2 数据加载逻辑</h4>
+        <pre><code class="language-javascript">&lt;script&gt;
+import { getAction } from '../../api/manage';
+import LineChart from '@/components/chart/LineChart.vue';
+import UnbalancedPieChart from '@/components/chart/UnbalancedPieChart.vue';
+import AlarmBarChart from '@/components/chart/AlarmBarChart.vue';
+
+export default {
+  name: "home",
+  components: {
+    LineChart,
+    UnbalancedPieChart,
+    AlarmBarChart
+  },
+  data() {
+    return {
+      selectedFanScope: '',  <span class="code-comment">// 选中的风场 ID</span>
+      homeTimeRange: 'day',  <span class="code-comment">// 时间范围（day/week/month）</span>
+      homeOverview: {        <span class="code-comment">// 概览数据</span>
+        clearanceRate: 0,
+        unbalancedMachines: 0,
+        totalMachines: 0,
+        onlineMachines: 0,
+        abnormalMachines: 0
+      },
+      clearanceData: [],     <span class="code-comment">// 净空趋势数据</span>
+      unbalancedData: [],    <span class="code-comment">// 不平衡分布数据</span>
+      alarmData: [],         <span class="code-comment">// 告警统计数据</span>
+      errorList: [],         <span class="code-comment">// 异常机组列表</span>
+      errorPageNo: 1,        <span class="code-comment">// 当前页码</span>
+      errorTotal: 0          <span class="code-comment">// 总数</span>
+    }
+  },
+  created() {
+    <span class="code-comment">// 页面加载时初始化</span>
+    getAction('/info/patrolFanScope/list').then(res => {
+      this.fanScopeList = res.result.records;
+      if (this.fanScopeList.length > 0) {
+        this.selectedFanScope = this.fanScopeList[0].id;
+        this.loadData();  <span class="code-comment">// 加载对应风场数据</span>
+      }
+    })
+  },
+  methods: {
+    <span class="code-comment">/**
+     * 加载所有数据
+     * 并行请求 5 个接口，提升加载速度
+     */</span>
+    loadData() {
+      console.log('加载数据...');
+      this.loadFanData();           <span class="code-comment">// 风机列表</span>
+      this.loadFanDeviceData();     <span class="code-comment">// 风机设备状态</span>
+      this.loadWarningList();       <span class="code-comment">// 告警列表</span>
+      this.loadErrorList();         <span class="code-comment">// 异常机组列表</span>
+      this.loadHomeStats();         <span class="code-comment">// 首页统计数据</span>
+    },
+
+    <span class="code-comment">/**
+     * 加载首页统计数据
+     * 使用 Promise.all 并行请求 4 个统计接口
+     */</span>
+    async loadHomeStats() {
+      try {
+        await Promise.all([
+          this.loadOverview(),         <span class="code-comment">// 概览卡片</span>
+          this.loadClearanceTrend(),   <span class="code-comment">// 净空趋势</span>
+          this.loadUnbalanceDist(),    <span class="code-comment">// 不平衡分布</span>
+          this.loadAlarmStats()        <span class="code-comment">// 告警统计</span>
+        ])
+      } catch (error) {
+        console.error('加载首页统计数据失败', error)
+      }
+    },
+
+    <span class="code-comment">/**
+     * 获取查询类型
+     * day -> today (当日实时)
+     * week/month -> history (历史汇总)
+     */</span>
+    getQueryType() {
+      return this.homeTimeRange === 'day' ? 'today' : 'history'
+    },
+
+    <span class="code-comment">/**
+     * 加载概览统计
+     * API: GET /stats/home/overview
+     */</span>
+    async loadOverview() {
+      const params = {
+        windFarmCode: this.selectedFanScope,
+        queryType: this.getQueryType()
+      }
+      const res = await getAction(this.statsOverviewUrl, params)
+      if (res.success && res.result) {
+        this.homeOverview = res.result
+      }
+    },
+
+    <span class="code-comment">/**
+     * 加载净空趋势
+     * API: GET /stats/home/clearanceTrend
+     */</span>
+    async loadClearanceTrend() {
+      const params = {
+        windFarmCode: this.selectedFanScope,
+        timeRange: this.homeTimeRange
+      }
+      const res = await getAction(this.clearanceTrendUrl, params)
+      if (res.success && res.result) {
+        this.clearanceData = res.result
+      }
+    },
+
+    <span class="code-comment">/**
+     * 加载不平衡分布
+     * API: GET /stats/home/unbalanceDist
+     */</span>
+    async loadUnbalanceDist() {
+      const params = {
+        windFarmCode: this.selectedFanScope,
+        queryType: this.getQueryType()
+      }
+      const res = await getAction(this.unbalanceDistUrl, params)
+      if (res.success && res.result) {
+        this.unbalancedData = res.result
+      }
+    },
+
+    <span class="code-comment">/**
+     * 加载告警统计
+     * API: GET /stats/home/alarmStats
+     */</span>
+    async loadAlarmStats() {
+      const params = {
+        timeRange: this.homeTimeRange
+      }
+      const res = await getAction(this.alarmStatsUrl, params)
+      if (res.success && res.result) {
+        this.alarmData = res.result
+      }
+    },
+
+    <span class="code-comment">/**
+     * 时间范围切换
+     */</span>
+    handleTimeRangeChange(e) {
+      this.homeTimeRange = e.target.value;
+      this.loadHomeStats();  <span class="code-comment">// 重新加载统计数据</span>
+    },
+
+    <span class="code-comment">/**
+     * 刷新数据
+     */</span>
+    handleRefresh() {
+      this.loadData();
+      this.$message.success('数据刷新成功');
+    }
+  }
+}
+&lt;/script&gt;</code></pre>
+
+        <h3 id="section3-2">3.2 数据概览卡片组件</h3>
+        <pre><code class="language-vue">&lt;!-- 数据概览卡片 --&gt;
+&lt;div class="overview-cards"&gt;
+  &lt;div class="overview-card"&gt;
+    &lt;div class="card-title"&gt;机组总数&lt;/div&gt;
+    &lt;div class="card-value"&gt;{{homeOverview.totalMachines}}&lt;/div&gt;
+  &lt;/div&gt;
+  &lt;div class="overview-card"&gt;
+    &lt;div class="card-title"&gt;在线机数&lt;/div&gt;
+    &lt;div class="card-value"&gt;{{homeOverview.onlineMachines}}&lt;/div&gt;
+  &lt;/div&gt;
+  &lt;div class="overview-card"&gt;
+    &lt;div class="card-title"&gt;异常数&lt;/div&gt;
+    &lt;div class="card-value"&gt;{{homeOverview.abnormalMachines}}&lt;/div&gt;
+  &lt;/div&gt;
+  &lt;div class="overview-card"&gt;
+    &lt;div class="card-title"&gt;净空达标率&lt;/div&gt;
+    &lt;div class="card-value"&gt;{{ homeOverview.clearanceRate }}%&lt;/div&gt;
+  &lt;/div&gt;
+  &lt;div class="overview-card"&gt;
+    &lt;div class="card-title"&gt;不平衡机数&lt;/div&gt;
+    &lt;div class="card-value"&gt;{{ homeOverview.unbalancedMachines }}&lt;/div&gt;
+  &lt;/div&gt;
+&lt;/div&gt;
+
+&lt;style scoped&gt;
+.overview-cards {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);  <span class="code-comment"># 5 列等宽布局</span>
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.overview-card {
+  padding: 20px;
+  background-color: #ffffff;
+  border-radius: 6px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s;
+}
+
+.overview-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);  <span class="code-comment"># 悬停阴影效果</span>
+}
+
+.card-title {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 8px;
+}
+
+.card-value {
+  font-size: 28px;
+  font-weight: bold;
+  color: #1890ff;  <span class="code-comment"># 主题蓝色</span>
+}
+&lt;/style&gt;</code></pre>
+
+        <h3 id="section3-3">3.3 折线图组件 LineChart</h3>
+        <p>LineChart 组件基于 Viser-vue（AntV G2 的 Vue 封装）实现。</p>
+
+        <pre><code class="language-vue">&lt;template&gt;
+  &lt;div :style="containerStyle"&gt;
+    &lt;h4 v-if="title" :style="{ marginBottom: '10px' }"&gt;{{ title }}&lt;/h4&gt;
+    &lt;v-chart
+      v-if="renderChart"
+      :forceFit="true"
+      :height="chartHeight"
+      :data="chartData"
+      :scale="scale"
+    &gt;
+      &lt;v-tooltip /&gt;
+      &lt;v-legend /&gt;
+      &lt;v-axis dataKey="time" :label="{ rotate: 0 }" /&gt;
+      &lt;v-axis dataKey="value" :label="{ position: 'left' }" /&gt;
+      &lt;v-line position="time*value" /&gt;
+    &lt;/v-chart&gt;
+  &lt;/div&gt;
+&lt;/template&gt;
+
+&lt;script&gt;
+export default {
+  name: 'LineChart',
+  props: {
+    dataSource: { type: Array, default: () => [] },
+    yaxisText: { type: String, default: 'value' },
+    title: { type: String, default: '' },
+    height: { type: Number, default: 254 }
+  },
+  computed: {
+    chartData() {
+      if (!this.dataSource || this.dataSource.length === 0) {
+        return []
+      }
+      <span class="code-comment">// 数据转换</span>
+      return this.dataSource.map(item => ({
+        time: item.time || '',
+        value: item.value !== undefined ? Number(item.value) : 0
+      }))
+    },
+    scale() {
+      return [
+        {
+          dataKey: 'time',
+          type: 'cat',
+          alias: '时间',
+          labels: { fontSize: 12, fill: '#666' }
+        },
+        {
+          dataKey: 'value',
+          alias: this.yaxisText,
+          min: 0,
+          labels: { fontSize: 12, fill: '#666' },
+          formatter: val => `${val}m`
+        }
+      ]
+    }
+  },
+  mounted() {
+    <span class="code-comment">// 延迟渲染，确保 DOM 已就绪</span>
+    this.$nextTick(() => {
+      setTimeout(() => {
+        this.renderChart = true
+      }, 100)
+    })
+  }
+}
+&lt;/script&gt;</code></pre>
+
+        <h3 id="section3-4">3.4 饼图组件 UnbalancedPieChart</h3>
+        <pre><code class="language-vue">&lt;template&gt;
+  &lt;v-chart :forceFit="true" :height="height" :data="data" :scale="scale"&gt;
+    &lt;v-tooltip :showTitle="false" dataKey="item*percent"/&gt;
+    &lt;v-axis/&gt;
+    &lt;v-legend dataKey="item"/&gt;
+    &lt;v-pie 
+      position="percent" 
+      color="item" 
+      :v-style="{ stroke: '#fff', lineWidth: 1 }" 
+      :label="labelConfig"
+    /&gt;
+    &lt;v-coord type="theta"/&gt;
+  &lt;/v-chart&gt;
+&lt;/template&gt;
+
+&lt;script&gt;
+const DataSet = require('@antv/data-set')
+
+export default {
+  name: 'UnbalancedPieChart',
+  props: {
+    dataSource: {
+      type: Array,
+      default: () => []
+    },
+    height: { type: Number, default: 254 }
+  },
+  computed: {
+    data() {
+      <span class="code-comment">// 使用 DataSet 计算百分比</span>
+      let dv = new DataSet.View().source(this.dataSource)
+      dv.transform({
+        type: 'percent',
+        field: 'count',
+        dimension: 'item',
+        as: 'percent'
+      })
+      return dv.rows
+    },
+    scale() {
+      return [{
+        dataKey: 'percent',
+        min: 0,
+        formatter: '.0%'  <span class="code-comment"># 百分比格式：0%, 10%, 50%</span>
+      }]
+    },
+    labelConfig() {
+      return {
+        content: data => `${data.item}: ${data.percent * 100}%`
+      }
+    }
+  }
+}
+&lt;/script&gt;</code></pre>
+
+        <h3 id="section3-5">3.5 柱状图组件 AlarmBarChart</h3>
+        <pre><code class="language-vue">&lt;template&gt;
+  &lt;div class="chart-container" :style="{ height: height + 'px' }"&gt;
+    &lt;v-chart :height="height" :data="chartData" :scale="scale"&gt;
+      &lt;v-tooltip :crosshairs="false"&gt;
+        &lt;template slot="label"&gt;&lt;span&gt;{{ datum.type }}&lt;/span&gt;&lt;/template&gt;
+        &lt;template slot="item"&gt;&lt;span&gt;数量：{{ datum.count }}&lt;/span&gt;&lt;/template&gt;
+      &lt;/v-tooltip&gt;
+      &lt;v-axis dataKey="type" :label="{rotate: 0}"/&gt;
+      &lt;v-axis dataKey="count" /&gt;
+      &lt;v-bar 
+        position="type*count" 
+        color="#1890ff" 
+        :barSize="30"
+      &gt;
+        &lt;v-label position="top" :content="(datum) => datum.count" /&gt;
+      &lt;/v-bar&gt;
+    &lt;/v-chart&gt;
+  &lt;/div&gt;
+&lt;/template&gt;
+
+&lt;script&gt;
+export default {
+  name: 'AlarmBarChart',
+  props: {
+    dataSource: { type: Array, required: true },
+    yaxisText: { type: String, default: '数量' },
+    title: { type: String, default: '' },
+    height: { type: Number, default: 254 }
+  },
+  computed: {
+    chartData() {
+      if (!this.dataSource || this.dataSource.length === 0) {
+        <span class="code-comment">// 返回默认数据确保图表框架渲染</span>
+        return [
+          { type: '默认类型 1', count: 0 },
+          { type: '默认类型 2', count: 0 }
+        ]
+      }
+      return this.dataSource.map(item => ({
+        type: item.type || '未知',
+        count: item.count || 0
+      }))
+    },
+    scale() {
+      return {
+        count: {
+          alias: this.yaxisText,
+          min: 0,
+          tickInterval: 1,
+          formatter: (val) => Math.round(val)
+        },
+        type: { alias: '告警类型' }
+      }
+    }
+  }
+}
+&lt;/script&gt;</code></pre>
+      </div>
+
+      <div class="section" id="chapter4">
+        <h2>第四章：前后端联调</h2>
+
+        <h3 id="section4-1">4.1 API 请求封装</h3>
+        <p>前端使用 Axios 封装了统一的 HTTP 请求方法，包含签名认证。</p>
+
+        <pre><code class="language-javascript"><span class="code-comment">// manage.js - API 请求封装</span>
+import Vue from 'vue'
+import { axios } from '@/utils/request'
+import signMd5Utils from '@/utils/encryption/signMd5Utils'
+
+<span class="code-comment">/**
+ * GET 请求
+ * @param url 请求路径
+ * @param parameter 请求参数
+ */</span>
+export function getAction(url, parameter) {
+  <span class="code-comment">// 生成签名（防止请求被篡改）</span>
+  let sign = signMd5Utils.getSign(url, parameter);
+  let signHeader = {
+    "X-Sign": sign,
+    "X-TIMESTAMP": signMd5Utils.getTimestamp()
+  };
+  
+  return axios({
+    url: url,
+    method: 'get',
+    params: parameter,
+    headers: signHeader
+  })
+}
+
+<span class="code-comment">/**
+ * POST 请求
+ */</span>
+export function postAction(url, parameter) {
+  let sign = signMd5Utils.getSign(url, parameter);
+  let signHeader = {
+    "X-Sign": sign,
+    "X-TIMESTAMP": signMd5Utils.getTimestamp()
+  };
+  
+  return axios({
+    url: url,
+    method: 'post',
+    data: parameter,
+    headers: signHeader
+  })
+}</code></pre>
+
+        <div class="knowledge-card">
+          <h5>📖 签名认证机制</h5>
+          <ul>
+            <li>
+              <strong>X-Sign</strong>：使用 MD5 算法对 URL+ 参数 +
+              时间戳生成签名，防止请求被篡改
+            </li>
+            <li>
+              <strong>X-TIMESTAMP</strong
+              >：请求时间戳，后端验证时间戳防止重放攻击
+            </li>
+            <li>
+              <strong>统一拦截</strong>：Axios 拦截器统一添加 Token 到请求头
+            </li>
+          </ul>
+        </div>
+
+        <h3 id="section4-2">4.2 数据流转过程</h3>
+        <pre><code>用户操作（选择风场/切换时间范围）
+    │
+    ▼
+前端触发 loadHomeStats()
+    │
+    ├── 并行请求 4 个 API
+    │   │
+    │   ├── GET /stats/home/overview
+    │   │   ├── 参数：windFarmCode, queryType
+    │   │   ├── HomeController.getOverview()
+    │   │   ├── HomeStatsServiceImpl.getOverview()
+    │   │   │   ├── getDevicesByWindFarm() 获取设备列表
+    │   │   │   ├── deviceDailyStatsService.getDailyStats() 查询日报表
+    │   │   │   └── calculateClearanceRate() 计算达标率
+    │   │   └── 返回：HomeOverviewVO
+    │   │
+    │   ├── GET /stats/home/clearanceTrend
+    │   │   ├── 参数：windFarmCode, timeRange
+    │   │   ├── HomeStatsServiceImpl.getClearanceTrend()
+    │   │   │   ├── calculateHourlyTrendFromDailyStats() (day)
+    │   │   │   └── calculateDailyTrend() (week/month)
+    │   │   └── 返回：List&lt;HomeTrendVO&gt;
+    │   │
+    │   ├── GET /stats/home/unbalanceDist
+    │   │   ├── 参数：windFarmCode, queryType
+    │   │   ├── HomeStatsServiceImpl.getUnbalanceDistribution()
+    │   │   │   ├── calculateUnbalanceLevel() 计算等级
+    │   │   │   └── 补充缺失等级数据（1-5 级）
+    │   │   └── 返回：List&lt;HomeDistributionVO&gt;
+    │   │
+    │   └── GET /stats/home/alarmStats
+    │       ├── 参数：timeRange
+    │       ├── HomeStatsServiceImpl.getAlarmStats()
+    │       │   ├── HomeStatsMapper.selectAlarmStats()
+    │       │   └── 补充缺失告警类型（7 种）
+    │       └── 返回：List&lt;HomeAlarmStatsVO&gt;
+    │
+    ▼
+前端接收响应数据
+    │
+    ├── this.homeOverview = res.result
+    ├── this.clearanceData = res.result
+    ├── this.unbalancedData = res.result
+    └── this.alarmData = res.result
+    │
+    ▼
+图表组件自动渲染
+    │
+    ├── LineChart 渲染折线图
+    ├── UnbalancedPieChart 渲染饼图
+    └── AlarmBarChart 渲染柱状图</code></pre>
+
+        <h3 id="section4-3">4.3 错误处理机制</h3>
+        <table>
+          <tr>
+            <th>错误类型</th>
+            <th>前端处理</th>
+            <th>后端处理</th>
+          </tr>
+          <tr>
+            <td><strong>网络错误</strong></td>
+            <td>Axios 拦截器捕获，显示全局错误提示</td>
+            <td>-</td>
+          </tr>
+          <tr>
+            <td><strong>401 未授权</strong></td>
+            <td>拦截器检测到 401，跳转到登录页</td>
+            <td>Shiro 认证失败，返回 401</td>
+          </tr>
+          <tr>
+            <td><strong>403 无权限</strong></td>
+            <td>显示"无权限访问"提示</td>
+            <td>Shiro 授权失败，返回 403</td>
+          </tr>
+          <tr>
+            <td><strong>500 服务器错误</strong></td>
+            <td>显示错误消息，控制台打印详细错误</td>
+            <td>@Slf4j 记录错误日志，返回 Result.error()</td>
+          </tr>
+          <tr>
+            <td><strong>数据为空</strong></td>
+            <td>图表组件显示空状态（默认值）</td>
+            <td>返回空对象或空数组，不返回 null</td>
+          </tr>
+        </table>
+
+        <pre><code class="language-javascript"><span class="code-comment">// 前端统一错误处理</span>
+async loadHomeStats() {
+  try {
+    await Promise.all([
+      this.loadOverview(),
+      this.loadClearanceTrend(),
+      this.loadUnbalanceDist(),
+      this.loadAlarmStats()
+    ])
+  } catch (error) {
+    console.error('加载首页统计数据失败', error)
+    if (error.response && error.response.status === 401) {
+      this.$router.push('/user/login')
+    } else {
+      this.$message.error('加载数据失败，请稍后重试')
+    }
+  }
+}</code></pre>
+      </div>
+
+      <div class="section" id="chapter5">
+        <h2>第五章：核心功能详解</h2>
+
+        <h3 id="section5-1">5.1 净空达标率计算</h3>
+        <h4>5.1.1 计算公式</h4>
+        <pre><code>净空达标率 = (达标天数 / 总天数) × 100%
+
+其中：
+- 达标天数：avg_clearance_value >= warningThreshold 的天数
+- 总天数：stats 记录总数（有数据的记录）</code></pre>
+
+        <h4>5.1.2 实现代码</h4>
+        <pre><code class="language-java"><span class="code-comment">// 服务层实现（HomeStatsServiceImpl）</span>
+long totalRecords = 0;
+long qualifiedDays = 0;
+Set&lt;String&gt; unbalancedDevices = new HashSet&lt;&gt;();
+
+for (DeviceDailyStats stats : statsList) {
+    if (stats.getTotalRecords() != null && stats.getTotalRecords() > 0) {
+        totalRecords += stats.getTotalRecords();
+
+        <span class="code-comment">// 净空达标判断</span>
+        if (stats.getAvgClearanceValue() != null &&
+            stats.getAvgClearanceValue().doubleValue() >= warningThreshold) {
+            qualifiedDays++;
+        }
+
+        <span class="code-comment">// 不平衡判断</span>
+        if (stats.getMinClearanceValue() != null &&
+            stats.getMinClearanceValue().doubleValue() < warningThreshold) {
+            unbalancedDevices.add(stats.getDeviceNo());
+        }
+    }
+}
+
+long totalDays = statsList.stream()
+    .filter(s -> s.getTotalRecords() != null && s.getTotalRecords() > 0)
+    .count();
+
+if (totalDays > 0) {
+    overview.setClearanceRate(BigDecimal.valueOf(qualifiedDays * 100.0 / totalDays)
+        .setScale(2, RoundingMode.HALF_UP).doubleValue());
+} else {
+    overview.setClearanceRate(0.0);
+}</code></pre>
+
+        <div class="note">
+          <strong>📌 阈值配置：</strong>
+          <ul style="margin-top: 10px">
+            <li>
+              阈值从 <span class="inline-code">sys_custom_config</span> 表的
+              <span class="inline-code">clearance_level_threshold</span>
+              配置读取
+            </li>
+            <li>
+              配置格式：JSON
+              <span class="inline-code"
+                >{"excellent":7.8, "good":6.5, "medium":5.5, "warning":4.2,
+                "danger":0.0}</span
+              >
+            </li>
+            <li>配置不存在时使用默认值：warning = 4.2 米</li>
+          </ul>
+        </div>
+
+        <h3 id="section5-2">5.2 不平衡等级计算</h3>
+        <h4>5.2.1 不平衡等级</h4>
+        <table>
+          <tr>
+            <th>等级</th>
+            <th>说明</th>
+            <th>净空值范围</th>
+          </tr>
+          <tr>
+            <td>1 级</td>
+            <td>优秀</td>
+            <td>&gt;= excellent (7.8 米)</td>
+          </tr>
+          <tr>
+            <td>2 级</td>
+            <td>良好</td>
+            <td>&gt;= good (6.5 米)</td>
+          </tr>
+          <tr>
+            <td>3 级</td>
+            <td>一般</td>
+            <td>&gt;= medium (5.5 米)</td>
+          </tr>
+          <tr>
+            <td>4 级</td>
+            <td>警告</td>
+            <td>&gt;= warning (4.2 米)</td>
+          </tr>
+          <tr>
+            <td>5 级</td>
+            <td>危险</td>
+            <td>&lt; warning (4.2 米)</td>
+          </tr>
+        </table>
+
+        <h4>5.2.2 统计逻辑</h4>
+        <pre><code class="language-java"><span class="code-keyword">private</span> int calculateUnbalanceLevel(BigDecimal avgClearance, ClearanceThresholdVO thresholds) {
+    double value = avgClearance.doubleValue();
+
+    if (value >= thresholds.getExcellent()) {
+        return 1;  <span class="code-comment">// 优秀</span>
+    } else if (value >= thresholds.getGood()) {
+        return 2;  <span class="code-comment">// 良好</span>
+    } else if (value >= thresholds.getMedium()) {
+        return 3;  <span class="code-comment">// 一般</span>
+    } else if (value >= thresholds.getWarning()) {
+        return 4;  <span class="code-comment">// 警告</span>
+    } else {
+        return 5;  <span class="code-comment">// 危险</span>
+    }
+}</code></pre>
+
+        <div class="tip">
+          <strong>💡 数据补全机制：</strong>
+          <ul style="margin-top: 10px">
+            <li>后端确保返回 1-5 级的完整数据，即使某级数量为 0</li>
+            <li>前端饼图能正确显示所有等级，避免缺失扇区</li>
+            <li>使用 HashMap 初始化为所有等级设置 0 值</li>
+          </ul>
+        </div>
+
+        <h3 id="section5-3">5.3 告警类型统计（2026 年 5 月更新）</h3>
+        <h4>5.3.1 告警类型字典</h4>
+        <pre><code>7 种告警类型：
+1. 数据质量
+2. 噪声过大
+3. 通讯异常
+4. 光照异常
+5. 电机故障
+6. 对焦失散
+7. 轴承故障</code></pre>
+
+        <h4>5.3.2 统计实现（最新）</h4>
+        <pre><code class="language-java"><span class="code-comment">// 服务层实现（HomeStatsServiceImpl）</span>
+<span class="code-keyword">@Override</span>
+public List&lt;HomeAlarmStatsVO&gt; getAlarmStats(String timeRange) {
+    try {
+        Date endDate = new Date();
+        Date startDate = calculateStartDate(timeRange);
+
+        log.info("告警统计查询：timeRange={}, startDate={}, endDate={}", 
+            timeRange, startDate, endDate);
+
+        <span class="code-comment">// 1. 定义完整的告警类型列表</span>
+        List&lt;String&gt; allTypes = Arrays.asList(
+            "数据质量", "噪声过大", "通讯异常", "光照异常", "电机故障", "对焦失散", "轴承故障"
+        );
+
+        <span class="code-comment">// 2. 初始化计数器</span>
+        Map&lt;String, Integer&gt; typeMap = new HashMap&lt;&gt;();
+        for (String type : allTypes) {
+            typeMap.put(type, 0);
+        }
+
+        <span class="code-comment">// 3. 从 record_info 表统计"数据质量"告警</span>
+        List&lt;RecordInfo&gt; recordList = shardingRecordService.queryRecordInfoByWindFarm(
+            null, null, startDate, endDate
+        );
+
+        log.info("告警统计 record_info 原始结果：recordCount={}", recordList.size());
+
+        for (RecordInfo record : recordList) {
+            if (record.getIsAbnormal() != null &amp;&amp; record.getIsAbnormal() == 1) {
+                typeMap.merge("数据质量", 1, Integer::sum);
+            }
+        }
+
+        <span class="code-comment">// 4. 从 warn_info 表统计其他类型告警</span>
+        List&lt;HomeAlarmStatsVO&gt; warnResult = homeStatsMapper.selectAlarmStats(startDate, endDate);
+        if (warnResult != null &amp;&amp; !warnResult.isEmpty()) {
+            for (HomeAlarmStatsVO warnVo : warnResult) {
+                if (warnVo.getType() != null &amp;&amp; !warnVo.getType().equals("数据质量")) {
+                    typeMap.merge(warnVo.getType(), warnVo.getCount(), Integer::sum);
+                }
+            }
+        }
+
+        <span class="code-comment">// 5. 补充缺失的类型（确保 7 种类型都有数据）</span>
+        List&lt;HomeAlarmStatsVO&gt; fullResult = new ArrayList&lt;&gt;();
+        for (String type : allTypes) {
+            HomeAlarmStatsVO vo = new HomeAlarmStatsVO();
+            vo.setType(type);
+            vo.setCount(typeMap.getOrDefault(type, 0));
+            fullResult.add(vo);
+        }
+
+        log.info("告警统计完整结果：{}", fullResult);
+        return fullResult;
+    } catch (Exception e) {
+        log.error("获取告警统计数据失败", e);
+        return getDefaultAlarmStats();
+    }
+}</code></pre>
+
+        <div class="tip">
+          <strong>💡 2026 年 5 月更新要点：</strong>
+          <ul style="margin-top: 10px">
+            <li>
+              <strong>双数据源统计</strong>：结合 record_info 表（数据质量）和
+              warn_info 表（其他告警类型）
+            </li>
+            <li>
+              <strong>排除重复</strong>：从 warn_info
+              统计时排除"数据质量"类型，避免重复计数
+            </li>
+            <li><strong>日志完善</strong>：添加详细的日志记录，便于排查问题</li>
+            <li>
+              <strong>数据补全</strong>：确保 7 种告警类型都有数据，即使数量为 0
+            </li>
+          </ul>
+        </div>
+
+        <h3 id="section5-4">5.4 时间范围处理</h3>
+        <h4>5.4.1 前端时间计算</h4>
+        <pre><code class="language-javascript"><span class="code-comment">/**
+ * 获取查询类型
+ * day -> today (当日实时)
+ * week/month -> history (历史汇总)
+ */</span>
+getQueryType() {
+  return this.homeTimeRange === 'day' ? 'today' : 'history'
+}</code></pre>
+
+        <h4>5.4.2 后端时间边界处理（最新）</h4>
+        <pre><code class="language-java"><span class="code-keyword">private</span> Date calculateStartDate(String timeRange) {
+    LocalDate today = LocalDate.now();
+    LocalDate startLocalDate;
+
+    switch (timeRange) {
+        case "today":
+        case "day":
+            startLocalDate = today;  <span class="code-comment">// 今天</span>
+            break;
+        case "history":
+            <span class="code-comment">// history 默认查询最近 7 天（兼容前端逻辑）</span>
+            startLocalDate = today.minusDays(7);
+            break;
+        case "week":
+            startLocalDate = today.minusDays(7);  <span class="code-comment">// 7 天前</span>
+            break;
+        case "month":
+            startLocalDate = today.minusDays(30);  <span class="code-comment">// 30 天前</span>
+            break;
+        default:
+            startLocalDate = today;
+    }
+
+    return Date.from(startLocalDate.atStartOfDay(ZoneId.systemDefault()).toInstant());
+}</code></pre>
+
+        <div class="tip">
+          <strong>💡 时间处理技巧：</strong>
+          <ul style="margin-top: 10px">
+            <li>
+              <strong>使用 LocalDate</strong>：Java 8 新 API，更精确的时间处理
+            </li>
+            <li>
+              <strong>时区处理</strong>：使用 ZoneId.systemDefault()
+              确保时区正确
+            </li>
+            <li>
+              <strong>统一边界</strong>：查询范围是 startDate <= time <
+              endDate（endDate 为当前时间）
+            </li>
+            <li>
+              <strong>history 参数</strong>：2026 年 5 月更新，默认查询 7 天数据
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="section" id="chapter6">
+        <h2>第六章：性能优化与最佳实践</h2>
+
+        <h3 id="section6-1">6.1 数据库查询优化</h3>
+        <h4>6.1.1 索引优化</h4>
+        <table>
+          <tr>
+            <th>表</th>
+            <th>字段</th>
+            <th>索引类型</th>
+            <th>优化查询</th>
+          </tr>
+          <tr>
+            <td>device_daily_stats</td>
+            <td>stats_date, wind_farm_code</td>
+            <td>复合索引</td>
+            <td>时间 + 风场查询</td>
+          </tr>
+          <tr>
+            <td>device_daily_stats</td>
+            <td>equipment_code</td>
+            <td>普通索引</td>
+            <td>设备查询</td>
+          </tr>
+          <tr>
+            <td>warn_info</td>
+            <td>alarm_time, handle_status</td>
+            <td>复合索引</td>
+            <td>告警查询</td>
+          </tr>
+          <tr>
+            <td>fengdian_device_info</td>
+            <td>fan_scope_id, del_flag</td>
+            <td>复合索引</td>
+            <td>风场设备查询</td>
+          </tr>
+          <tr>
+            <td>record_info</td>
+            <td>detection_time, is_abnormal</td>
+            <td>复合索引</td>
+            <td>检测记录查询</td>
+          </tr>
+        </table>
+
+        <h4>6.1.2 查询优化建议</h4>
+        <ul>
+          <li>
+            <strong>使用日报表</strong>：所有统计从 device_daily_stats
+            查询，避免直接查询海量原始数据
+          </li>
+          <li><strong>覆盖索引</strong>：SELECT 只查询需要的字段</li>
+          <li><strong>批量查询</strong>：多个相关查询合并为一个 SQL</li>
+          <li><strong>避免 N+1</strong>：使用 JOIN 一次性获取关联数据</li>
+          <li>
+            <strong>预计算字段</strong>：device_daily_stats 表包含
+            excellentCount 等预计算字段，避免重复计算
+          </li>
+        </ul>
+      </div>
+    </div>
+  </body>
+</html>

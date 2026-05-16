@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>区块链可视化管理交易系统 - PPT演示</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary: #FF9800;
+            --primary-dark: #E65100;
+            --primary-light: #FFF3E0;
+            --dark: #1a1a2e;
+            --text: #333;
+            --white: #fff;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Microsoft YaHei", sans-serif;
+            background: var(--dark);
+            overflow: hidden;
+            height: 100vh;
+        }
+        .presentation { width: 100vw; height: 100vh; position: relative; }
+        .slide {
+            position: absolute; top: 0; left: 0;
+            width: 100%; height: 100%;
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            opacity: 0; transform: translateX(100%);
+            transition: all 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: 35px 55px;
+            pointer-events: none;
+        }
+        .slide.active { opacity: 1; transform: translateX(0); pointer-events: all; }
+        .slide.prev { opacity: 0; transform: translateX(-100%); }
+        .slide.next-exit { opacity: 0; transform: translateX(100%); }
+
+        /* 封面 */
+        .slide-cover {
+            background: linear-gradient(135deg, #0a0a23 0%, #16213e 40%, #0f3460 100%);
+            color: var(--white); text-align: center;
+        }
+        .slide-cover::before {
+            content: ''; position: absolute;
+            width: 600px; height: 600px;
+            background: radial-gradient(circle, rgba(255,152,0,0.12) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: pulse 5s ease-in-out infinite;
+        }
+        @keyframes pulse { 0%,100%{transform:scale(1);opacity:0.5;} 50%{transform:scale(1.15);opacity:0.8;} }
+        .slide-cover .cover-content { position: relative; z-index: 1; }
+        .slide-cover .icon-block { font-size: 64px; margin-bottom: 20px; animation: fadeInDown 0.8s ease both; }
+        .slide-cover h1 { font-size: 38px; margin-bottom: 15px; animation: fadeInUp 1s ease 0.3s both; }
+        .slide-cover h1 span { color: var(--primary); }
+        .slide-cover .subtitle { font-size: 18px; opacity: 0.7; margin-bottom: 50px; animation: fadeInUp 1s ease 0.5s both; }
+        .slide-cover .divider { width: 120px; height: 3px; background: var(--primary); margin: 0 auto 40px; animation: fadeInUp 1s ease 0.7s both; }
+        .slide-cover .team-info { font-size: 15px; opacity: 0.6; animation: fadeInUp 1s ease 0.9s both; }
+        .slide-cover .team-info p { margin: 6px 0; }
+        @keyframes fadeInUp { from{opacity:0;transform:translateY(30px);} to{opacity:1;transform:translateY(0);} }
+        @keyframes fadeInDown { from{opacity:0;transform:translateY(-30px);} to{opacity:1;transform:translateY(0);} }
+        @keyframes fadeIn { from{opacity:0;} to{opacity:1;} }
+
+        /* 内容页 */
+        .slide-content { background: var(--white); color: var(--text); }
+        .slide-content .slide-title {
+            font-size: 28px; color: var(--primary);
+            margin-bottom: 20px; padding-bottom: 10px;
+            border-bottom: 3px solid var(--primary);
+            width: 100%; text-align: left;
+            display: flex; align-items: center; gap: 12px;
+        }
+        .slide-content .slide-title .icon { font-size: 24px; }
+        .slide-content .slide-body { width: 100%; max-width: 1200px; overflow-y: auto; }
+
+        /* Mermaid 图表容器 */
+        .mermaid { background: #fafafa; padding: 15px; border-radius: 10px; margin: 10px 0; text-align: center; }
+        .mermaid svg { max-width: 100%; }
+        .mermaid-label {
+            display: inline-block; padding: 3px 10px;
+            background: var(--primary-light); color: var(--primary-dark);
+            border-radius: 6px; font-size: 11px; margin-bottom: 8px;
+        }
+
+        /* 代码块 */
+        .code-block {
+            background: #1e1e2e; color: #cdd6f4;
+            padding: 14px; border-radius: 10px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 11px; line-height: 1.7;
+            overflow-x: auto;
+        }
+        .code-block .kw { color: #cba6f7; }
+        .code-block .str { color: #a6e3a1; }
+        .code-block .cmt { color: #6c7086; }
+        .code-block .fn { color: #89b4fa; }
+        .code-block .num { color: #fab387; }
+
+        /* 两列 */
+        .two-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; width: 100%; }
+        .col-block { background: #f8f9fa; padding: 14px; border-radius: 10px; }
+        .col-block h3 { font-size: 14px; color: var(--primary); margin-bottom: 10px; }
+
+        /* 特性卡片 */
+        .feature-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; width: 100%; }
+        .feature-card {
+            background: #f8f9fa; padding: 14px; border-radius: 10px;
+            border-top: 3px solid var(--primary); animation: fadeInUp 0.5s ease both;
+        }
+        .feature-card .fc-icon { font-size: 20px; margin-bottom: 5px; }
+        .feature-card .fc-title { font-size: 12px; font-weight: 600; margin-bottom: 4px; color: var(--primary-dark); }
+        .feature-card .fc-desc { font-size: 10px; color: #666; line-height: 1.5; }
+
+        /* 表格 */
+        .demo-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .demo-table th { background: var(--primary); color: white; padding: 8px 10px; text-align: left; }
+        .demo-table td { padding: 7px 10px; border-bottom: 1px solid #eee; }
+        .demo-table tr:nth-child(even) { background: #f8f9fa; }
+
+        /* 提示框 */
+        .tip-box {
+            background: var(--primary-light); border-left: 4px solid var(--primary);
+            padding: 10px 14px; border-radius: 0 8px 8px 0;
+            font-size: 12px; margin-top: 10px;
+        }
+        .tip-box strong { color: var(--primary-dark); }
+
+        /* 结束页 */
+        .slide-end { background: linear-gradient(135deg, #0a0a23 0%, #0f3460 100%); color: var(--white); text-align: center; }
+        .slide-end h1 { font-size: 48px; margin-bottom: 20px; }
+        .slide-end h1 span { color: var(--primary); }
+        .slide-end .qa { font-size: 24px; opacity: 0.7; margin-bottom: 40px; }
+
+        /* 导航 */
+        .nav-controls {
+            position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%);
+            display: flex; gap: 12px; z-index: 1000;
+        }
+        .nav-btn {
+            background: rgba(255,255,255,0.15); border: 2px solid rgba(255,255,255,0.25);
+            color: white; width: 44px; height: 44px; border-radius: 50%;
+            cursor: pointer; font-size: 18px; transition: all 0.3s ease;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .nav-btn:hover { background: var(--primary); border-color: var(--primary); transform: scale(1.1); }
+        .slide-indicator {
+            position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%);
+            display: flex; gap: 6px; z-index: 1000;
+        }
+        .indicator-dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: rgba(255,255,255,0.25); transition: all 0.3s ease; cursor: pointer;
+        }
+        .indicator-dot.active { background: var(--primary); transform: scale(1.4); }
+        .slide-counter { position: fixed; top: 15px; right: 25px; font-size: 13px; z-index: 1000; opacity: 0.6; }
+        .progress-bar {
+            position: fixed; top: 0; left: 0; height: 3px;
+            background: linear-gradient(90deg, var(--primary), #FFB74D);
+            z-index: 1001; transition: width 0.5s ease;
+        }
+
+        /* 目录 */
+        .toc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; width: 100%; }
+        .toc-item {
+            background: linear-gradient(135deg, #f8f9fa, #fff); padding: 14px 12px;
+            border-radius: 10px; border-left: 4px solid var(--primary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06); cursor: pointer; transition: all 0.3s ease;
+        }
+        .toc-item:hover { transform: translateY(-3px); box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .toc-item .num { font-size: 22px; font-weight: 700; color: var(--primary); }
+        .toc-item .title { font-size: 13px; font-weight: 600; color: var(--text); margin: 3px 0; }
+        .toc-item .desc { font-size: 10px; color: #888; }
+    </style>
+</head>
+<body>
+    <div class="progress-bar" id="progressBar"></div>
+    <div class="slide-counter" id="slideCounter">1 / 10</div>
+
+    <div class="presentation" id="presentation">
+        <!-- Slide 1: 封面 -->
+        <div class="slide slide-cover active" data-index="0">
+            <div class="cover-content">
+                <div class="icon-block">⛓️</div>
+                <h1>区块链<span>可视化管理</span>交易系统</h1>
+                <p class="subtitle">软件工程课程项目汇报</p>
+                <div class="divider"></div>
+                <div class="team-info">
+                    <p>汇报日期：2026年5月</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 2: 目录 -->
+        <div class="slide slide-content" data-index="1">
+            <h2 class="slide-title">📋 汇报目录</h2>
+            <div class="slide-body">
+                <div class="toc-grid">
+                    <div class="toc-item" onclick="goToSlide(2)"><div class="num">01</div><div class="title">项目概述</div><div class="desc">目标 · 技术栈 · 功能模块</div></div>
+                    <div class="toc-item" onclick="goToSlide(3)"><div class="num">02</div><div class="title">系统体系结构</div><div class="desc">整体架构 · 分层设计</div></div>
+                    <div class="toc-item" onclick="goToSlide(4)"><div class="num">03</div><div class="title">开发视图</div><div class="desc">项目结构 · 代码组织</div></div>
+                    <div class="toc-item" onclick="goToSlide(5)"><div class="num">04</div><div class="title">P2P 网络模块</div><div class="desc">节点同步 · 区块广播</div></div>
+                    <div class="toc-item" onclick="goToSlide(6)"><div class="num">05</div><div class="title">RabbitMQ 模块</div><div class="desc">消息队列 · 聊天通信</div></div>
+                    <div class="toc-item" onclick="goToSlide(7)"><div class="num">06</div><div class="title">模块间协作</div><div class="desc">调用关系 · 数据流向</div></div>
+                    <div class="toc-item" onclick="goToSlide(8)"><div class="num">07</div><div class="title">部署视图</div><div class="desc">环境配置 · 启动流程</div></div>
+                    <div class="toc-item" onclick="goToSlide(9)"><div class="num">08</div><div class="title">总结</div><div class="desc">核心功能 · 项目亮点</div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 3: 项目概述 -->
+        <div class="slide slide-content" data-index="2">
+            <h2 class="slide-title">📌 项目概述</h2>
+            <div class="slide-body">
+                <div class="two-cols">
+                    <div class="col-block">
+                        <h3>🎯 三大核心模块</h3>
+                        <div class="mermaid">
+mindmap
+  root((系统功能))
+    blockchain[区块链基础平台]
+      b1[区块生成 · 链式存储]
+      b2[交易打包 · PoW挖矿]
+      b3[防篡改验证 · SHA256]
+      b4[钱包余额 · RSA签名]
+    nodemgmt[节点管理系统]
+      n1[用户注册 · 自动创建节点]
+      n2[交易创建 · 挖矿操作]
+      n3[数据验证 · 节点同步]
+      n4[邻居节点管理 · P2P]
+    rabbitmq[RabbitMQ 交流平台]
+      r1[成员即时聊天 · 6种消息类型]
+      r2[交易事宜沟通 · 模拟场景]
+      r3[3种交换机 Fanout/Direct/Topic]
+      r4[6个队列独立路由消费]
+                        </div>
+                    </div>
+                    <div class="col-block">
+                        <h3>🔧 技术栈</h3>
+                        <table class="demo-table">
+                            <tr><th>层级</th><th>技术</th></tr>
+                            <tr><td>前端</td><td>Vue3 + Vite + Element Plus</td></tr>
+                            <tr><td>后端</td><td>Spring Boot 2.7.0 + JDK 17</td></tr>
+                            <tr><td>数据库</td><td>H2 内存数据库 + JPA</td></tr>
+                            <tr><td>P2P通信</td><td>Spring WebFlux (WebClient)</td></tr>
+                            <tr><td>消息队列</td><td>RabbitMQ (spring-boot-starter-amqp)</td></tr>
+                            <tr><td>实时推送</td><td>RabbitMQ 消息队列(非WebSocket)</td></tr>
+                            <tr><td>加密</td><td>BCrypt + SHA256 + RSA</td></tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 4: 系统体系结构 -->
+        <div class="slide slide-content" data-index="3">
+            <h2 class="slide-title">🏗️ 系统体系结构视图</h2>
+            <div class="slide-body">
+                <div class="mermaid-label">整体系统架构图</div>
+                <div class="mermaid">
+graph TB
+    subgraph Frontend["🖥️ 前端层 (Vue3)"]
+        A1[Login.vue 登录/注册]
+        A2[BlockchainView.vue 区块链管理]
+        A3[NodeManagement.vue 节点管理]
+        A4[ChatView.vue 即时聊天]
+        A5[Axios HTTP请求]
+    end
+
+    subgraph Backend["⚙️ 后端层 (Spring Boot 2.7)"]
+        subgraph Controller["Controller 层"]
+            B1[UserController 用户API]
+            B2[BlockchainController 区块链API]
+            B3[ChatController 聊天API]
+        end
+        subgraph Service["Service 层"]
+            B4[UserService 用户业务]
+            B5[BlockchainService 区块链业务]
+            B6[ChatService 聊天业务]
+        end
+        subgraph BlockchainCore["区块链核心 blockchain.core"]
+            B7[Blockchain 链式结构]
+            B8[Block 区块]
+            B9[Transaction 交易]
+        end
+        subgraph Network["P2P网络 network"]
+            B10[Node 节点通信]
+            B11[NodeInfo 节点信息]
+        end
+        subgraph MQ["消息队列 mq"]
+            B12[ChatProducer 生产者]
+            B13[ChatConsumer 消费者]
+        end
+        subgraph Util["工具 util"]
+            B14[Wallet RSA钱包]
+            B15[HashUtil SHA256]
+        end
+        subgraph Config["配置 config"]
+            B16[RabbitMQConfig]
+            B17[BlockchainConfig]
+        end
+    end
+
+    subgraph External["外部服务"]
+        C1[RabbitMQ Server]
+        C2[H2 Database]
+    end
+
+    A5 -->|"HTTP"| B1
+    A5 -->|"HTTP"| B2
+    A5 -->|"HTTP"| B3
+    B1 --> B4
+    B2 --> B5
+    B3 --> B6
+    B5 --> B7
+    B5 --> B10
+    B6 --> B12
+    B4 --> C2
+    B7 --> B15
+    B12 -->|"AMQP"| C1
+    C1 --> B13
+
+    style B7 fill:#E8F5E9,stroke:#4CAF50
+    style B10 fill:#E8F5E9,stroke:#4CAF50
+    style B12 fill:#FFF3E0,stroke:#FF9800
+    style C1 fill:#F3E5F5,stroke:#9C27B0
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 5: 开发视图 -->
+        <div class="slide slide-content" data-index="4">
+            <h2 class="slide-title">📁 开发视图 - 项目结构</h2>
+            <div class="slide-body">
+                <div class="mermaid-label">📦 backend/ (Spring Boot 2.7) 完整结构</div>
+                <div class="mermaid">
+mindmap
+  root((backend))
+    controller[controller 控制器层]
+      UserController[用户注册/登录/余额]
+      BlockchainController[交易/挖矿/验证/同步]
+      ChatController[聊天消息发送]
+    service[service 业务层]
+      UserService[用户业务 · BCrypt加密]
+      BlockchainService[区块链核心业务]
+      ChatService[聊天业务 · 模拟场景]
+      NodeService[节点服务 · P2P]
+    core[core 区块链核心]
+      Blockchain[链式结构 · PoW挖矿]
+      Block[区块数据模型]
+      Transaction[交易数据模型]
+    network[network P2P网络]
+      Node[节点通信 WebClient]
+      NodeInfo[节点信息 POJO]
+    mq[mq 消息队列]
+      ChatProducer[生产者 · 6种消息类型]
+      ChatConsumer[消费者 · 6个RabbitListener监听]
+    util[util 工具类]
+      Wallet[RSA钱包 · 签名验证]
+      HashUtil[SHA256哈希]
+    config[config 配置类]
+      RabbitMQConfig[交换机/队列/绑定]
+      BlockchainConfig[挖矿难度/奖励]
+    model[model 实体模型]
+      User[用户实体 · JPA · @Entity]
+      MessageDTO[消息传输对象]
+    repository[repository 数据层]
+      UserRepository[UserRepository · JPA]
+    BlockchainApplication[启动类 · @SpringBootApplication]
+                </div>
+                <div class="two-cols" style="margin-top:10px;">
+                    <div>
+                        <div class="mermaid-label">🎨 frontend/ (Vue3) 结构</div>
+                        <div class="mermaid">
+mindmap
+  root((frontend))
+    src[src/]
+      views[views/ 页面]
+        Login[Login.vue 登录]
+        Register[Register.vue 注册]
+        Dashboard[Dashboard.vue 主布局]
+        BlockchainView[BlockchainView.vue]
+        ChatView[ChatView.vue 聊天]
+        ProfileView[ProfileView.vue]
+        Home[Home.vue redirect]
+        NodeManagement[NodeManagement.vue redirect]
+      api[api/ 请求]
+        user[user.js 用户API]
+        blockchain[blockchain.js 区块链API]
+      router[router/index.js 路由]
+      App[App.vue 根组件]
+      main[main.js 入口]
+    packagejson[package.json]
+    viteconfig[vite.config.js]
+                        </div>
+                    </div>
+                    <div>
+                        <div class="mermaid-label">组件调用关系</div>
+                        <div class="mermaid">
+graph LR
+    App[App.vue] --> Dashboard[Dashboard.vue]
+    Dashboard --> BV[BlockchainView.vue]
+    Dashboard --> CV[ChatView.vue]
+    Dashboard --> PV[ProfileView.vue]
+    Login[Login.vue] -->|"redirect"| Dashboard
+    Register[Register.vue] -->|"redirect"| Dashboard
+    BV --> userApi[user.js]
+    BV --> bcApi[blockchain.js]
+    CV --> bcApi
+    userApi --> Backend["后端 /api/user/*"]
+    bcApi --> Backend
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 6: P2P 网络模块 -->
+        <div class="slide slide-content" data-index="5">
+            <h2 class="slide-title"> P2P 网络模块详解</h2>
+            <div class="slide-body">
+                <div class="two-cols">
+                    <div>
+                        <div class="mermaid-label">P2P 节点通信架构</div>
+                        <div class="mermaid">
+graph TB
+    subgraph P2P["P2P 去中心化网络"]
+        N1[("节点A<br/>Port:8080<br/>Blockchain实例")]
+        N2[("节点B<br/>Port:8081<br/>Blockchain实例")]
+        N3[("节点C<br/>Port:8082<br/>Blockchain实例")]
+    end
+
+    N1 <-->|"WebClient HTTP<br/>POST /api/blockchain/block"| N2
+    N1 <-->|"WebClient HTTP<br/>GET /api/blockchain/chain"| N3
+    N2 <-->|"WebClient HTTP<br/>同步链数据"| N3
+
+    style N1 fill:#FFB74D,stroke:#FF9800,color:#333
+    style N2 fill:#64B5F6,stroke:#2196F3,color:#fff
+    style N3 fill:#81C784,stroke:#4CAF50,color:#fff
+                        </div>
+                    </div>
+                    <div>
+                        <div class="mermaid-label">区块广播 & 链同步时序图</div>
+                        <div class="mermaid">
+sequenceDiagram
+    participant A as 节点A (矿工)
+    participant B as 节点B (邻居)
+    participant C as 节点C (邻居)
+
+    A->>A: minePendingTransactions()
+    A->>A: 创建新区块 Block[n]
+    A->>A: 挖矿 mineBlock(difficulty)
+    A->>B: POST /api/blockchain/block<br/>广播新区块
+    A->>C: POST /api/blockchain/block<br/>广播新区块
+    B->>B: 验证 previousHash 匹配
+    B->>B: chain.add(block)
+    C->>C: 验证 previousHash 匹配
+    C->>C: chain.add(block)
+    Note over A,C: 所有节点链保持一致
+                        </div>
+                    </div>
+                </div>
+                <div class="two-cols" style="margin-top:10px;">
+                    <div class="col-block">
+                        <h3>📤 Node.java 核心方法</h3>
+                        <div class="code-block">
+<span class="kw">public class</span> <span class="fn">Node</span> {
+    String nodeId; String host; <span class="kw">int</span> port;
+    List&lt;String&gt; peerNodes;
+    Blockchain blockchain;
+
+    <span class="kw">void</span> <span class="fn">addPeer</span>(String addr)      <span class="cmt">// 添加邻居</span>
+    <span class="kw">void</span> <span class="fn">removePeer</span>(String addr)   <span class="cmt">// 移除邻居</span>
+    <span class="kw">void</span> <span class="fn">broadcastBlock</span>(Block b)   <span class="cmt">// 广播区块</span>
+    <span class="kw">void</span> <span class="fn">broadcastTransaction</span>(t)   <span class="cmt">// 广播交易</span>
+    <span class="kw">void</span> <span class="fn">syncWithNetwork</span>()         <span class="cmt">// 链同步</span>
+    List&lt;Block&gt; <span class="fn">requestChainFromPeer</span>(p)
+    boolean <span class="fn">isValidChain</span>(chain)   <span class="cmt">// 链验证</span>
+}
+                        </div>
+                    </div>
+                    <div class="col-block">
+                        <h3>🔄 最长链原则(实际代码)</h3>
+                        <div class="code-block">
+<span class="kw">public void</span> <span class="fn">syncWithNetwork</span>() {
+    <span class="kw">for</span> (String peer : peerNodes) {
+        List&lt;Block&gt; peerChain =
+            <span class="fn">requestChainFromPeer</span>(peer);
+        <span class="kw">if</span> (peerChain != <span class="kw">null</span> &&
+            peerChain.size() > 0) {
+            <span class="kw">if</span> (<span class="fn">isValidChain</span>(peerChain) &&
+                peerChain.size() >
+                blockchain.getChain().size()) {
+                blockchain.<span class="fn">setChain</span>(peerChain);
+            }
+        }
+    }
+}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 7: RabbitMQ 模块 -->
+        <div class="slide slide-content" data-index="6">
+            <h2 class="slide-title">💬 RabbitMQ 消息队列详解</h2>
+            <div class="slide-body">
+                <div class="mermaid-label">RabbitMQ 消息流转架构</div>
+                <div class="mermaid">
+graph LR
+    subgraph Frontend["前端 Vue3"]
+        U1[用户A 发送消息]
+        U2[用户B 接收消息]
+    end
+
+    subgraph Backend["后端 Spring Boot"]
+        P[ChatProducer 生产者]
+        C[ChatConsumer 消费者]
+    end
+
+    subgraph RabbitMQ["RabbitMQ"]
+        DE[("Direct Exchange<br/>chat-direct-exchange")]
+        TE[("Topic Exchange<br/>chat-topic-exchange")]
+        FE[("Fanout Exchange<br/>chat-fanout-exchange")]
+        QC[("chat-queue")]
+        QI[("info-queue")]
+        QW[("warning-queue")]
+        QE[("error-queue")]
+        QO[("order-queue")]
+        QN[("notification-queue")]
+    end
+
+    U1 -->|"POST /api/chat/send"| Backend
+    Backend --> P
+
+    P -->|"route.info"| DE
+    P -->|"route.warning"| DE
+    P -->|"route.error"| DE
+    DE --> QI
+    DE --> QW
+    DE --> QE
+
+    P -->|"order.create"| TE
+    TE --> QO
+
+    P -->|""| FE
+    FE --> QC
+    FE --> QN
+
+    QC -->|"RabbitListener"| C
+    QI -->|"RabbitListener"| C
+    QW -->|"RabbitListener"| C
+    QE -->|"RabbitListener"| C
+    QO -->|"RabbitListener"| C
+    QN -->|"RabbitListener"| C
+
+    C -->|"日志记录+处理"| Backend
+
+    style DE fill:#FFF3E0,stroke:#FF9800
+    style TE fill:#E3F2FD,stroke:#2196F3
+    style FE fill:#F3E5F5,stroke:#9C27B0
+    style P fill:#E8F5E9,stroke:#4CAF50
+    style C fill:#FFEBEE,stroke:#F44336
+                </div>
+                <div class="two-cols" style="margin-top:10px;">
+                    <div class="col-block">
+                        <h3>📤 ChatProducer (6种消息)</h3>
+                        <div class="code-block">
+<span class="kw">public class</span> <span class="fn">ChatProducer</span> {
+    <span class="kw">@Autowired</span> RabbitTemplate rabbitTemplate;
+
+    <span class="cmt">// Fanout: chat-fanout-exchange</span>
+    <span class="fn">sendChatMessage</span>(content, sender)
+    <span class="fn">sendNotificationMessage</span>(c, s)
+
+    <span class="cmt">// Direct: chat-direct-exchange</span>
+    <span class="fn">sendInfoMessage</span>(content, sender)    <span class="cmt">// route.info</span>
+    <span class="fn">sendWarningMessage</span>(content, sender) <span class="cmt">// route.warning</span>
+    <span class="fn">sendErrorMessage</span>(content, sender)   <span class="cmt">// route.error</span>
+
+    <span class="cmt">// Topic: chat-topic-exchange</span>
+    <span class="fn">sendOrderMessage</span>(content, sender)   <span class="cmt">// order.create</span>
+}
+                        </div>
+                    </div>
+                    <div class="col-block">
+                        <h3>📥 ChatConsumer (6个监听)</h3>
+                        <div class="code-block">
+<span class="kw">@Component</span>
+<span class="kw">public class</span> <span class="fn">ChatConsumer</span> {
+
+    <span class="kw">@RabbitListener</span>(queues=<span class="str">"chat-queue"</span>)
+    <span class="kw">public void</span> <span class="fn">receiveChatMessage</span>(MessageDTO msg)
+
+    <span class="kw">@RabbitListener</span>(queues=<span class="str">"info-queue"</span>)
+    <span class="kw">public void</span> <span class="fn">receiveInfoMessage</span>(MessageDTO msg)
+
+    <span class="kw">@RabbitListener</span>(queues=<span class="str">"warning-queue"</span>)
+    <span class="kw">public void</span> <span class="fn">receiveWarningMessage</span>(MessageDTO msg)
+
+    <span class="kw">@RabbitListener</span>(queues=<span class="str">"error-queue"</span>)
+    <span class="kw">public void</span> <span class="fn">receiveErrorMessage</span>(MessageDTO msg)
+
+    <span class="kw">@RabbitListener</span>(queues=<span class="str">"order-queue"</span>)
+    <span class="kw">public void</span> <span class="fn">receiveOrderMessage</span>(MessageDTO msg)
+
+    <span class="kw">@RabbitListener</span>(queues=<span class="str">"notification-queue"</span>)
+    <span class="kw">public void</span> <span class="fn">receiveNotificationMessage</span>(MessageDTO msg)
+}
+                        </div>
+                    </div>
+                </div>
+                <div class="tip-box" style="margin-top:10px;">
+                    <strong>RabbitMQConfig 配置：</strong>3种交换机(Direct=chat-direct-exchange/Topic=chat-topic-exchange/Fanout=chat-fanout-exchange) + 6个队列(chat-queue/info-queue/warning-queue/error-queue/order-queue/notification-queue) + Jackson2JsonMessageConverter JSON序列化 + 路由键(route.info/route.warning/route.error/order.create)
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 8: 模块间协作 -->
+        <div class="slide slide-content" data-index="7">
+            <h2 class="slide-title">🔗 模块间协作关系</h2>
+            <div class="slide-body">
+                <div class="mermaid-label">完整系统调用关系图</div>
+                <div class="mermaid">
+graph TB
+    subgraph UI["前端 Vue3"]
+        V1[Login.vue]
+        V2[BlockchainView.vue]
+        V3[ChatView.vue]
+        V4[ProfileView.vue]
+    end
+
+    subgraph Controller["Controller 层"]
+        C1[UserController<br/>/api/user/*]
+        C2[BlockchainController<br/>/api/blockchain/*]
+        C3[ChatController<br/>/api/chat/*]
+    end
+
+    subgraph Service["Service 层"]
+        S1[UserService<br/>register/login/existsByUsername]
+        S2[BlockchainService<br/>createTransaction/mineBlock/sync/receiveBlock]
+        S3[ChatService<br/>sendChatMessage/simulateUserLogin/simulateTradeDiscuss]
+    end
+
+    subgraph Core["核心模块"]
+        BC[Blockchain<br/>链式结构+PoW挖矿]
+        ND[Node<br/>P2P WebFlux通信]
+        PR[ChatProducer<br/>RabbitMQ生产者]
+        CS[ChatConsumer<br/>RabbitMQ消费者]
+    end
+
+    subgraph External["外部服务"]
+        MQ[RabbitMQ Server]
+        DB[H2 Database]
+    end
+
+    subgraph Config["配置类"]
+        RQ[RabbitMQConfig]
+        BL[BlockchainConfig]
+    end
+
+    V1 -->|"POST /api/user/register|login"| C1
+    V2 -->|"POST /api/blockchain/mine"| C2
+    V2 -->|"GET /api/blockchain/chain"| C2
+    V2 -->|"POST /api/blockchain/sync"| C2
+    V2 -->|"POST /api/blockchain/peers/add"| C2
+    V3 -->|"POST /api/chat/send"| C3
+
+    C1 --> S1
+    C2 --> S2
+    C3 --> S3
+
+    S1 -->|"save()|findByUsername()"| DB
+    S2 -->|"调用"| BC
+    S2 -->|"调用"| ND
+    S3 -->|"调用"| PR
+
+    BC -->|"SHA256"| HashUtil
+    ND -->|"broadcastBlock()|broadcastTransaction()|syncWithNetwork()"| C2
+    PR -->|"convertAndSend"| MQ
+    MQ -->|"RabbitListener"| CS
+
+    style BC fill:#E8F5E9,stroke:#4CAF50
+    style ND fill:#E8F5E9,stroke:#4CAF50
+    style PR fill:#FFF3E0,stroke:#FF9800
+    style MQ fill:#F3E5F5,stroke:#9C27B0
+                </div>
+                <div class="tip-box" style="margin-top:10px;">
+                    <strong>关键协作点：</strong>① BlockchainService 同时调用 Blockchain 核心和 Node P2P模块，挖矿后自动广播新区块 ② ChatService 调用 ChatProducer 发送RabbitMQ消息 ③ ChatConsumer 消费消息后进行日志记录和处理 ④ Node 通过 WebFlux WebClient 与其他节点HTTP通信，实现区块广播和链同步 ⑤ ChatController 提供模拟登录和交易讨论API接口
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 9: 部署视图 -->
+        <div class="slide slide-content" data-index="8">
+            <h2 class="slide-title">🚀 部署视图</h2>
+            <div class="slide-body">
+                <div class="two-cols">
+                    <div>
+                        <div class="mermaid-label">服务部署架构</div>
+                        <div class="mermaid">
+graph TB
+    subgraph DevMachine["开发者机器"]
+        subgraph Frontend["前端服务"]
+            F1[Vite Dev Server<br/>Port: 5173]
+        end
+        subgraph Backend["后端服务"]
+            B1[Spring Boot 2.7<br/>Port: 8080<br/>DevTools热部署]
+        end
+        subgraph Middleware["中间件服务"]
+            M1[RabbitMQ Server<br/>Port: 5672/15672]
+            M2[H2 Console<br/>Port: 8080/h2-console]
+        end
+    end
+
+    F1 -->|"HTTP REST API"| B1
+    B1 -->|"AMQP 协议"| M1
+
+    style F1 fill:#E3F2FD,stroke:#2196F3
+    style B1 fill:#FFF3E0,stroke:#FF9800
+    style M1 fill:#F3E5F5,stroke:#9C27B0
+    style M2 fill:#E8F5E9,stroke:#4CAF50
+                        </div>
+                    </div>
+                    <div>
+                        <h3 style="font-size:14px;color:var(--primary);margin-bottom:10px;">🔧 配置信息 (BlockchainConfig.java)</h3>
+                        <table class="demo-table">
+                            <tr><th>配置项</th><th>值</th></tr>
+                            <tr><td>server.port</td><td>8080</td></tr>
+                            <tr><td>spring.datasource</td><td>H2 内存数据库</td></tr>
+                            <tr><td>spring.jpa.hibernate.ddl-auto</td><td>update</td></tr>
+                            <tr><td>spring.rabbitmq.host</td><td>localhost:5672</td></tr>
+                            <tr><td>blockchain.difficulty</td><td>4 (硬编码在Blockchain构造函数)</td></tr>
+                            <tr><td>blockchain.mining-reward</td><td>10.0 (硬编码在Blockchain构造函数)</td></tr>
+                            <tr><td>node.host</td><td>localhost (BlockchainConfig)</td></tr>
+                            <tr><td>node.port</td><td>8080 (BlockchainConfig)</td></tr>
+                        </table>
+                        <div style="margin-top:12px;">
+                            <h3 style="font-size:13px;color:var(--primary);margin-bottom:6px;">📝 启动命令</h3>
+                            <div class="code-block">
+<span class="cmt"># 1. 启动 RabbitMQ</span>
+rabbitmq-service start
+
+<span class="cmt"># 2. 启动后端 (DevTools热部署)</span>
+cd backend && mvnw spring-boot:run
+
+<span class="cmt"># 3. 启动前端</span>
+cd frontend && npm run dev
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 10: 总结 -->
+        <div class="slide slide-content" data-index="9">
+            <h2 class="slide-title">✨ 核心功能 & 总结</h2>
+            <div class="slide-body">
+                <div class="feature-cards">
+                    <div class="feature-card" style="border-top-color:#2196F3;">
+                        <div class="fc-icon">👤</div>
+                        <div class="fc-title">用户模块</div>
+                        <div class="fc-desc">注册自动生成RSA钱包+专属节点ID，BCrypt密码加密，UserRepository JPA存储到H2</div>
+                    </div>
+                    <div class="feature-card" style="border-top-color:#FF9800;">
+                        <div class="fc-icon">⛏️</div>
+                        <div class="fc-title">PoW 挖矿</div>
+                        <div class="fc-desc">difficulty=4，打包交易生成新区块，挖矿奖励10.0，SHA256哈希计算</div>
+                    </div>
+                    <div class="feature-card" style="border-top-color:#4CAF50;">
+                        <div class="fc-icon">🔒</div>
+                        <div class="fc-title">数据防篡改</div>
+                        <div class="fc-desc">SHA-256链式结构，isChainValid()验证每个区块哈希和前一区块哈希</div>
+                    </div>
+                    <div class="feature-card" style="border-top-color:#9C27B0;">
+                        <div class="fc-icon">🌐</div>
+                        <div class="fc-title">P2P 网络</div>
+                        <div class="fc-desc">WebClient HTTP通信，broadcastBlock广播，syncWithNetwork最长链同步</div>
+                    </div>
+                    <div class="feature-card" style="border-top-color:#FF5722;">
+                        <div class="fc-icon">💬</div>
+                        <div class="fc-title">RabbitMQ聊天</div>
+                        <div class="fc-desc">3种交换机(Direct/Topic/Fanout)，6种消息类型，6个队列独立消费</div>
+                    </div>
+                    <div class="feature-card" style="border-top-color:#607D8B;">
+                        <div class="fc-icon">🎯</div>
+                        <div class="fc-title">ChatService</div>
+                        <div class="fc-desc">模拟用户登录/交易讨论场景，sendCustomMessage自定义消息类型</div>
+                    </div>
+                </div>
+                <div class="tip-box" style="margin-top:12px;">
+                    <strong>项目技术栈总结：</strong>Spring Boot 2.7 + JDK 17 + H2数据库 + WebFlux WebClient(P2P) + RabbitMQ(3种交换机/6种消息) + Vue3(前端) + BCrypt+SHA256+RSA(安全) + DevTools(热部署)
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 11: 结束页 -->
+        <div class="slide slide-end" data-index="10">
+            <div style="position:relative;z-index:1;">
+                <h1>感谢<span>聆听</span></h1>
+                <p class="qa">Q & A</p>
+                <p style="font-size:14px;opacity:0.5;">区块链可视化管理交易系统 · 软件工程课程项目</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="nav-controls">
+        <button class="nav-btn" onclick="prevSlide()" title="上一页 (←)">◀</button>
+        <button class="nav-btn" onclick="nextSlide()" title="下一页 (→)">▶</button>
+    </div>
+    <div class="slide-indicator" id="slideIndicator"></div>
+
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            themeVariables: {
+                primaryColor: '#FF9800',
+                primaryTextColor: '#fff',
+                primaryBorderColor: '#E65100',
+                lineColor: '#999',
+                secondaryColor: '#E3F2FD',
+                tertiaryColor: '#FFF3E0',
+                fontFamily: 'Microsoft YaHei, sans-serif',
+                fontSize: '12px'
+            },
+            flowchart: { useMaxWidth: true, htmlLabels: true, curve: 'basis' },
+            sequence: { useMaxWidth: true, wrap: true },
+            mindmap: { useMaxWidth: true, padding: 16 }
+        });
+
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+        const progressBar = document.getElementById('progressBar');
+        const slideCounter = document.getElementById('slideCounter');
+        const indicatorContainer = document.getElementById('slideIndicator');
+
+        for (let i = 0; i < totalSlides; i++) {
+            const dot = document.createElement('div');
+            dot.className = 'indicator-dot' + (i === 0 ? ' active' : '');
+            dot.onclick = () => goToSlide(i);
+            indicatorContainer.appendChild(dot);
+        }
+
+        function updateUI() {
+            const progress = ((currentSlide + 1) / totalSlides) * 100;
+            progressBar.style.width = progress + '%';
+            slideCounter.textContent = (currentSlide + 1) + ' / ' + totalSlides;
+            document.querySelectorAll('.indicator-dot').forEach((dot, i) => {
+                dot.classList.toggle('active', i === currentSlide);
+            });
+        }
+
+        function goToSlide(index) {
+            if (index < 0 || index >= totalSlides || index === currentSlide) return;
+            const goingForward = index > currentSlide;
+            slides.forEach((s, i) => { s.classList.remove('active', 'prev', 'next-exit'); s.style.visibility = 'hidden'; });
+            slides[currentSlide].style.visibility = 'visible';
+            if (goingForward) slides[currentSlide].classList.add('prev');
+            else slides[currentSlide].classList.add('next-exit');
+            slides[index].style.visibility = 'visible';
+            if (!goingForward) slides[index].style.transform = 'translateX(-100%)';
+            currentSlide = index;
+            requestAnimationFrame(() => { slides[currentSlide].classList.add('active'); slides[currentSlide].style.transform = ''; });
+            updateUI();
+        }
+
+        function nextSlide() { goToSlide(Math.min(currentSlide + 1, totalSlides - 1)); }
+        function prevSlide() { goToSlide(Math.max(currentSlide - 1, 0)); }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); nextSlide(); }
+            else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); prevSlide(); }
+            else if (e.key === 'Home') { e.preventDefault(); goToSlide(0); }
+            else if (e.key === 'End') { e.preventDefault(); goToSlide(totalSlides - 1); }
+        });
+
+        let touchStartX = 0;
+        document.addEventListener('touchstart', (e) => { touchStartX = e.touches[0].clientX; });
+        document.addEventListener('touchend', (e) => {
+            const diff = touchStartX - e.changedTouches[0].clientX;
+            if (Math.abs(diff) > 50) { diff > 0 ? nextSlide() : prevSlide(); }
+        });
+
+        updateUI();
+    </script>
+</body>
+</html>

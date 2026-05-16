@@ -1,0 +1,1860 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>风电净空监控系统 - 风轮不平衡评估报告页面全链路教程</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, sans-serif;
+        line-height: 1.8;
+        color: #333;
+        background: #f0f7f0;
+      }
+      .sidebar {
+        position: fixed;
+        left: 0;
+        top: 0;
+        width: 300px;
+        height: 100vh;
+        background: linear-gradient(180deg, #1e40af 0%, #3b82f6 100%);
+        overflow-y: auto;
+        z-index: 1000;
+        box-shadow: 2px 0 12px rgba(0, 0, 0, 0.15);
+      }
+      .sidebar-header {
+        padding: 25px 20px;
+        text-align: center;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+      }
+      .sidebar-header h1 {
+        color: #fff;
+        font-size: 1.3em;
+        margin-bottom: 8px;
+      }
+      .sidebar-header p {
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 0.85em;
+      }
+      .sidebar-nav {
+        padding: 15px 0;
+      }
+      .sidebar-nav .nav-category {
+        padding: 10px 20px 5px;
+        color: rgba(255, 255, 255, 0.5);
+        font-size: 0.75em;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+      .sidebar-nav a {
+        display: block;
+        padding: 8px 20px;
+        color: rgba(255, 255, 255, 0.85);
+        text-decoration: none;
+        font-size: 0.9em;
+        transition: all 0.3s;
+        border-left: 3px solid transparent;
+      }
+      .sidebar-nav a:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: #fff;
+        border-left-color: #93c5fd;
+      }
+      .sidebar-nav a.active {
+        background: rgba(255, 255, 255, 0.15);
+        color: #fff;
+        border-left-color: #dbeafe;
+      }
+      .sidebar-nav .nav-chapter {
+        font-weight: 600;
+        padding-left: 20px;
+      }
+      .sidebar-nav .nav-section {
+        padding-left: 35px;
+        font-size: 0.85em;
+      }
+      .main-content {
+        margin-left: 300px;
+        padding: 30px 40px;
+        min-height: 100vh;
+      }
+      .content-header {
+        text-align: center;
+        padding: 50px 30px;
+        background: linear-gradient(
+          135deg,
+          #60a5fa 0%,
+          #3b82f6 50%,
+          #2563eb 100%
+        );
+        color: white;
+        margin-bottom: 35px;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(37, 99, 235, 0.3);
+      }
+      .content-header h1 {
+        font-size: 2.2em;
+        margin-bottom: 12px;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+      .content-header p {
+        font-size: 1.1em;
+        opacity: 0.95;
+      }
+      .section {
+        background: white;
+        padding: 35px;
+        border-radius: 12px;
+        margin-bottom: 30px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+        border: 1px solid #dbeafe;
+      }
+      .section h2 {
+        color: #1e40af;
+        font-size: 1.8em;
+        margin-bottom: 25px;
+        padding-bottom: 12px;
+        border-bottom: 3px solid #60a5fa;
+      }
+      .section h3 {
+        color: #3b82f6;
+        font-size: 1.4em;
+        margin: 25px 0 15px 0;
+        padding-left: 12px;
+        border-left: 4px solid #60a5fa;
+      }
+      .section h4 {
+        color: #555;
+        font-size: 1.15em;
+        margin: 20px 0 12px 0;
+      }
+      .section p {
+        margin-bottom: 15px;
+        text-align: justify;
+      }
+      pre {
+        background: #1e1e1e;
+        color: #d4d4d4;
+        padding: 20px;
+        border-radius: 8px;
+        overflow-x: auto;
+        margin: 20px 0;
+        font-size: 13px;
+        line-height: 1.6;
+        border: 1px solid #333;
+      }
+      code {
+        font-family: "Fira Code", "Consolas", "Monaco", monospace;
+      }
+      .inline-code {
+        background: #dbeafe;
+        padding: 2px 8px;
+        border-radius: 4px;
+        color: #1e40af;
+        font-size: 0.88em;
+        border: 1px solid #93c5fd;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 20px 0;
+        border-radius: 8px;
+        overflow: hidden;
+      }
+      table th {
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        color: white;
+        padding: 12px 15px;
+        text-align: left;
+        font-weight: 600;
+      }
+      table td {
+        padding: 10px 15px;
+        border-bottom: 1px solid #dbeafe;
+      }
+      table tr:hover {
+        background: #eff6ff;
+      }
+      table tr:nth-child(even) {
+        background: #f8fafc;
+      }
+      .note {
+        background: #fff8e1;
+        border-left: 4px solid #ffc107;
+        padding: 15px 20px;
+        margin: 20px 0;
+        border-radius: 0 8px 8px 0;
+      }
+      .note strong {
+        color: #856404;
+      }
+      .tip {
+        background: #dbeafe;
+        border-left: 4px solid #3b82f6;
+        padding: 15px 20px;
+        margin: 20px 0;
+        border-radius: 0 8px 8px 0;
+      }
+      .tip strong {
+        color: #1e40af;
+      }
+      .info-card {
+        background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+        border: 1px solid #93c5fd;
+        border-radius: 8px;
+        padding: 20px;
+        margin: 20px 0;
+      }
+      .info-card h4 {
+        color: #1e40af;
+        margin-top: 0;
+      }
+      .progress-bar {
+        position: fixed;
+        top: 0;
+        left: 300px;
+        right: 0;
+        height: 4px;
+        background: #e5e7eb;
+        z-index: 999;
+      }
+      .progress-bar-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%);
+        width: 0%;
+        transition: width 0.3s;
+      }
+      .back-to-top {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        width: 50px;
+        height: 50px;
+        background: #3b82f6;
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+        transition: all 0.3s;
+        z-index: 998;
+      }
+      .back-to-top:hover {
+        background: #2563eb;
+        transform: translateY(-3px);
+        box-shadow: 0 6px 16px rgba(59, 130, 246, 0.5);
+      }
+      .code-tabs {
+        margin: 20px 0;
+      }
+      .code-tabs .tab-header {
+        display: flex;
+        border-bottom: 2px solid #dbeafe;
+        margin-bottom: 0;
+      }
+      .code-tabs .tab-btn {
+        padding: 10px 20px;
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: #6b7280;
+        font-weight: 600;
+        border-bottom: 3px solid transparent;
+        margin-bottom: -2px;
+        transition: all 0.3s;
+      }
+      .code-tabs .tab-btn.active {
+        color: #1e40af;
+        border-bottom-color: #3b82f6;
+      }
+      .code-tabs .tab-content {
+        display: none;
+      }
+      .code-tabs .tab-content.active {
+        display: block;
+      }
+      @media (max-width: 768px) {
+        .sidebar {
+          width: 100%;
+          height: auto;
+          position: relative;
+        }
+        .main-content {
+          margin-left: 0;
+          padding: 20px;
+        }
+        .progress-bar {
+          left: 0;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- 侧边栏导航 -->
+    <nav class="sidebar">
+      <div class="sidebar-header">
+        <h1>🌀 风轮不平衡评估教程</h1>
+        <p>风电净空监控系统</p>
+      </div>
+      <div class="sidebar-nav">
+        <div class="nav-category">概述篇</div>
+        <a href="#chapter1" class="nav-chapter">第一章：页面功能概述</a>
+        <a href="#section1-1" class="nav-section">1.1 功能模块</a>
+        <a href="#section1-2" class="nav-section">1.2 布局结构</a>
+        <a href="#section1-3" class="nav-section">1.3 技术栈</a>
+
+        <div class="nav-category">后端篇</div>
+        <a href="#chapter2" class="nav-chapter">第二章：后端实现详解</a>
+        <a href="#section2-1" class="nav-section">2.1 控制器层</a>
+        <a href="#section2-2" class="nav-section">2.2 服务层</a>
+        <a href="#section2-3" class="nav-section">2.3 实体类</a>
+        <a href="#section2-4" class="nav-section">2.4 数据访问层</a>
+
+        <div class="nav-category">前端篇</div>
+        <a href="#chapter3" class="nav-chapter">第三章：前端实现详解</a>
+        <a href="#section3-1" class="nav-section">3.1 组件结构</a>
+        <a href="#section3-2" class="nav-section">3.2 核心功能</a>
+        <a href="#section3-3" class="nav-section">3.3 图表集成</a>
+
+        <div class="nav-category">联调篇</div>
+        <a href="#chapter4" class="nav-chapter">第四章：前后端联调</a>
+        <a href="#section4-1" class="nav-section">4.1 API 接口</a>
+        <a href="#section4-2" class="nav-section">4.2 数据流转</a>
+        <a href="#section4-3" class="nav-section">4.3 趋势分析</a>
+
+        <div class="nav-category">进阶篇</div>
+        <a href="#chapter5" class="nav-chapter">第五章：核心功能详解</a>
+        <a href="#section5-1" class="nav-section">5.1 等级配置</a>
+        <a href="#section5-2" class="nav-section">5.2 趋势数据</a>
+        <a href="#section5-3" class="nav-section">5.3 对比分析</a>
+
+        <div class="nav-category">优化篇</div>
+        <a href="#chapter6" class="nav-chapter">第六章：性能优化</a>
+        <a href="#section6-1" class="nav-section">6.1 数据库优化</a>
+        <a href="#section6-2" class="nav-section">6.2 最佳实践</a>
+      </div>
+    </nav>
+
+    <!-- 进度条 -->
+    <div class="progress-bar">
+      <div class="progress-bar-fill" id="progressBar"></div>
+    </div>
+
+    <!-- 返回顶部按钮 -->
+    <div class="back-to-top" id="backToTop" title="返回顶部">↑</div>
+
+    <!-- 主内容区 -->
+    <main class="main-content">
+      <!-- 页面标题 -->
+      <header class="content-header" id="top">
+        <h1>🌀 风轮不平衡评估报告页面</h1>
+        <p>风电净空监控系统 - 全链路开发教程</p>
+        <p style="margin-top: 15px; font-size: 0.95em; opacity: 0.9">
+          📅 创建日期：2025 年 4 月 25 日 | 📊 数据版本：v1.1
+        </p>
+      </header>
+
+      <!-- 第一章：页面功能概述 -->
+      <section class="section" id="chapter1">
+        <h2>📖 第一章：页面功能概述</h2>
+        <p>
+          风轮不平衡评估报告页面是风电净空监控系统的核心功能模块之一，主要用于监测和分析风机叶片的不平衡状态，
+          通过实时数据采集和统计分析，帮助运维人员及时发现风机运行异常，预防设备故障。
+        </p>
+
+        <h3 id="section1-1">1.1 功能模块</h3>
+        <div class="info-card">
+          <h4>📋 核心功能清单</h4>
+          <ul style="margin-left: 20px; margin-top: 10px">
+            <li><strong>单风机趋势分析</strong>：查看指定风机在不同时间范围内的不平衡趋势</li>
+            <li><strong>多风机对比分析</strong>：对比同一风场下多个风机的不平衡数据</li>
+            <li><strong>等级配置管理</strong>：动态配置不平衡等级的划分标准</li>
+            <li><strong>实时状态监控</strong>：查询风机最新的不平衡等级状态</li>
+            <li><strong>数据导出</strong>：支持 Excel 格式的监测数据导出</li>
+            <li><strong>数据导入</strong>：支持批量导入手动录入的监测数据</li>
+          </ul>
+        </div>
+
+        <h3 id="section1-2">1.2 布局结构</h3>
+        <p>页面采用经典的上下左右布局，主要包含以下区域：</p>
+        <pre><code>┌─────────────────────────────────────────────────────┐
+│              顶部筛选区（风场、风机、时间）            │
+├─────────────────────────────────────────────────────┤
+│                                                     │
+│  ┌─────────────┐  ┌──────────────────────────────┐ │
+│  │             │  │                              │ │
+│  │  等级配置   │  │     单风机趋势图表           │ │
+│  │  （饼图）   │  │    （折线图/柱状图）         │ │
+│  │             │  │                              │ │
+│  └─────────────┘  └──────────────────────────────┘ │
+│                                                     │
+│  ┌────────────────────────────────────────────────┐ │
+│  │                                              │ │
+│  │          多风机对比图表（柱状图）             │ │
+│  │                                              │ │
+│  └────────────────────────────────────────────────┘ │
+│                                                     │
+│  ┌────────────────────────────────────────────────┐ │
+│  │                                              │ │
+│  │            详细数据表格（分页）               │ │
+│  │                                              │ │
+│  └────────────────────────────────────────────────┘ │
+│                                                     │
+└─────────────────────────────────────────────────────┘</code></pre>
+
+        <h3 id="section1-3">1.3 技术栈</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>层级</th>
+              <th>技术</th>
+              <th>版本</th>
+              <th>用途</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>后端框架</td>
+              <td>Spring Boot</td>
+              <td>2.6.6</td>
+              <td>REST API 服务</td>
+            </tr>
+            <tr>
+              <td>ORM 框架</td>
+              <td>MyBatis-Plus</td>
+              <td>3.5.1</td>
+              <td>数据库操作</td>
+            </tr>
+            <tr>
+              <td>数据库</td>
+              <td>MySQL</td>
+              <td>5.7+</td>
+              <td>数据存储</td>
+            </tr>
+            <tr>
+              <td>前端框架</td>
+              <td>Vue.js</td>
+              <td>2.6</td>
+              <td>组件化开发</td>
+            </tr>
+            <tr>
+              <td>UI 组件库</td>
+              <td>Ant Design Vue</td>
+              <td>1.7.2</td>
+              <td>UI 组件</td>
+            </tr>
+            <tr>
+              <td>图表库</td>
+              <td>Viser-vue</td>
+              <td>2.4</td>
+              <td>数据可视化</td>
+            </tr>
+            <tr>
+              <td>HTTP 客户端</td>
+              <td>Axios</td>
+              <td>0.18</td>
+              <td>API 请求</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- 第二章：后端实现详解 -->
+      <section class="section" id="chapter2">
+        <h2>🔧 第二章：后端实现详解</h2>
+        <p>
+          后端采用 Spring Boot + MyBatis-Plus 架构，提供 RESTful API 接口，
+          支持不平衡数据的增删改查、趋势分析、对比分析等功能。
+        </p>
+
+        <h3 id="section2-1">2.1 控制器层（Controller）</h3>
+        <p>
+          控制器类 <code class="inline-code">FengjiUnbalanceStatsController</code> 继承自
+          <code class="inline-code">JeecgController</code>，自动获得标准 CRUD 功能，
+          同时提供自定义的统计分析接口。
+        </p>
+
+        <div class="tip">
+          <strong>💡 提示：</strong> 所有接口统一返回 <code class="inline-code">Result&lt;T&gt;</code> 包装类，
+          包含 <code class="inline-code">success</code>、<code class="inline-code">message</code>、
+          <code class="inline-code">code</code>、<code class="inline-code">result</code> 等字段。
+        </div>
+
+        <h4>2.1.1 获取不平衡等级配置</h4>
+        <pre><code class="language-java">/**
+ * 获取不平衡等级配置
+ *
+ * @return
+ */
+@ApiOperation(value="获取不平衡等级配置", notes="获取不平衡等级划分标准配置")
+@GetMapping(value = "/thresholds")
+public Result&lt;List&lt;Map&lt;String, Object&gt;&gt;&gt; getThresholds() {
+    try {
+        SysCustomConfig config = sysCustomConfigService.getOne(
+            new QueryWrapper&lt;SysCustomConfig&gt;().eq("code", "unbalance_level_threshold")
+        );
+
+        if (config == null) {
+            // 返回默认配置
+            List&lt;Map&lt;String, Object&gt;&gt; defaultLevels = new ArrayList&lt;&gt;();
+            defaultLevels.add(createLevelMap(1, 1.0, "无影响", "#52c41a"));
+            defaultLevels.add(createLevelMap(2, 2.0, "轻微影响", "#73d13d"));
+            defaultLevels.add(createLevelMap(3, 3.0, "中度影响", "#ffc53d"));
+            defaultLevels.add(createLevelMap(4, 4.0, "严重影响", "#ff7a45"));
+            defaultLevels.add(createLevelMap(5, 5.0, "紧急处理", "#ff4d4f"));
+            return Result.OK(defaultLevels);
+        }
+
+        Map&lt;String, Object&gt; configMap = JSON.parseObject(
+            config.getConfigValue(),
+            new TypeReference&lt;Map&lt;String, Object&gt;&gt;() {}
+        );
+
+        List&lt;Map&lt;String, Object&gt;&gt; levels = (List&lt;Map&lt;String, Object&gt;&gt;) configMap.get("levels");
+        return Result.OK(levels);
+    } catch (Exception e) {
+        log.error("获取不平衡等级配置失败", e);
+        return Result.error("获取配置失败：" + e.getMessage());
+    }
+}
+
+private Map&lt;String, Object&gt; createLevelMap(int level, double max, String text, String color) {
+    Map&lt;String, Object&gt; map = new HashMap&lt;&gt;();
+    map.put("level", level);
+    map.put("max", max);
+    map.put("text", text);
+    map.put("color", color);
+    return map;
+}</code></pre>
+
+        <h4>2.1.2 查询单风机不平衡趋势数据</h4>
+        <pre><code class="language-java">/**
+ * 查询单风机不平衡趋势数据
+ *
+ * @param windTurbineCode 风机编号
+ * @param timeRange 时间范围：day-日，week-周，month-月
+ * @return
+ */
+@ApiOperation(value="查询单风机不平衡趋势数据", notes="查询单风机不平衡趋势数据")
+@GetMapping(value = "/trend")
+public Result&lt;List&lt;Map&lt;String, Object&gt;&gt;&gt; queryTrendData(
+        @RequestParam(name="windTurbineCode", required=true) String windTurbineCode,
+        @RequestParam(name="timeRange", defaultValue="day") String timeRange) {
+
+    try {
+        String startTime = null;
+        String endTime = null;
+
+        Calendar calendar = Calendar.getInstance();
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+        if ("day".equals(timeRange)) {
+            calendar.set(Calendar.HOUR_OF_DAY, 0);
+            calendar.set(Calendar.MINUTE, 0);
+            calendar.set(Calendar.SECOND, 0);
+            startTime = sdf.format(calendar.getTime());
+            calendar.add(Calendar.DAY_OF_MONTH, 1);
+            endTime = sdf.format(calendar.getTime());
+        } else if ("week".equals(timeRange)) {
+            calendar.add(Calendar.DAY_OF_MONTH, -6);
+            calendar.set(Calendar.HOUR_OF_DAY, 0);
+            calendar.set(Calendar.MINUTE, 0);
+            calendar.set(Calendar.SECOND, 0);
+            startTime = sdf.format(calendar.getTime());
+            calendar.add(Calendar.DAY_OF_MONTH, 7);
+            endTime = sdf.format(calendar.getTime());
+        } else if ("month".equals(timeRange)) {
+            calendar.add(Calendar.DAY_OF_MONTH, -29);
+            calendar.set(Calendar.HOUR_OF_DAY, 0);
+            calendar.set(Calendar.MINUTE, 0);
+            calendar.set(Calendar.SECOND, 0);
+            startTime = sdf.format(calendar.getTime());
+            calendar.add(Calendar.DAY_OF_MONTH, 30);
+            endTime = sdf.format(calendar.getTime());
+        }
+
+        List&lt;Map&lt;String, Object&gt;&gt; trendData = fengjiUnbalanceStatsService.queryTrendData(
+            windTurbineCode, startTime, endTime
+        );
+        return Result.OK(trendData);
+    } catch (Exception e) {
+        log.error("查询趋势数据失败", e);
+        return Result.error("查询失败：" + e.getMessage());
+    }
+}</code></pre>
+
+        <h4>2.1.3 查询多风机不平衡对比数据</h4>
+        <pre><code class="language-java">/**
+ * 查询多风机不平衡对比数据
+ *
+ * @param windFarmCode 风场编号
+ * @param timeRange 时间范围：day-日，week-周，month-月
+ * @return
+ */
+@ApiOperation(value="查询多风机不平衡对比数据", notes="查询多风机不平衡对比数据")
+@GetMapping(value = "/compare")
+public Result&lt;List&lt;Map&lt;String, Object&gt;&gt;&gt; queryCompareData(
+        @RequestParam(name="windFarmCode", required=true) String windFarmCode,
+        @RequestParam(name="timeRange", defaultValue="day") String timeRange) {
+
+    try {
+        String startTime = null;
+        String endTime = null;
+
+        Calendar calendar = Calendar.getInstance();
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+        if ("day".equals(timeRange)) {
+            calendar.set(Calendar.HOUR_OF_DAY, 0);
+            calendar.set(Calendar.MINUTE, 0);
+            calendar.set(Calendar.SECOND, 0);
+            startTime = sdf.format(calendar.getTime());
+            calendar.add(Calendar.DAY_OF_MONTH, 1);
+            endTime = sdf.format(calendar.getTime());
+        } else if ("week".equals(timeRange)) {
+            calendar.add(Calendar.DAY_OF_MONTH, -6);
+            calendar.set(Calendar.HOUR_OF_DAY, 0);
+            calendar.set(Calendar.MINUTE, 0);
+            calendar.set(Calendar.SECOND, 0);
+            startTime = sdf.format(calendar.getTime());
+            calendar.add(Calendar.DAY_OF_MONTH, 7);
+            endTime = sdf.format(calendar.getTime());
+        } else if ("month".equals(timeRange)) {
+            calendar.add(Calendar.DAY_OF_MONTH, -29);
+            calendar.set(Calendar.HOUR_OF_DAY, 0);
+            calendar.set(Calendar.MINUTE, 0);
+            calendar.set(Calendar.SECOND, 0);
+            startTime = sdf.format(calendar.getTime());
+            calendar.add(Calendar.DAY_OF_MONTH, 30);
+            endTime = sdf.format(calendar.getTime());
+        }
+
+        List&lt;Map&lt;String, Object&gt;&gt; compareData = fengjiUnbalanceStatsService.queryCompareData(
+            windFarmCode, startTime, endTime
+        );
+        return Result.OK(compareData);
+    } catch (Exception e) {
+        log.error("查询对比数据失败", e);
+        return Result.error("查询失败：" + e.getMessage());
+    }
+}</code></pre>
+
+        <h4>2.1.4 查询最新不平衡等级</h4>
+        <pre><code class="language-java">/**
+ * 查询最新不平衡等级
+ *
+ * @param windTurbineCode 风机编号
+ * @return
+ */
+@ApiOperation(value="查询最新不平衡等级", notes="查询最新不平衡等级")
+@GetMapping(value = "/latestLevel")
+public Result&lt;Map&lt;String, Object&gt;&gt; queryLatestLevel(
+        @RequestParam(name="windTurbineCode", required=true) String windTurbineCode) {
+
+    try {
+        Integer level = fengjiUnbalanceStatsService.queryLatestLevel(windTurbineCode);
+
+        Map&lt;String, Object&gt; result = new HashMap&lt;&gt;();
+        result.put("level", level);
+
+        if (level != null) {
+            String levelDesc = "";
+            switch (level) {
+                case 1: levelDesc = "无影响"; break;
+                case 2: levelDesc = "轻微影响"; break;
+                case 3: levelDesc = "中度影响"; break;
+                case 4: levelDesc = "严重影响"; break;
+                case 5: levelDesc = "紧急处理"; break;
+                default: levelDesc = "未知"; break;
+            }
+            result.put("levelDesc", levelDesc);
+        }
+
+        return Result.OK(result);
+    } catch (Exception e) {
+        log.error("查询最新等级失败", e);
+        return Result.error("查询失败：" + e.getMessage());
+    }
+}</code></pre>
+
+        <h3 id="section2-2">2.2 服务层（Service）</h3>
+        <p>
+          服务接口 <code class="inline-code">IFengjiUnbalanceStatsService</code> 继承自
+          <code class="inline-code">IService&lt;FengjiUnbalanceStats&gt;</code>，
+          提供业务逻辑封装。
+        </p>
+
+        <h4>2.2.1 服务接口</h4>
+        <pre><code class="language-java">package org.jeecg.modules.fengji.stats.service;
+
+import org.jeecg.modules.fengji.stats.entity.FengjiUnbalanceStats;
+import com.baomidou.mybatisplus.extension.service.IService;
+
+import java.util.List;
+import java.util.Map;
+
+/**
+ * @Description: 风机不平衡监测数据统计表
+ * @Author: jeecg-boot
+ * @Date:   2025-04-25
+ * @Version: V1.0
+ */
+public interface IFengjiUnbalanceStatsService extends IService&lt;FengjiUnbalanceStats&gt; {
+
+    /**
+     * 查询单风机不平衡趋势数据
+     * @param windTurbineCode 风机编号
+     * @param startTime 开始时间
+     * @param endTime 结束时间
+     * @return 趋势数据列表
+     */
+    List&lt;Map&lt;String, Object&gt;&gt; queryTrendData(String windTurbineCode, String startTime, String endTime);
+
+    /**
+     * 查询多风机不平衡对比数据
+     * @param windFarmCode 风场编号
+     * @param startTime 开始时间
+     * @param endTime 结束时间
+     * @return 对比数据列表
+     */
+    List&lt;Map&lt;String, Object&gt;&gt; queryCompareData(String windFarmCode, String startTime, String endTime);
+
+    /**
+     * 查询最新不平衡等级
+     * @param windTurbineCode 风机编号
+     * @return 最新不平衡等级
+     */
+    Integer queryLatestLevel(String windTurbineCode);
+}</code></pre>
+
+        <h4>2.2.2 服务实现</h4>
+        <pre><code class="language-java">package org.jeecg.modules.fengji.stats.service.impl;
+
+import org.jeecg.modules.fengji.stats.entity.FengjiUnbalanceStats;
+import org.jeecg.modules.fengji.stats.mapper.FengjiUnbalanceStatsMapper;
+import org.jeecg.modules.fengji.stats.service.IFengjiUnbalanceStatsService;
+import org.springframework.stereotype.Service;
+
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+
+import java.util.List;
+import java.util.Map;
+
+/**
+ * @Description: 风机不平衡监测数据统计表
+ * @Author: jeecg-boot
+ * @Date:   2025-04-25
+ * @Version: V1.0
+ */
+@Service
+public class FengjiUnbalanceStatsServiceImpl extends ServiceImpl&lt;FengjiUnbalanceStatsMapper, FengjiUnbalanceStats&gt; 
+        implements IFengjiUnbalanceStatsService {
+
+    @Override
+    public List&lt;Map&lt;String, Object&gt;&gt; queryTrendData(String windTurbineCode, String startTime, String endTime) {
+        return baseMapper.queryTrendData(windTurbineCode, startTime, endTime);
+    }
+
+    @Override
+    public List&lt;Map&lt;String, Object&gt;&gt; queryCompareData(String windFarmCode, String startTime, String endTime) {
+        return baseMapper.queryCompareData(windFarmCode, startTime, endTime);
+    }
+
+    @Override
+    public Integer queryLatestLevel(String windTurbineCode) {
+        return baseMapper.queryLatestLevel(windTurbineCode);
+    }
+}</code></pre>
+
+        <h3 id="section2-3">2.3 实体类（Entity）</h3>
+        <p>
+          实体类 <code class="inline-code">FengjiUnbalanceStats</code> 对应数据库表
+          <code class="inline-code">fengji_unbalance_stats</code>，
+          使用 MyBatis-Plus 的注解进行映射。
+        </p>
+
+        <pre><code class="language-java">package org.jeecg.modules.fengji.stats.entity;
+
+import java.io.Serializable;
+import java.util.Date;
+import java.math.BigDecimal;
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
+import lombok.Data;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.jeecgframework.poi.excel.annotation.Excel;
+import org.jeecg.common.aspect.annotation.Dict;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+
+/**
+ * @Description: 风机不平衡监测数据统计表
+ * @Author: jeecg-boot
+ * @Date:   2025-04-25
+ * @Version: V1.0
+ */
+@Data
+@TableName("fengji_unbalance_stats")
+public class FengjiUnbalanceStats implements Serializable {
+    private static final long serialVersionUID = 1L;
+
+    /**主键*/
+    @TableId(type = IdType.ASSIGN_ID)
+    @ApiModelProperty(value = "主键")
+    private String id;
+
+    /**风场编号*/
+    @Excel(name = "风场编号", width = 15)
+    @ApiModelProperty(value = "风场编号")
+    @Dict(dictTable = "patrol_fan_scope", dicText = "name", dicCode = "id")
+    private String windFarmCode;
+
+    /**风机编号*/
+    @Excel(name = "风机编号", width = 15)
+    @ApiModelProperty(value = "风机编号")
+    @Dict(dictTable = "patrol_fan_info", dicText = "fan_number", dicCode = "id")
+    private String windTurbineCode;
+
+    /**统计时间*/
+    @Excel(name = "统计时间", width = 20, format = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(timezone = "GMT+8",pattern = "yyyy-MM-dd HH:mm:ss")
+    @DateTimeFormat(pattern="yyyy-MM-dd HH:mm:ss")
+    @ApiModelProperty(value = "统计时间")
+    private Date statsTime;
+
+    /**不平衡值（0-5 之间的小数）*/
+    @Excel(name = "不平衡值", width = 15)
+    @ApiModelProperty(value = "不平衡值（0-5 之间的小数）")
+    private BigDecimal unbalanceValue;
+
+    /**不平衡等级（1-5）*/
+    @Excel(name = "不平衡等级", width = 15)
+    @ApiModelProperty(value = "不平衡等级（1-5）")
+    private Integer unbalanceLevel;
+
+    /**当前风速（单位：m/s）*/
+    @Excel(name = "当前风速", width = 15)
+    @ApiModelProperty(value = "当前风速（单位：m/s）")
+    private BigDecimal windSpeed;
+
+    /**转速（单位：r/min）*/
+    @Excel(name = "转速", width = 15)
+    @ApiModelProperty(value = "转速（单位：r/min）")
+    private BigDecimal rotationSpeed;
+
+    /**数据来源：1-自动采集，2-手动录入*/
+    @Excel(name = "数据来源", width = 15)
+    @ApiModelProperty(value = "数据来源：1-自动采集，2-手动录入")
+    private Integer dataSource;
+
+    /**备注*/
+    @Excel(name = "备注", width = 15)
+    @ApiModelProperty(value = "备注")
+    private String remark;
+
+    /**创建人*/
+    @ApiModelProperty(value = "创建人")
+    private String createBy;
+
+    /**创建日期*/
+    @JsonFormat(timezone = "GMT+8",pattern = "yyyy-MM-dd HH:mm:ss")
+    @DateTimeFormat(pattern="yyyy-MM-dd HH:mm:ss")
+    @ApiModelProperty(value = "创建日期")
+    private Date createTime;
+
+    /**更新人*/
+    @ApiModelProperty(value = "更新人")
+    private String updateBy;
+
+    /**更新日期*/
+    @JsonFormat(timezone = "GMT+8",pattern = "yyyy-MM-dd HH:mm:ss")
+    @DateTimeFormat(pattern="yyyy-MM-dd HH:mm:ss")
+    @ApiModelProperty(value = "更新日期")
+    private Date updateTime;
+
+    /**所属部门*/
+    @ApiModelProperty(value = "所属部门")
+    private String sysOrgCode;
+}</code></pre>
+
+        <h3 id="section2-4">2.4 数据访问层（Mapper）</h3>
+        <p>
+          Mapper 接口 <code class="inline-code">FengjiUnbalanceStatsMapper</code> 继承自
+          <code class="inline-code">BaseMapper</code>，提供自定义 SQL 查询方法。
+        </p>
+
+        <pre><code class="language-java">package org.jeecg.modules.fengji.stats.mapper;
+
+import java.util.List;
+import java.util.Map;
+
+import org.apache.ibatis.annotations.Param;
+import org.jeecg.modules.fengji.stats.entity.FengjiUnbalanceStats;
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+
+/**
+ * @Description: 风机不平衡监测数据统计表
+ * @Author: jeecg-boot
+ * @Date:   2025-04-25
+ * @Version: V1.0
+ */
+public interface FengjiUnbalanceStatsMapper extends BaseMapper&lt;FengjiUnbalanceStats&gt; {
+
+    /**
+     * 查询单风机不平衡趋势数据
+     * @param windTurbineCode 风机编号
+     * @param startTime 开始时间
+     * @param endTime 结束时间
+     * @return 趋势数据列表
+     */
+    List&lt;Map&lt;String, Object&gt;&gt; queryTrendData(@Param("windTurbineCode") String windTurbineCode,
+                                                  @Param("startTime") String startTime,
+                                                  @Param("endTime") String endTime);
+
+    /**
+     * 查询多风机不平衡对比数据
+     * @param windFarmCode 风场编号
+     * @param startTime 开始时间
+     * @param endTime 结束时间
+     * @return 对比数据列表
+     */
+    List&lt;Map&lt;String, Object&gt;&gt; queryCompareData(@Param("windFarmCode") String windFarmCode,
+                                                    @Param("startTime") String startTime,
+                                                    @Param("endTime") String endTime);
+
+    /**
+     * 查询最新不平衡等级
+     * @param windTurbineCode 风机编号
+     * @return 最新不平衡等级
+     */
+    Integer queryLatestLevel(@Param("windTurbineCode") String windTurbineCode);
+}</code></pre>
+
+        <div class="note">
+          <strong>⚠️ 注意：</strong> Mapper XML 文件中的 SQL 语句需要手动编写，
+          通常位于 <code class="inline-code">resources/mapper</code> 目录下。
+        </div>
+      </section>
+
+      <!-- 第三章：前端实现详解 -->
+      <section class="section" id="chapter3">
+        <h2>🎨 第三章：前端实现详解</h2>
+        <p>
+          前端采用 Vue.js 2.6 + Ant Design Vue 1.7.2 + Viser-vue 2.4 技术栈，
+          实现组件化开发和数据可视化展示。
+        </p>
+
+        <h3 id="section3-1">3.1 组件结构</h3>
+        <p>页面组件主要包含以下几个部分：</p>
+
+        <div class="info-card">
+          <h4>📦 组件结构清单</h4>
+          <ul style="margin-left: 20px; margin-top: 10px">
+            <li><strong>template</strong>：页面模板结构</li>
+            <li><strong>script</strong>：组件逻辑（data、methods、mounted 等）</li>
+            <li><strong>style</strong>：组件样式（可选 scoped）</li>
+          </ul>
+        </div>
+
+        <h4>3.1.1 模板结构示例</h4>
+        <pre><code class="language-vue">&lt;template&gt;
+  &lt;a-card :bordered="false" class="card-area"&gt;
+    &lt;!-- 筛选区域 --&gt;
+    &lt;div class="table-page-search-wrapper"&gt;
+      &lt;a-form layout="inline"&gt;
+        &lt;a-row :gutter="48"&gt;
+          &lt;a-col :md="8" :sm="12"&gt;
+            &lt;a-form-item label="风场选择"&gt;
+              &lt;a-select v-model="queryParam.windFarmCode" placeholder="请选择风场"&gt;
+                &lt;a-select-option v-for="item in windFarmOptions" :key="item.id" :value="item.id"&gt;
+                  {{ item.name }}
+                &lt;/a-select-option&gt;
+              &lt;/a-select&gt;
+            &lt;/a-form-item&gt;
+          &lt;/a-col&gt;
+          &lt;a-col :md="8" :sm="12"&gt;
+            &lt;a-form-item label="风机选择"&gt;
+              &lt;a-select v-model="queryParam.windTurbineCode" placeholder="请选择风机"&gt;
+                &lt;a-select-option v-for="item in windTurbineOptions" :key="item.id" :value="item.id"&gt;
+                  {{ item.fan_number }}
+                &lt;/a-select-option&gt;
+              &lt;/a-select&gt;
+            &lt;/a-form-item&gt;
+          &lt;/a-col&gt;
+          &lt;a-col :md="8" :sm="12"&gt;
+            &lt;a-form-item label="时间范围"&gt;
+              &lt;a-radio-group v-model="queryParam.timeRange" button-style="solid"&gt;
+                &lt;a-radio-button value="day"&gt;今日&lt;/a-radio-button&gt;
+                &lt;a-radio-button value="week"&gt;近 7 天&lt;/a-radio-button&gt;
+                &lt;a-radio-button value="month"&gt;近 30 天&lt;/a-radio-button&gt;
+              &lt;/a-radio-group&gt;
+            &lt;/a-form-item&gt;
+          &lt;/a-col&gt;
+          &lt;a-col :md="8" :sm="12"&gt;
+            &lt;span class="table-page-search-submitButtons"&gt;
+              &lt;a-button type="primary" @click="searchQuery"&gt;查询&lt;/a-button&gt;
+              &lt;a-button style="margin-left: 8px" @click="searchReset"&gt;重置&lt;/a-button&gt;
+            &lt;/span&gt;
+          &lt;/a-col&gt;
+        &lt;/a-row&gt;
+      &lt;/a-form&gt;
+    &lt;/div&gt;
+
+    &lt;!-- 等级配置饼图 --&gt;
+    &lt;a-row :gutter="24" style="margin-top: 24px"&gt;
+      &lt;a-col :span="12"&gt;
+        &lt;a-card title="不平衡等级分布"&gt;
+          &lt;v-chart :forceFit="true" :height="300" :data="levelData" :scale="levelScale"&gt;
+            &lt;v-tooltip :showTitle="tooltipShowTitle" dataKey="level*text" /&gt;
+            &lt;v-axis /&gt;
+            &lt;v-legend dataKey="text"/&gt;
+            &lt;v-pie position="percent" :vStyle="pieStyle" :label="label" /&gt;
+          &lt;/v-chart&gt;
+        &lt;/a-card&gt;
+      &lt;/a-col&gt;
+      &lt;a-col :span="12"&gt;
+        &lt;a-card title="单风机趋势分析"&gt;
+          &lt;v-chart :forceFit="true" :height="300" :data="trendData"&gt;
+            &lt;v-tooltip :showTitle="tooltipShowTitle" /&gt;
+            &lt;v-axis /&gt;
+            &lt;v-legend /&gt;
+            &lt;v-line position="statsTime*unbalanceValue" /&gt;
+            &lt;v-point position="statsTime*unbalanceValue" shape="circle" :size="4" /&gt;
+          &lt;/v-chart&gt;
+        &lt;/a-card&gt;
+      &lt;/a-col&gt;
+    &lt;/a-row&gt;
+
+    &lt;!-- 多风机对比柱状图 --&gt;
+    &lt;a-row style="margin-top: 24px"&gt;
+      &lt;a-col :span="24"&gt;
+        &lt;a-card title="多风机对比分析"&gt;
+          &lt;v-chart :forceFit="true" :height="400" :data="compareData"&gt;
+            &lt;v-tooltip :showTitle="tooltipShowTitle" /&gt;
+            &lt;v-axis /&gt;
+            &lt;v-legend /&gt;
+            &lt;v-bar position="windTurbineCode*unbalanceValue" color="windTurbineCode" /&gt;
+          &lt;/v-chart&gt;
+        &lt;/a-card&gt;
+      &lt;/a-col&gt;
+    &lt;/a-row&gt;
+
+    &lt;!-- 数据表格 --&gt;
+    &lt;a-table
+      ref="table"
+      :columns="columns"
+      :dataSource="dataSource"
+      :pagination="ipagination"
+      :loading="loading"
+      @change="handleTableChange"
+    &gt;
+      &lt;template slot="unbalanceLevel" slot-scope="text"&gt;
+        &lt;a-badge :status="getLevelStatus(text)" :text="getLevelText(text)" /&gt;
+      &lt;/template&gt;
+    &lt;/a-table&gt;
+  &lt;/a-card&gt;
+&lt;/template&gt;</code></pre>
+
+        <h3 id="section3-2">3.2 核心功能</h3>
+
+        <h4>3.2.1 数据定义</h4>
+        <pre><code class="language-vue">&lt;script&gt;
+import { getAction } from "@/api/api"
+
+export default {
+  name: "UnbalanceReport",
+  data() {
+    return {
+      // 查询参数
+      queryParam: {
+        windFarmCode: "",
+        windTurbineCode: "",
+        timeRange: "day"
+      },
+      // 风场选项
+      windFarmOptions: [],
+      // 风机选项
+      windTurbineOptions: [],
+      // 等级配置数据
+      levelData: [],
+      // 趋势数据
+      trendData: [],
+      // 对比数据
+      compareData: [],
+      // 表格数据
+      dataSource: [],
+      // 表头列配置
+      columns: [
+        {
+          title: "风场名称",
+          align: "center",
+          dataIndex: "windFarmCode",
+          scopedSlots: { customRender: "windFarmCode" }
+        },
+        {
+          title: "风机编号",
+          align: "center",
+          dataIndex: "windTurbineCode"
+        },
+        {
+          title: "统计时间",
+          align: "center",
+          dataIndex: "statsTime"
+        },
+        {
+          title: "不平衡值",
+          align: "center",
+          dataIndex: "unbalanceValue"
+        },
+        {
+          title: "不平衡等级",
+          align: "center",
+          dataIndex: "unbalanceLevel",
+          scopedSlots: { customRender: "unbalanceLevel" }
+        },
+        {
+          title: "风速",
+          align: "center",
+          dataIndex: "windSpeed"
+        },
+        {
+          title: "转速",
+          align: "center",
+          dataIndex: "rotationSpeed"
+        }
+      ],
+      // 分页参数
+      ipagination: {
+        current: 1,
+        pageSize: 10,
+        pageSizeOptions: ["10", "20", "30"],
+        showTotal: (total, range) => {
+          return total + "条数据，共" + range[1] + "页"
+        },
+        showQuickJumper: true,
+        showSizeChanger: true,
+        total: 0,
+        hideOnSinglePage: false
+      },
+      // 加载状态
+      loading: false,
+      // API 地址
+      url: {
+        list: "/stats/unbalanceStats/list",
+        trend: "/stats/unbalanceStats/trend",
+        compare: "/stats/unbalanceStats/compare",
+        thresholds: "/stats/unbalanceStats/thresholds",
+        latestLevel: "/stats/unbalanceStats/latestLevel"
+      }
+    }
+  },</code></pre>
+
+        <h4>3.2.2 方法实现</h4>
+        <pre><code class="language-vue">  methods: {
+    // 加载风场列表
+    loadWindFarms() {
+      getAction("/info/fengdianDeviceInfo/list", { pageNo: 1, pageSize: 100 }).then(res => {
+        if (res.success) {
+          this.windFarmOptions = res.result.records
+        }
+      })
+    },
+    // 加载风机列表
+    loadWindTurbines() {
+      if (!this.queryParam.windFarmCode) {
+        this.windTurbineOptions = []
+        return
+      }
+      getAction("/info/patrolFanInfo/list", {
+        pageNo: 1,
+        pageSize: 100,
+        region: this.queryParam.windFarmCode
+      }).then(res => {
+        if (res.success) {
+          this.windTurbineOptions = res.result.records
+        }
+      })
+    },
+    // 加载等级配置
+    loadThresholds() {
+      getAction(this.url.thresholds).then(res => {
+        if (res.success && res.result) {
+          this.levelData = res.result.map(item => ({
+            ...item,
+            percent: item.level // 用于饼图显示
+          }))
+        }
+      })
+    },
+    // 加载趋势数据
+    loadTrendData() {
+      if (!this.queryParam.windTurbineCode) {
+        this.trendData = []
+        return
+      }
+      getAction(this.url.trend, {
+        windTurbineCode: this.queryParam.windTurbineCode,
+        timeRange: this.queryParam.timeRange
+      }).then(res => {
+        if (res.success && res.result) {
+          this.trendData = res.result
+        }
+      })
+    },
+    // 加载对比数据
+    loadCompareData() {
+      if (!this.queryParam.windFarmCode) {
+        this.compareData = []
+        return
+      }
+      getAction(this.url.compare, {
+        windFarmCode: this.queryParam.windFarmCode,
+        timeRange: this.queryParam.timeRange
+      }).then(res => {
+        if (res.success && res.result) {
+          this.compareData = res.result
+        }
+      })
+    },
+    // 加载表格数据
+    loadData() {
+      this.loading = true
+      getAction(this.url.list, {
+        ...this.queryParam,
+        pageNo: this.ipagination.current,
+        pageSize: this.ipagination.pageSize
+      }).then(res => {
+        if (res.success) {
+          this.dataSource = res.result.records
+          this.ipagination.total = res.result.total
+        }
+        this.loading = false
+      }).catch(() => {
+        this.loading = false
+      })
+    },
+    // 查询
+    searchQuery() {
+      this.ipagination.current = 1
+      this.loadData()
+      this.loadTrendData()
+      this.loadCompareData()
+    },
+    // 重置
+    searchReset() {
+      this.queryParam = {
+        windFarmCode: "",
+        windTurbineCode: "",
+        timeRange: "day"
+      }
+      this.ipagination.current = 1
+      this.loadData()
+      this.trendData = []
+      this.compareData = []
+    },
+    // 表格分页变化
+    handleTableChange(pagination) {
+      this.ipagination.current = pagination.current
+      this.ipagination.pageSize = pagination.pageSize
+      this.loadData()
+    },
+    // 获取等级文本
+    getLevelText(level) {
+      const levelMap = {
+        1: "无影响",
+        2: "轻微影响",
+        3: "中度影响",
+        4: "严重影响",
+        5: "紧急处理"
+      }
+      return levelMap[level] || "未知"
+    },
+    // 获取等级状态颜色
+    getLevelStatus(level) {
+      const statusMap = {
+        1: "success",
+        2: "processing",
+        3: "warning",
+        4: "error",
+        5: "error"
+      }
+      return statusMap[level] || "default"
+    }
+  },
+  mounted() {
+    this.loadWindFarms()
+    this.loadThresholds()
+    this.loadData()
+  }
+}
+&lt;/script&gt;</code></pre>
+
+        <h3 id="section3-3">3.3 图表集成</h3>
+        <p>
+          使用 <code class="inline-code">viser-vue</code> 图表库实现数据可视化，
+          主要包含饼图、折线图、柱状图等图表类型。
+        </p>
+
+        <h4>3.3.1 饼图配置（等级分布）</h4>
+        <pre><code class="language-vue">&lt;v-chart :forceFit="true" :height="300" :data="levelData" :scale="levelScale"&gt;
+  &lt;v-tooltip :showTitle="tooltipShowTitle" dataKey="level*text" /&gt;
+  &lt;v-axis /&gt;
+  &lt;v-legend dataKey="text"/&gt;
+  &lt;v-pie position="percent" :vStyle="pieStyle" :label="label" /&gt;
+&lt;/v-chart&gt;</code></pre>
+
+        <h4>3.3.2 折线图配置（趋势分析）</h4>
+        <pre><code class="language-vue">&lt;v-chart :forceFit="true" :height="300" :data="trendData"&gt;
+  &lt;v-tooltip :showTitle="tooltipShowTitle" /&gt;
+  &lt;v-axis /&gt;
+  &lt;v-legend /&gt;
+  &lt;v-line position="statsTime*unbalanceValue" /&gt;
+  &lt;v-point position="statsTime*unbalanceValue" shape="circle" :size="4" /&gt;
+&lt;/v-chart&gt;</code></pre>
+
+        <h4>3.3.3 柱状图配置（对比分析）</h4>
+        <pre><code class="language-vue">&lt;v-chart :forceFit="true" :height="400" :data="compareData"&gt;
+  &lt;v-tooltip :showTitle="tooltipShowTitle" /&gt;
+  &lt;v-axis /&gt;
+  &lt;v-legend /&gt;
+  &lt;v-bar position="windTurbineCode*unbalanceValue" color="windTurbineCode" /&gt;
+&lt;/v-chart&gt;</code></pre>
+      </section>
+
+      <!-- 第四章：前后端联调 -->
+      <section class="section" id="chapter4">
+        <h2>🔗 第四章：前后端联调</h2>
+        <p>
+          前后端通过 RESTful API 进行通信，前端使用 Axios 封装的 HTTP 客户端发送请求，
+          后端返回统一的 <code class="inline-code">Result&lt;T&gt;</code> 格式响应。
+        </p>
+
+        <h3 id="section4-1">4.1 API 接口</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>接口名称</th>
+              <th>请求方式</th>
+              <th>接口路径</th>
+              <th>参数说明</th>
+              <th>返回结果</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>获取等级配置</td>
+              <td>GET</td>
+              <td>/stats/unbalanceStats/thresholds</td>
+              <td>无</td>
+              <td>等级配置列表</td>
+            </tr>
+            <tr>
+              <td>分页查询</td>
+              <td>GET</td>
+              <td>/stats/unbalanceStats/list</td>
+              <td>pageNo, pageSize, windFarmCode, windTurbineCode</td>
+              <td>分页数据</td>
+            </tr>
+            <tr>
+              <td>趋势数据</td>
+              <td>GET</td>
+              <td>/stats/unbalanceStats/trend</td>
+              <td>windTurbineCode, timeRange</td>
+              <td>趋势数据列表</td>
+            </tr>
+            <tr>
+              <td>对比数据</td>
+              <td>GET</td>
+              <td>/stats/unbalanceStats/compare</td>
+              <td>windFarmCode, timeRange</td>
+              <td>对比数据列表</td>
+            </tr>
+            <tr>
+              <td>最新等级</td>
+              <td>GET</td>
+              <td>/stats/unbalanceStats/latestLevel</td>
+              <td>windTurbineCode</td>
+              <td>最新等级信息</td>
+            </tr>
+            <tr>
+              <td>新增</td>
+              <td>POST</td>
+              <td>/stats/unbalanceStats/add</td>
+              <td>FengjiUnbalanceStats 对象</td>
+              <td>操作结果</td>
+            </tr>
+            <tr>
+              <td>编辑</td>
+              <td>PUT/POST</td>
+              <td>/stats/unbalanceStats/edit</td>
+              <td>FengjiUnbalanceStats 对象</td>
+              <td>操作结果</td>
+            </tr>
+            <tr>
+              <td>删除</td>
+              <td>DELETE</td>
+              <td>/stats/unbalanceStats/delete</td>
+              <td>id</td>
+              <td>操作结果</td>
+            </tr>
+            <tr>
+              <td>导出 Excel</td>
+              <td>GET</td>
+              <td>/stats/unbalanceStats/exportXls</td>
+              <td>查询条件</td>
+              <td>Excel 文件</td>
+            </tr>
+            <tr>
+              <td>导入 Excel</td>
+              <td>POST</td>
+              <td>/stats/unbalanceStats/importExcel</td>
+              <td>文件</td>
+              <td>操作结果</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3 id="section4-2">4.2 数据流转</h3>
+        <pre><code>┌─────────────┐      ┌─────────────┐      ┌─────────────┐
+│   前端 Vue   │      │  Controller │      │   Service   │
+│   组件      │      │   控制器    │      │   服务层    │
+└──────┬──────┘      └──────┬──────┘      └──────┬──────┘
+       │                    │                    │
+       │ 1. GET /trend      │                    │
+       │    windTurbineCode │                    │
+       │    timeRange       │                    │
+       │───────────────────&gt;│                    │
+       │                    │                    │
+       │                    │ 2. 解析时间范围     │
+       │                    │    计算 startTime  │
+       │                    │    endTime         │
+       │                    │                    │
+       │                    │ 3. queryTrendData()│
+       │                    │───────────────────&gt;│
+       │                    │                    │
+       │                    │                    │ 4. 执行 SQL 查询
+       │                    │                    │    fengji_unbalance_stats 表
+       │                    │                    │
+       │                    │ 5. 返回 List&lt;Map&gt;  │
+       │                    │&lt;───────────────────│
+       │                    │                    │
+       │ 6. Result.OK()     │                    │
+       │&lt;───────────────────│                    │
+       │                    │                    │
+       │ 7. 更新 this.trendData                  │
+       │                    │                    │
+       │ 8. 渲染图表                               │
+       │                    │                    │
+└──────┴──────┘      └──────┴──────┘      └──────┴──────┘</code></pre>
+
+        <h3 id="section4-3">4.3 趋势分析流程</h3>
+        <p>以单风机趋势分析为例，说明完整的数据流转过程：</p>
+
+        <div class="info-card">
+          <h4>📊 趋势分析步骤</h4>
+          <ol style="margin-left: 20px; margin-top: 10px">
+            <li><strong>用户操作</strong>：选择风机和时间范围（日/周/月）</li>
+            <li><strong>前端请求</strong>：调用 <code class="inline-code">loadTrendData()</code> 方法</li>
+            <li><strong>API 调用</strong>：发送 GET 请求到 <code class="inline-code">/stats/unbalanceStats/trend</code></li>
+            <li><strong>控制器处理</strong>：解析 <code class="inline-code">timeRange</code> 参数，计算时间范围</li>
+            <li><strong>服务层查询</strong>：调用 Mapper 的 <code class="inline-code">queryTrendData()</code> 方法</li>
+            <li><strong>数据库查询</strong>：执行 SQL 查询 <code class="inline-code">fengji_unbalance_stats</code> 表</li>
+            <li><strong>返回结果</strong>：逐层返回数据到前端组件</li>
+            <li><strong>图表渲染</strong>：Viser-vue 根据数据渲染折线图</li>
+          </ol>
+        </div>
+      </section>
+
+      <!-- 第五章：核心功能详解 -->
+      <section class="section" id="chapter5">
+        <h2>🎯 第五章：核心功能详解</h2>
+
+        <h3 id="section5-1">5.1 等级配置管理</h3>
+        <p>
+          不平衡等级配置存储在 <code class="inline-code">sys_custom_config</code> 表中，
+          支持动态调整等级划分标准，无需修改代码。
+        </p>
+
+        <h4>5.1.1 配置表结构</h4>
+        <pre><code class="language-sql">CREATE TABLE `sys_custom_config` (
+  `id` VARCHAR(32) NOT NULL,
+  `code` VARCHAR(100) DEFAULT NULL COMMENT '配置编码',
+  `config_value` TEXT COMMENT '配置值（JSON 格式）',
+  `remark` VARCHAR(500) DEFAULT NULL COMMENT '备注',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_code` (`code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='系统自定义配置表';</code></pre>
+
+        <h4>5.1.2 配置值示例</h4>
+        <pre><code class="language-json">{
+  "levels": [
+    {
+      "level": 1,
+      "max": 1.0,
+      "text": "无影响",
+      "color": "#52c41a"
+    },
+    {
+      "level": 2,
+      "max": 2.0,
+      "text": "轻微影响",
+      "color": "#73d13d"
+    },
+    {
+      "level": 3,
+      "max": 3.0,
+      "text": "中度影响",
+      "color": "#ffc53d"
+    },
+    {
+      "level": 4,
+      "max": 4.0,
+      "text": "严重影响",
+      "color": "#ff7a45"
+    },
+    {
+      "level": 5,
+      "max": 5.0,
+      "text": "紧急处理",
+      "color": "#ff4d4f"
+    }
+  ]
+}</code></pre>
+
+        <h3 id="section5-2">5.2 趋势数据分析</h3>
+        <p>
+          趋势数据查询支持三种时间范围：<code class="inline-code">day</code>（今日）、
+          <code class="inline-code">week</code>（近 7 天）、<code class="inline-code">month</code>（近 30 天）。
+        </p>
+
+        <h4>5.2.1 时间范围计算逻辑</h4>
+        <pre><code class="language-java">// day - 今日 00:00:00 到 明日 00:00:00
+calendar.set(Calendar.HOUR_OF_DAY, 0);
+calendar.set(Calendar.MINUTE, 0);
+calendar.set(Calendar.SECOND, 0);
+startTime = sdf.format(calendar.getTime());
+calendar.add(Calendar.DAY_OF_MONTH, 1);
+endTime = sdf.format(calendar.getTime());
+
+// week - 7 天前 00:00:00 到 今天 00:00:00
+calendar.add(Calendar.DAY_OF_MONTH, -6);
+calendar.set(Calendar.HOUR_OF_DAY, 0);
+calendar.set(Calendar.MINUTE, 0);
+calendar.set(Calendar.SECOND, 0);
+startTime = sdf.format(calendar.getTime());
+calendar.add(Calendar.DAY_OF_MONTH, 7);
+endTime = sdf.format(calendar.getTime());
+
+// month - 30 天前 00:00:00 到 今天 00:00:00
+calendar.add(Calendar.DAY_OF_MONTH, -29);
+calendar.set(Calendar.HOUR_OF_DAY, 0);
+calendar.set(Calendar.MINUTE, 0);
+calendar.set(Calendar.SECOND, 0);
+startTime = sdf.format(calendar.getTime());
+calendar.add(Calendar.DAY_OF_MONTH, 30);
+endTime = sdf.format(calendar.getTime());</code></pre>
+
+        <h4>5.2.2 Mapper XML SQL 示例</h4>
+        <pre><code class="language-xml">&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd"&gt;
+&lt;mapper namespace="org.jeecg.modules.fengji.stats.mapper.FengjiUnbalanceStatsMapper"&gt;
+
+    &lt;!-- 查询单风机不平衡趋势数据 --&gt;
+    &lt;select id="queryTrendData" resultType="java.util.Map"&gt;
+        SELECT
+            stats_time as statsTime,
+            unbalance_value as unbalanceValue,
+            unbalance_level as unbalanceLevel,
+            wind_speed as windSpeed,
+            rotation_speed as rotationSpeed
+        FROM
+            fengji_unbalance_stats
+        WHERE
+            wind_turbine_code = #{windTurbineCode}
+            AND stats_time &gt;= #{startTime}
+            AND stats_time &lt; #{endTime}
+        ORDER BY
+            stats_time ASC
+    &lt;/select&gt;
+
+    &lt;!-- 查询多风机不平衡对比数据 --&gt;
+    &lt;select id="queryCompareData" resultType="java.util.Map"&gt;
+        SELECT
+            wind_turbine_code as windTurbineCode,
+            AVG(unbalance_value) as unbalanceValue,
+            AVG(wind_speed) as windSpeed,
+            AVG(rotation_speed) as rotationSpeed,
+            COUNT(*) as dataCount
+        FROM
+            fengji_unbalance_stats
+        WHERE
+            wind_farm_code = #{windFarmCode}
+            AND stats_time &gt;= #{startTime}
+            AND stats_time &lt; #{endTime}
+        GROUP BY
+            wind_turbine_code
+        ORDER BY
+            wind_turbine_code
+    &lt;/select&gt;
+
+    &lt;!-- 查询最新不平衡等级 --&gt;
+    &lt;select id="queryLatestLevel" resultType="java.lang.Integer"&gt;
+        SELECT
+            unbalance_level
+        FROM
+            fengji_unbalance_stats
+        WHERE
+            wind_turbine_code = #{windTurbineCode}
+        ORDER BY
+            stats_time DESC
+        LIMIT 1
+    &lt;/select&gt;
+
+&lt;/mapper&gt;</code></pre>
+
+        <h3 id="section5-3">5.3 对比分析</h3>
+        <p>
+          多风机对比分析通过聚合查询，计算每个风机在指定时间范围内的平均不平衡值，
+          帮助运维人员快速识别问题风机。
+        </p>
+
+        <div class="tip">
+          <strong>💡 提示：</strong> 对比分析使用 <code class="inline-code">AVG()</code> 聚合函数计算平均值，
+          同时返回 <code class="inline-code">COUNT(*)</code> 用于评估数据完整性。
+        </div>
+      </section>
+
+      <!-- 第六章：性能优化与最佳实践 -->
+      <section class="section" id="chapter6">
+        <h2>🚀 第六章：性能优化与最佳实践</h2>
+
+        <h3 id="section6-1">6.1 数据库优化</h3>
+        <p>
+          为了保证查询性能，需要在关键字段上创建索引，优化查询效率。
+        </p>
+
+        <h4>6.1.1 索引设计</h4>
+        <table>
+          <thead>
+            <tr>
+              <th>索引名称</th>
+              <th>字段</th>
+              <th>类型</th>
+              <th>用途</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>idx_wind_farm_code</td>
+              <td>wind_farm_code</td>
+              <td>普通索引</td>
+              <td>风场筛选查询</td>
+            </tr>
+            <tr>
+              <td>idx_wind_turbine_code</td>
+              <td>wind_turbine_code</td>
+              <td>普通索引</td>
+              <td>风机筛选查询</td>
+            </tr>
+            <tr>
+              <td>idx_stats_time</td>
+              <td>stats_time</td>
+              <td>普通索引</td>
+              <td>时间范围查询</td>
+            </tr>
+            <tr>
+              <td>idx_unbalance_level</td>
+              <td>unbalance_level</td>
+              <td>普通索引</td>
+              <td>等级统计查询</td>
+            </tr>
+            <tr>
+              <td>idx_farm_turbine_time</td>
+              <td>wind_farm_code, wind_turbine_code, stats_time</td>
+              <td>复合索引</td>
+              <td>多条件组合查询（推荐）</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h4>6.1.2 SQL 创建索引语句</h4>
+        <pre><code class="language-sql">-- 单字段索引
+CREATE INDEX idx_wind_farm_code ON fengji_unbalance_stats(wind_farm_code);
+CREATE INDEX idx_wind_turbine_code ON fengji_unbalance_stats(wind_turbine_code);
+CREATE INDEX idx_stats_time ON fengji_unbalance_stats(stats_time);
+CREATE INDEX idx_unbalance_level ON fengji_unbalance_stats(unbalance_level);
+
+-- 复合索引（推荐）
+CREATE INDEX idx_farm_turbine_time ON fengji_unbalance_stats(wind_farm_code, wind_turbine_code, stats_time);</code></pre>
+
+        <h3 id="section6-2">6.2 最佳实践</h3>
+
+        <h4>6.2.1 数据分区策略</h4>
+        <p>
+          对于数据量较大的场景，可以考虑按时间进行表分区，提高查询性能：
+        </p>
+        <pre><code class="language-sql">-- MySQL 表分区示例（按月份分区）
+ALTER TABLE fengji_unbalance_stats
+PARTITION BY RANGE (TO_DAYS(stats_time)) (
+    PARTITION p202501 VALUES LESS THAN (TO_DAYS('2025-02-01')),
+    PARTITION p202502 VALUES LESS THAN (TO_DAYS('2025-03-01')),
+    PARTITION p202503 VALUES LESS THAN (TO_DAYS('2025-04-01')),
+    -- ... 更多分区
+    PARTITION p_max VALUES LESS THAN MAXVALUE
+);</code></pre>
+
+        <h4>6.2.2 缓存策略</h4>
+        <p>
+          对于不常变化的等级配置数据，可以使用 Redis 缓存，减少数据库查询：
+        </p>
+        <pre><code class="language-java">@Autowired
+private RedisTemplate&lt;String, Object&gt; redisTemplate;
+
+public List&lt;Map&lt;String, Object&gt;&gt; getThresholds() {
+    // 尝试从缓存读取
+    String cacheKey = "unbalance:thresholds";
+    Object cached = redisTemplate.opsForValue().get(cacheKey);
+    if (cached != null) {
+        return (List&lt;Map&lt;String, Object&gt;&gt;) cached;
+    }
+
+    // 从数据库查询
+    List&lt;Map&lt;String, Object&gt;&gt; levels = ...;
+
+    // 写入缓存（过期时间 1 小时）
+    redisTemplate.opsForValue().set(cacheKey, levels, 1, TimeUnit.HOURS);
+
+    return levels;
+}</code></pre>
+
+        <h4>6.2.3 前端性能优化</h4>
+        <ul style="margin-left: 20px">
+          <li><strong>防抖处理</strong>：搜索框输入使用防抖，减少请求次数</li>
+          <li><strong>数据分页</strong>：大数据量使用分页加载，避免一次性加载过多数据</li>
+          <li><strong>图表懒加载</strong>：图表组件进入可视区域后再加载数据</li>
+          <li><strong>缓存选项</strong>：风场、风机选项数据可以缓存在 Vuex 中</li>
+        </ul>
+
+        <h4>6.2.4 错误处理</h4>
+        <pre><code class="language-vue">// 统一的错误处理
+loadData() {
+  this.loading = true
+  getAction(this.url.list, params).then(res => {
+    if (res.success) {
+      this.dataSource = res.result.records
+      this.ipagination.total = res.result.total
+    } else {
+      this.$message.error(res.message || '查询失败')
+    }
+    this.loading = false
+  }).catch(error => {
+    console.error('查询出错:', error)
+    this.$message.error('网络异常，请稍后重试')
+    this.loading = false
+  })
+}</code></pre>
+
+        <div class="tip">
+          <strong>💡 总结：</strong> 风轮不平衡评估报告页面是一个完整的数据分析和可视化系统，
+          涵盖数据采集、存储、分析、展示的全流程。通过合理的架构设计和性能优化，
+          可以为用户提供流畅的使用体验和准确的数据分析结果。
+        </div>
+      </section>
+
+      <!-- 页脚 -->
+      <footer style="text-align: center; padding: 40px 0; color: #666; font-size: 0.9em">
+        <p>© 2025 风电净空监控系统 | 技术文档</p>
+        <p style="margin-top: 10px">
+          最后更新：2025 年 5 月 16 日 | 文档版本：v1.0
+        </p>
+      </footer>
+    </main>
+
+    <!-- JavaScript 交互 -->
+    <script>
+      // 平滑滚动
+      document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+          e.preventDefault()
+          const target = document.querySelector(this.getAttribute('href'))
+          if (target) {
+            target.scrollIntoView({
+              behavior: 'smooth',
+              block: 'start'
+            })
+          }
+        })
+      })
+
+      // 进度条更新
+      function updateProgressBar() {
+        const scrollTop = window.pageYOffset || document.documentElement.scrollTop
+        const scrollHeight = document.documentElement.scrollHeight - window.innerHeight
+        const progress = (scrollTop / scrollHeight) * 100
+        document.getElementById('progressBar').style.width = progress + '%'
+      }
+
+      // 返回顶部
+      function toggleBackToTop() {
+        const backToTop = document.getElementById('backToTop')
+        if (window.pageYOffset > 300) {
+          backToTop.style.display = 'flex'
+        } else {
+          backToTop.style.display = 'none'
+        }
+        updateProgressBar()
+      }
+
+      document.getElementById('backToTop').addEventListener('click', function () {
+        window.scrollTo({
+          top: 0,
+          behavior: 'smooth'
+        })
+      })
+
+      // 导航激活状态
+      function updateActiveNav() {
+        const sections = document.querySelectorAll('.section')
+        const navLinks = document.querySelectorAll('.sidebar-nav a')
+
+        let current = ''
+        sections.forEach(section => {
+          const sectionTop = section.offsetTop
+          const sectionHeight = section.clientHeight
+          if (window.pageYOffset >= sectionTop - 100) {
+            current = section.getAttribute('id')
+          }
+        })
+
+        navLinks.forEach(link => {
+          link.classList.remove('active')
+          if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active')
+          }
+        })
+      }
+
+      // 监听滚动事件
+      window.addEventListener('scroll', () => {
+        updateProgressBar()
+        toggleBackToTop()
+        updateActiveNav()
+      })
+
+      // 初始化
+      toggleBackToTop()
+      updateActiveNav()
+    </script>
+  </body>
+</html>
