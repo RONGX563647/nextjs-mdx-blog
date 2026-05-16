@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>阶段五：前端可视化界面 - 区块链可视化管理交易系统教程</title>
+    <link rel="stylesheet" href="../../docs/learn/css/style.css" />
+  </head>
+  <body>
+    <div class="main-container">
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          <h1>区块链可视化管理交易系统</h1>
+          <p>开发教程文档</p>
+        </div>
+        <nav class="sidebar-nav">
+          <div class="nav-section">
+            <div class="nav-section-title">首页</div>
+            <a href="index.html" class="nav-item">教程导览</a>
+          </div>
+          <div class="nav-section">
+            <div class="nav-section-title">开发阶段</div>
+            <a href="stage1-infrastructure.html" class="nav-item">阶段一：项目基础设施</a>
+            <a href="stage2-user.html" class="nav-item">阶段二：用户模块</a>
+            <a href="stage3-blockchain.html" class="nav-item">阶段三：区块链节点管理</a>
+            <a href="stage4-chat.html" class="nav-item">阶段四：即时聊天功能</a>
+            <a href="stage5-frontend.html" class="nav-item active">阶段五：前端可视化界面</a>
+            <a href="stage5-frontend.html#overview" class="nav-item nav-item-sub">界面概述</a>
+            <a href="stage5-frontend.html#login" class="nav-item nav-item-sub">登录界面</a>
+            <a href="stage5-frontend.html#main" class="nav-item nav-item-sub">主界面布局</a>
+            <a href="stage5-frontend.html#blockchain" class="nav-item nav-item-sub">区块链交易界面</a>
+            <a href="stage5-frontend.html#chat" class="nav-item nav-item-sub">聊天界面</a>
+            <a href="stage6-integration.html" class="nav-item">阶段六：系统集成与测试</a>
+          </div>
+        </nav>
+      </aside>
+      <main class="content">
+        <div class="content-header">
+          <div class="breadcrumb">
+            <a href="index.html">首页</a> / 阶段五：前端可视化界面
+          </div>
+          <h1>阶段五：前端可视化界面</h1>
+        </div>
+        <div class="section" id="overview">
+          <h2>一、前端界面概述</h2>
+          <p>系统提供多场景可视化操作界面，界面需实现交互操作、数据展示。根据需求文档，主要包含三大界面场景：</p>
+          <table>
+            <tr>
+              <th>界面</th>
+              <th>功能</th>
+            </tr>
+            <tr>
+              <td>登录界面</td>
+              <td>实现用户账号密码输入、注册跳转、登录验证</td>
+            </tr>
+            <tr>
+              <td>区块链交易界面</td>
+              <td>实现节点管理、交易创建、挖矿、余额查询、链查询、数据验证、节点同步等操作</td>
+            </tr>
+            <tr>
+              <td>聊天界面</td>
+              <td>实现成员消息发送、消息接收、聊天记录展示</td>
+            </tr>
+          </table>
+          <h3>1.1 技术栈</h3>
+          <ul>
+            <li><strong>Vue 3</strong>：渐进式 JavaScript 框架</li>
+            <li><strong>Vite</strong>：前端构建工具</li>
+            <li><strong>Element Plus</strong>：UI 组件库</li>
+            <li><strong>Axios</strong>：HTTP 请求库</li>
+            <li><strong>Vue Router</strong>：路由管理</li>
+          </ul>
+        </div>
+        <div class="section" id="login">
+          <h2>二、登录界面</h2>
+          <h3>2.1 登录/注册页面</h3>
+          <pre><code>&lt;template&gt;
+  &lt;div class="auth-container"&gt;
+    &lt;div class="auth-card"&gt;
+      &lt;h1&gt;区块链可视化管理交易系统&lt;/h1&gt;
+      
+      &lt;!-- 登录表单 --&gt;
+      &lt;el-form 
+        v-if="isLogin" 
+        :model="loginForm" 
+        label-width="0"
+        class="auth-form"
+      &gt;
+        &lt;h2&gt;用户登录&lt;/h2&gt;
+        &lt;el-form-item&gt;
+          &lt;el-input 
+            v-model="loginForm.username" 
+            placeholder="请输入用户名" 
+            prefix-icon="User"
+          /&gt;
+        &lt;/el-form-item&gt;
+        &lt;el-form-item&gt;
+          &lt;el-input 
+            v-model="loginForm.password" 
+            type="password" 
+            placeholder="请输入密码" 
+            prefix-icon="Lock"
+            show-password
+          /&gt;
+        &lt;/el-form-item&gt;
+        &lt;el-form-item&gt;
+          &lt;el-button type="primary" @click="handleLogin" class="full-width"&gt;
+            登录
+          &lt;/el-button&gt;
+        &lt;/el-form-item&gt;
+        &lt;div class="auth-link"&gt;
+          &lt;span&gt;还没有账号？&lt;/span&gt;
+          &lt;el-link type="primary" @click="toggleMode"&gt;立即注册&lt;/el-link&gt;
+        &lt;/div&gt;
+      &lt;/el-form&gt;
+
+      &lt;!-- 注册表单 --&gt;
+      &lt;el-form 
+        v-else 
+        :model="registerForm" 
+        label-width="0"
+        class="auth-form"
+      &gt;
+        &lt;h2&gt;用户注册&lt;/h2&gt;
+        &lt;el-form-item&gt;
+          &lt;el-input 
+            v-model="registerForm.username" 
+            placeholder="请输入用户名" 
+            prefix-icon="User"
+          /&gt;
+        &lt;/el-form-item&gt;
+        &lt;el-form-item&gt;
+          &lt;el-input 
+            v-model="registerForm.password" 
+            type="password" 
+            placeholder="请输入密码" 
+            prefix-icon="Lock"
+            show-password
+          /&gt;
+        &lt;/el-form-item&gt;
+        &lt;el-form-item&gt;
+          &lt;el-input 
+            v-model="registerForm.confirmPassword" 
+            type="password" 
+            placeholder="请确认密码" 
+            prefix-icon="Lock"
+            show-password
+          /&gt;
+        &lt;/el-form-item&gt;
+        &lt;el-form-item&gt;
+          &lt;el-button type="primary" @click="handleRegister" class="full-width"&gt;
+            注册
+          &lt;/el-button&gt;
+        &lt;/el-form-item&gt;
+        &lt;div class="auth-link"&gt;
+          &lt;span&gt;已有账号？&lt;/span&gt;
+          &lt;el-link type="primary" @click="toggleMode"&gt;立即登录&lt;/el-link&gt;
+        &lt;/div&gt;
+      &lt;/el-form&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+&lt;/template&gt;
+
+&lt;script setup&gt;
+import { ref, reactive } from 'vue'
+import { useRouter } from 'vue-router'
+import axios from 'axios'
+import { ElMessage } from 'element-plus'
+
+const router = useRouter()
+const isLogin = ref(true)
+
+const loginForm = reactive({
+  username: '',
+  password: ''
+})
+
+const registerForm = reactive({
+  username: '',
+  password: '',
+  confirmPassword: ''
+})
+
+function toggleMode() {
+  isLogin.value = !isLogin.value
+}
+
+async function handleLogin() {
+  try {
+    const response = await axios.post('/api/user/login', {
+      username: loginForm.username,
+      password: loginForm.password
+    })
+    if (response.data.status === 'success') {
+      // 保存用户信息
+      localStorage.setItem('userInfo', JSON.stringify(response.data.user))
+      localStorage.setItem('username', response.data.user.username)
+      ElMessage.success('登录成功')
+      router.push('/dashboard')
+    }
+  } catch (error) {
+    ElMessage.error(error.response?.data?.message || '登录失败')
+  }
+}
+
+async function handleRegister() {
+  if (registerForm.password !== registerForm.confirmPassword) {
+    ElMessage.warning('两次密码输入不一致')
+    return
+  }
+  try {
+    const response = await axios.post('/api/user/register', {
+      username: registerForm.username,
+      password: registerForm.password
+    })
+    if (response.data.status === 'success') {
+      ElMessage.success('注册成功，请登录')
+      isLogin.value = true
+    }
+  } catch (error) {
+    ElMessage.error(error.response?.data?.message || '注册失败')
+  }
+}
+&lt;/script&gt;
+
+&lt;style scoped&gt;
+.auth-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.auth-card {
+  background: white;
+  padding: 40px;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  width: 400px;
+}
+
+.auth-card h1 {
+  text-align: center;
+  color: #333;
+  margin-bottom: 30px;
+  font-size: 20px;
+}
+
+.auth-form h2 {
+  color: #555;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.auth-link {
+  text-align: center;
+  margin-top: 16px;
+}
+&lt;/style&gt;</code></pre>
+        </div>
+        <div class="section" id="main">
+          <h2>三、主界面布局</h2>
+          <h3>3.1 App.vue 根组件</h3>
+          <pre><code>&lt;template&gt;
+  &lt;div id="app"&gt;
+    &lt;router-view /&gt;
+  &lt;/div&gt;
+&lt;/template&gt;
+
+&lt;script setup&gt;
+// App 根组件
+&lt;/script&gt;</code></pre>
+          <h3>3.2 Dashboard 主布局</h3>
+          <pre><code>&lt;template&gt;
+  &lt;el-container class="dashboard-layout"&gt;
+    &lt;!-- 侧边栏 --&gt;
+    &lt;el-aside width="200px"&gt;
+      &lt;div class="logo"&gt;
+        &lt;h2&gt;区块链管理系统&lt;/h2&gt;
+      &lt;/div&gt;
+      &lt;el-menu
+        :default-active="activeMenu"
+        router
+        background-color="#304156"
+        text-color="#bfcbd9"
+        active-text-color="#409eff"
+      &gt;
+        &lt;el-menu-item index="/dashboard/blockchain"&gt;
+          &lt;el-icon&gt;&lt;Connection /&gt;&lt;/el-icon&gt;
+          &lt;span&gt;区块链管理&lt;/span&gt;
+        &lt;/el-menu-item&gt;
+        &lt;el-menu-item index="/dashboard/chat"&gt;
+          &lt;el-icon&gt;&lt;ChatDotRound /&gt;&lt;/el-icon&gt;
+          &lt;span&gt;即时聊天&lt;/span&gt;
+        &lt;/el-menu-item&gt;
+        &lt;el-menu-item index="/dashboard/profile"&gt;
+          &lt;el-icon&gt;&lt;User /&gt;&lt;/el-icon&gt;
+          &lt;span&gt;个人中心&lt;/span&gt;
+        &lt;/el-menu-item&gt;
+      &lt;/el-menu&gt;
+    &lt;/el-aside&gt;
+
+    &lt;!-- 主内容区 --&gt;
+    &lt;el-container&gt;
+      &lt;!-- 顶部导航 --&gt;
+      &lt;el-header class="header"&gt;
+        &lt;div class="header-left"&gt;
+          &lt;span&gt;欢迎，{{ userInfo.username }}&lt;/span&gt;
+        &lt;/div&gt;
+        &lt;div class="header-right"&gt;
+          &lt;el-dropdown&gt;
+            &lt;el-avatar :size="32"&gt;{{ userInfo.username?.charAt(0) }}&lt;/el-avatar&gt;
+            &lt;template #dropdown&gt;
+              &lt;el-dropdown-menu&gt;
+                &lt;el-dropdown-item @click="handleLogout"&gt;退出登录&lt;/el-dropdown-item&gt;
+              &lt;/el-dropdown-menu&gt;
+            &lt;/template&gt;
+          &lt;/el-dropdown&gt;
+        &lt;/div&gt;
+      &lt;/el-header&gt;
+
+      &lt;!-- 内容区 --&gt;
+      &lt;el-main&gt;
+        &lt;router-view /&gt;
+      &lt;/el-main&gt;
+    &lt;/el-container&gt;
+  &lt;/el-container&gt;
+&lt;/template&gt;
+
+&lt;script setup&gt;
+import { ref, computed } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { ElMessageBox } from 'element-plus'
+
+const router = useRouter()
+const route = useRoute()
+
+const userInfo = ref(JSON.parse(localStorage.getItem('userInfo') || '{}'))
+const activeMenu = computed(() => route.path)
+
+function handleLogout() {
+  ElMessageBox.confirm('确定要退出登录吗？', '提示', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning'
+  }).then(() => {
+    localStorage.clear()
+    router.push('/login')
+  })
+}
+&lt;/script&gt;
+
+&lt;style scoped&gt;
+.dashboard-layout {
+  height: 100vh;
+}
+
+.el-aside {
+  background-color: #304156;
+}
+
+.logo {
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #2b3a4c;
+}
+
+.logo h2 {
+  color: white;
+  font-size: 16px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: white;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+.el-main {
+  background-color: #f0f2f5;
+  padding: 20px;
+}
+&lt;/style&gt;</code></pre>
+          <h3>3.3 路由配置</h3>
+          <pre><code>// router/index.js
+import { createRouter, createWebHistory } from 'vue-router'
+
+const routes = [
+  {
+    path: '/',
+    redirect: '/login'
+  },
+  {
+    path: '/login',
+    name: 'Login',
+    component: () => import('../views/Login.vue')
+  },
+  {
+    path: '/dashboard',
+    component: () => import('../views/Dashboard.vue'),
+    children: [
+      {
+        path: 'blockchain',
+        name: 'Blockchain',
+        component: () => import('../views/BlockchainView.vue')
+      },
+      {
+        path: 'chat',
+        name: 'Chat',
+        component: () => import('../views/ChatView.vue')
+      },
+      {
+        path: 'profile',
+        name: 'Profile',
+        component: () => import('../views/ProfileView.vue')
+      }
+    ]
+  }
+]
+
+const router = createRouter({
+  history: createWebHistory(),
+  routes
+})
+
+// 路由守卫
+router.beforeEach((to, from, next) => {
+  const userInfo = localStorage.getItem('userInfo')
+  if (to.path !== '/login' && !userInfo) {
+    next('/login')
+  } else {
+    next()
+  }
+})
+
+export default router</code></pre>
+        </div>
+        <div class="section" id="blockchain">
+          <h2>四、区块链交易界面</h2>
+          <h3>4.1 区块链管理页面</h3>
+          <pre><code>&lt;template&gt;
+  &lt;div class="blockchain-view"&gt;
+    &lt;h2&gt;区块链管理&lt;/h2&gt;
+
+    &lt;!-- 节点信息卡片 --&gt;
+    &lt;el-row :gutter="20"&gt;
+      &lt;el-col :span="6"&gt;
+        &lt;el-card shadow="hover"&gt;
+          &lt;template #header&gt;
+            &lt;span&gt;节点ID&lt;/span&gt;
+          &lt;/template&gt;
+          &lt;p class="stat-value"&gt;{{ nodeInfo.nodeId || '-' }}&lt;/p&gt;
+        &lt;/el-card&gt;
+      &lt;/el-col&gt;
+      &lt;el-col :span="6"&gt;
+        &lt;el-card shadow="hover"&gt;
+          &lt;template #header&gt;
+            &lt;span&gt;钱包地址&lt;/span&gt;
+          &lt;/template&gt;
+          &lt;p class="stat-value"&gt;{{ wallet.address || '-' }}&lt;/p&gt;
+        &lt;/el-card&gt;
+      &lt;/el-col&gt;
+      &lt;el-col :span="6"&gt;
+        &lt;el-card shadow="hover"&gt;
+          &lt;template #header&gt;
+            &lt;span&gt;钱包余额&lt;/span&gt;
+          &lt;/template&gt;
+          &lt;p class="stat-value"&gt;{{ stats.walletBalance || 0 }}&lt;/p&gt;
+        &lt;/el-card&gt;
+      &lt;/el-col&gt;
+      &lt;el-col :span="6"&gt;
+        &lt;el-card shadow="hover"&gt;
+          &lt;template #header&gt;
+            &lt;span&gt;链长度&lt;/span&gt;
+          &lt;/template&gt;
+          &lt;p class="stat-value"&gt;{{ stats.chainLength || 0 }}&lt;/p&gt;
+        &lt;/el-card&gt;
+      &lt;/el-col&gt;
+    &lt;/el-row&gt;
+
+    &lt;!-- 操作按钮区 --&gt;
+    &lt;el-card class="action-card"&gt;
+      &lt;template #header&gt;
+        &lt;span&gt;操作&lt;/span&gt;
+      &lt;/template&gt;
+      &lt;el-button type="primary" @click="txDialogVisible = true"&gt;
+        创建交易
+      &lt;/el-button&gt;
+      &lt;el-button type="success" @click="handleMine"&gt;
+        挖矿
+      &lt;/el-button&gt;
+      &lt;el-button type="warning" @click="handleValidate"&gt;
+        验证链
+      &lt;/el-button&gt;
+      &lt;el-button type="info" @click="handleSync"&gt;
+        同步网络
+      &lt;/el-button&gt;
+    &lt;/el-card&gt;
+
+    &lt;!-- 区块链数据展示 --&gt;
+    &lt;el-card&gt;
+      &lt;template #header&gt;
+        &lt;div class="card-header"&gt;
+          &lt;span&gt;区块链数据 ({{ chain.length }} 个区块)&lt;/span&gt;
+          &lt;el-button @click="loadChain"&gt;刷新&lt;/el-button&gt;
+        &lt;/div&gt;
+      &lt;/template&gt;
+      &lt;el-timeline&gt;
+        &lt;el-timeline-item 
+          v-for="block in chain" 
+          :key="block.index"
+          :timestamp="'区块 #' + block.index"
+          placement="top"
+        &gt;
+          &lt;el-card shadow="hover"&gt;
+            &lt;el-descriptions :column="2" border&gt;
+              &lt;el-descriptions-item label="Hash"&gt;
+                &lt;code&gt;{{ block.hash }}&lt;/code&gt;
+              &lt;/el-descriptions-item&gt;
+              &lt;el-descriptions-item label="Previous Hash"&gt;
+                &lt;code&gt;{{ block.previousHash }}&lt;/code&gt;
+              &lt;/el-descriptions-item&gt;
+              &lt;el-descriptions-item label="交易数"&gt;
+                {{ block.transactions?.length || 0 }}
+              &lt;/el-descriptions-item&gt;
+              &lt;el-descriptions-item label="Nonce"&gt;
+                {{ block.nonce }}
+              &lt;/el-descriptions-item&gt;
+              &lt;el-descriptions-item label="时间戳"&gt;
+                {{ formatTimestamp(block.timestamp) }}
+              &lt;/el-descriptions-item&gt;
+            &lt;/el-descriptions&gt;
+          &lt;/el-card&gt;
+        &lt;/el-timeline-item&gt;
+      &lt;/el-timeline&gt;
+    &lt;/el-card&gt;
+
+    &lt;!-- 邻居节点管理 --&gt;
+    &lt;el-card&gt;
+      &lt;template #header&gt;
+        &lt;span&gt;邻居节点 ({{ peers.length }})&lt;/span&gt;
+      &lt;/template&gt;
+      &lt;el-table :data="peers"&gt;
+        &lt;el-table-column prop="address" label="节点地址" /&gt;
+        &lt;el-table-column label="操作" width="120"&gt;
+          &lt;template #default="{ row }"&gt;
+            &lt;el-button 
+              type="danger" 
+              size="small" 
+              @click="removePeer(row)"
+            &gt;移除&lt;/el-button&gt;
+          &lt;/template&gt;
+        &lt;/el-table-column&gt;
+      &lt;/el-table&gt;
+      &lt;div style="margin-top: 16px; display: flex; gap: 10px;"&gt;
+        &lt;el-input 
+          v-model="newPeerAddress" 
+          placeholder="输入节点地址 (如: localhost:8081)" 
+          style="width: 300px;"
+        /&gt;
+        &lt;el-button type="primary" @click="addPeer"&gt;添加节点&lt;/el-button&gt;
+      &lt;/div&gt;
+    &lt;/el-card&gt;
+
+    &lt;!-- 交易创建对话框 --&gt;
+    &lt;el-dialog v-model="txDialogVisible" title="创建交易"&gt;
+      &lt;el-form :model="txForm" label-width="100px"&gt;
+        &lt;el-form-item label="接收方地址"&gt;
+          &lt;el-input v-model="txForm.recipient" /&gt;
+        &lt;/el-form-item&gt;
+        &lt;el-form-item label="交易金额"&gt;
+          &lt;el-input-number 
+            v-model="txForm.amount" 
+            :min="0.1" 
+            :step="0.1" 
+          /&gt;
+        &lt;/el-form-item&gt;
+      &lt;/el-form&gt;
+      &lt;template #footer&gt;
+        &lt;el-button @click="txDialogVisible = false"&gt;取消&lt;/el-button&gt;
+        &lt;el-button type="primary" @click="submitTransaction"&gt;确认&lt;/el-button&gt;
+      &lt;/template&gt;
+    &lt;/el-dialog&gt;
+  &lt;/div&gt;
+&lt;/template&gt;
+
+&lt;script setup&gt;
+import { ref, reactive, onMounted } from 'vue'
+import axios from 'axios'
+import { ElMessage } from 'element-plus'
+
+const nodeInfo = ref({})
+const wallet = ref({})
+const stats = ref({})
+const chain = ref([])
+const peers = ref([])
+const txDialogVisible = ref(false)
+const newPeerAddress = ref('')
+
+const txForm = reactive({
+  recipient: '',
+  amount: 1
+})
+
+// 加载节点信息
+async function loadNodeInfo() {
+  const res = await axios.get('/api/blockchain/node/info')
+  nodeInfo.value = res.data
+}
+
+async function loadWallet() {
+  const res = await axios.get('/api/blockchain/wallet')
+  wallet.value = res.data
+}
+
+async function loadStats() {
+  const res = await axios.get('/api/blockchain/stats')
+  stats.value = res.data
+}
+
+async function loadChain() {
+  const res = await axios.get('/api/blockchain/chain')
+  chain.value = res.data
+}
+
+async function loadPeers() {
+  const res = await axios.get('/api/blockchain/peers')
+  peers.value = res.data
+}
+
+// 创建交易
+async function submitTransaction() {
+  try {
+    await axios.post('/api/blockchain/transaction', null, {
+      params: {
+        senderAddress: wallet.value.address,
+        recipientAddress: txForm.recipient,
+        amount: txForm.amount
+      }
+    })
+    ElMessage.success('交易创建成功')
+    txDialogVisible.value = false
+    loadChain()
+  } catch (error) {
+    ElMessage.error('交易创建失败')
+  }
+}
+
+// 挖矿
+async function handleMine() {
+  try {
+    await axios.post('/api/blockchain/mine', null, {
+      params: { minerAddress: wallet.value.address }
+    })
+    ElMessage.success('挖矿成功')
+    loadChain()
+    loadStats()
+  } catch (error) {
+    ElMessage.error('挖矿失败')
+  }
+}
+
+// 验证链
+async function handleValidate() {
+  const res = await axios.get('/api/blockchain/validate')
+  ElMessage[res.data.valid ? 'success' : 'error'](
+    res.data.valid ? '区块链有效' : '区块链无效'
+  )
+  loadStats()
+}
+
+// 同步网络
+async function handleSync() {
+  await axios.post('/api/blockchain/sync')
+  ElMessage.success('同步完成')
+  loadChain()
+}
+
+// 添加邻居节点
+async function addPeer() {
+  if (!newPeerAddress.value) return
+  await axios.post('/api/blockchain/peers/add', null, {
+    params: { peerAddress: newPeerAddress.value }
+  })
+  newPeerAddress.value = ''
+  ElMessage.success('节点添加成功')
+  loadPeers()
+}
+
+// 移除邻居节点
+async function removePeer(peer) {
+  await axios.delete('/api/blockchain/peers/remove', {
+    params: { peerAddress: peer }
+  })
+  ElMessage.success('节点已移除')
+  loadPeers()
+}
+
+function formatTimestamp(timestamp) {
+  return new Date(timestamp).toLocaleString()
+}
+
+onMounted(() => {
+  loadNodeInfo()
+  loadWallet()
+  loadStats()
+  loadChain()
+  loadPeers()
+})
+&lt;/script&gt;
+
+&lt;style scoped&gt;
+.blockchain-view h2 {
+  margin-bottom: 20px;
+}
+
+.stat-value {
+  font-size: 18px;
+  font-weight: bold;
+  color: #409eff;
+  word-break: break-all;
+}
+
+.action-card {
+  margin: 20px 0;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+code {
+  font-size: 12px;
+  background: #f5f5f5;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+&lt;/style&gt;</code></pre>
+        </div>
+        <div class="section" id="chat">
+          <h2>五、聊天界面</h2>
+          <h3>5.1 即时聊天页面</h3>
+          <pre><code>&lt;template&gt;
+  &lt;div class="chat-view"&gt;
+    &lt;h2&gt;即时聊天交流&lt;/h2&gt;
+    
+    &lt;div class="chat-wrapper"&gt;
+      &lt;!-- 消息展示区 --&gt;
+      &lt;div class="chat-messages" ref="messageContainer"&gt;
+        &lt;div 
+          v-for="(msg, index) in messages" 
+          :key="index"
+          class="chat-message"
+          :class="{ 'self': msg.sender === currentUser }"
+        &gt;
+          &lt;div class="message-avatar"&gt;
+            &lt;el-avatar :size="36"&gt;
+              {{ msg.sender?.charAt(0) }}
+            &lt;/el-avatar&gt;
+          &lt;/div&gt;
+          &lt;div class="message-content"&gt;
+            &lt;div class="message-header"&gt;
+              &lt;span class="sender-name"&gt;{{ msg.sender }}&lt;/span&gt;
+              &lt;el-tag size="small" :type="getTypeTag(msg.type)"&gt;
+                {{ msg.type }}
+              &lt;/el-tag&gt;
+              &lt;span class="message-time"&gt;{{ formatTime(msg.timestamp) }}&lt;/span&gt;
+            &lt;/div&gt;
+            &lt;div class="message-text"&gt;{{ msg.content }}&lt;/div&gt;
+          &lt;/div&gt;
+        &lt;/div&gt;
+        
+        &lt;div v-if="messages.length === 0" class="empty-tip"&gt;
+          暂无消息，发送第一条消息开始交流吧！
+        &lt;/div&gt;
+      &lt;/div&gt;
+
+      &lt;!-- 消息输入区 --&gt;
+      &lt;div class="chat-input-area"&gt;
+        &lt;el-input
+          v-model="newMessage"
+          type="textarea"
+          :rows="2"
+          placeholder="输入消息，按 Enter 发送..."
+          @keydown.enter.prevent="sendMessage"
+        /&gt;
+        &lt;div class="input-actions"&gt;
+          &lt;el-button type="primary" @click="sendMessage"&gt;发送&lt;/el-button&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+&lt;/template&gt;
+
+&lt;script setup&gt;
+import { ref, nextTick, onMounted, onUnmounted } from 'vue'
+import axios from 'axios'
+import { ElMessage } from 'element-plus'
+
+const messages = ref([])
+const newMessage = ref('')
+const currentUser = ref(localStorage.getItem('username') || 'guest')
+const messageContainer = ref(null)
+
+// 发送消息
+async function sendMessage() {
+  if (!newMessage.value.trim()) return
+  
+  try {
+    await axios.post('/api/chat/send', {
+      content: newMessage.value,
+      sender: currentUser.value
+    })
+    
+    // 添加到本地列表
+    messages.value.push({
+      messageId: Date.now().toString(),
+      content: newMessage.value,
+      sender: currentUser.value,
+      type: 'CHAT',
+      timestamp: new Date().toISOString()
+    })
+    
+    newMessage.value = ''
+    scrollToBottom()
+  } catch (error) {
+    ElMessage.error('消息发送失败')
+  }
+}
+
+// 滚动到底部
+function scrollToBottom() {
+  nextTick(() => {
+    if (messageContainer.value) {
+      messageContainer.value.scrollTop = messageContainer.value.scrollHeight
+    }
+  })
+}
+
+// 格式化时间
+function formatTime(timestamp) {
+  if (!timestamp) return ''
+  const date = new Date(timestamp)
+  return date.toLocaleTimeString()
+}
+
+// 获取类型标签
+function getTypeTag(type) {
+  const map = {
+    'INFO': 'info',
+    'WARNING': 'warning',
+    'ERROR': 'danger',
+    'ORDER': 'success',
+    'NOTIFICATION': '',
+    'CHAT': ''
+  }
+  return map[type] || ''
+}
+
+// 定时轮询新消息
+let pollInterval = null
+
+onMounted(() => {
+  pollInterval = setInterval(async () => {
+    // TODO: 通过 WebSocket/SSE 实时获取消息
+    // 或使用轮询方式获取最新消息
+  }, 2000)
+})
+
+onUnmounted(() => {
+  if (pollInterval) {
+    clearInterval(pollInterval)
+  }
+})
+&lt;/script&gt;
+
+&lt;style scoped&gt;
+.chat-view {
+  height: calc(100vh - 140px);
+}
+
+.chat-view h2 {
+  margin-bottom: 20px;
+}
+
+.chat-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: calc(100% - 40px);
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+}
+
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+}
+
+.chat-message {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+  max-width: 70%;
+}
+
+.chat-message.self {
+  margin-left: auto;
+  flex-direction: row-reverse;
+}
+
+.message-content {
+  background: #f5f5f5;
+  padding: 10px 14px;
+  border-radius: 8px;
+}
+
+.chat-message.self .message-content {
+  background: #e3f2fd;
+}
+
+.message-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.sender-name {
+  font-weight: bold;
+  color: #333;
+}
+
+.message-time {
+  font-size: 12px;
+  color: #999;
+}
+
+.message-text {
+  color: #555;
+}
+
+.empty-tip {
+  text-align: center;
+  color: #999;
+  padding: 40px;
+}
+
+.chat-input-area {
+  padding: 16px;
+  border-top: 1px solid #eee;
+}
+
+.input-actions {
+  margin-top: 8px;
+  text-align: right;
+}
+&lt;/style&gt;</code></pre>
+        </div>
+      </main>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>阶段四：即时聊天功能 - 区块链可视化管理交易系统教程</title>
+    <link rel="stylesheet" href="../../docs/learn/css/style.css" />
+  </head>
+  <body>
+    <div class="main-container">
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          <h1>区块链可视化管理交易系统</h1>
+          <p>开发教程文档</p>
+        </div>
+        <nav class="sidebar-nav">
+          <div class="nav-section">
+            <div class="nav-section-title">首页</div>
+            <a href="index.html" class="nav-item">教程导览</a>
+          </div>
+          <div class="nav-section">
+            <div class="nav-section-title">开发阶段</div>
+            <a href="stage1-infrastructure.html" class="nav-item">阶段一：项目基础设施</a>
+            <a href="stage2-user.html" class="nav-item">阶段二：用户模块</a>
+            <a href="stage3-blockchain.html" class="nav-item">阶段三：区块链节点管理</a>
+            <a href="stage4-chat.html" class="nav-item active">阶段四：即时聊天功能</a>
+            <a href="stage4-chat.html#overview" class="nav-item nav-item-sub">功能概述</a>
+            <a href="stage4-chat.html#config" class="nav-item nav-item-sub">RabbitMQ配置</a>
+            <a href="stage4-chat.html#dto" class="nav-item nav-item-sub">消息数据模型</a>
+            <a href="stage4-chat.html#producer" class="nav-item nav-item-sub">消息生产者</a>
+            <a href="stage4-chat.html#consumer" class="nav-item nav-item-sub">消息消费者</a>
+            <a href="stage4-chat.html#controller" class="nav-item nav-item-sub">聊天控制器</a>
+            <a href="stage4-chat.html#api" class="nav-item nav-item-sub">API 接口</a>
+            <a href="stage5-frontend.html" class="nav-item">阶段五：前端可视化界面</a>
+            <a href="stage6-integration.html" class="nav-item">阶段六：系统集成与测试</a>
+          </div>
+        </nav>
+      </aside>
+      <main class="content">
+        <div class="content-header">
+          <div class="breadcrumb">
+            <a href="index.html">首页</a> / 阶段四：即时聊天功能
+          </div>
+          <h1>阶段四：即时聊天功能</h1>
+        </div>
+        <div class="section" id="overview">
+          <h2>一、即时聊天功能概述</h2>
+          <p>即时聊天交流平台基于 RabbitMQ 生产者-消费者模式实现，为区块链平台所有注册用户（节点成员）提供在线交流功能，用于商讨交易相关事宜。</p>
+          <h3>1.1 功能需求</h3>
+          <ul>
+            <li><strong>通信主体</strong>：区块链平台所有注册用户（节点成员）</li>
+            <li><strong>通信内容</strong>：成员之间在线交流、聊天，用于商讨交易相关事宜</li>
+            <li><strong>通信技术</strong>：基于 RabbitMQ 生产者-消费者模式实现消息收发</li>
+          </ul>
+          <h3>1.2 架构设计</h3>
+          <pre><code>用户A (生产者)                    RabbitMQ                    用户B (消费者)
++-------------+              +-------------------+              +-------------+
+| ChatProducer | ---消息---> |    Exchange       | ---消息---> | ChatConsumer |
+|              |              |                   |              |              |
+| 发送消息      |              |  消息路由/分发     |              | 接收消息      |
+| 到队列        |              |                   |              | 推送给前端    |
++-------------+              +-------------------+              +-------------+
+                                   |
+                            +--------------+
+                            |    Queue     |
+                            |  消息存储     |
+                            +--------------+</code></pre>
+          <h3>1.3 消息流转过程</h3>
+          <ol>
+            <li>用户在前端输入聊天消息并发送</li>
+            <li>前端通过 HTTP API 将消息发送到后端 ChatController</li>
+            <li>ChatController 调用 ChatProducer 将消息发送到 RabbitMQ</li>
+            <li>RabbitMQ 将消息存储到对应队列</li>
+            <li>ChatConsumer 监听队列，接收到消息后处理</li>
+            <li>处理后的消息通过 WebSocket 或 SSE 推送给在线用户</li>
+          </ol>
+        </div>
+        <div class="section" id="config">
+          <h2>二、RabbitMQ 配置</h2>
+          <h3>2.1 依赖配置</h3>
+          <p><strong>pom.xml - 添加 RabbitMQ 依赖：</strong></p>
+          <pre><code>&lt;dependency&gt;
+    &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+    &lt;artifactId&gt;spring-boot-starter-amqp&lt;/artifactId&gt;
+&lt;/dependency&gt;
+
+&lt;dependency&gt;
+    &lt;groupId&gt;com.fasterxml.jackson.datatype&lt;/groupId&gt;
+    &lt;artifactId&gt;jackson-datatype-jsr310&lt;/artifactId&gt;
+&lt;/dependency&gt;</code></pre>
+          <h3>2.2 应用配置</h3>
+          <p><strong>application.yml - RabbitMQ 连接配置：</strong></p>
+          <pre><code>spring:
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+    virtual-host: /
+    listener:
+      simple:
+        acknowledge-mode: auto</code></pre>
+          <h3>2.3 RabbitMQConfig 配置类</h3>
+          <pre><code>@Configuration
+public class RabbitMQConfig {
+    // 交换机名称
+    public static final String DIRECT_EXCHANGE = "chat-direct-exchange";
+    public static final String TOPIC_EXCHANGE = "chat-topic-exchange";
+    public static final String FANOUT_EXCHANGE = "chat-fanout-exchange";
+
+    // 队列名称
+    public static final String CHAT_QUEUE = "chat-queue";
+    public static final String INFO_QUEUE = "info-queue";
+    public static final String WARNING_QUEUE = "warning-queue";
+    public static final String ERROR_QUEUE = "error-queue";
+    public static final String ORDER_QUEUE = "order-queue";
+    public static final String NOTIFICATION_QUEUE = "notification-queue";
+
+    // 路由键
+    public static final String INFO_ROUTING_KEY = "route.info";
+    public static final String WARNING_ROUTING_KEY = "route.warning";
+    public static final String ERROR_ROUTING_KEY = "route.error";
+    public static final String ORDER_ROUTING_KEY = "route.order";
+    public static final String NOTIFICATION_ROUTING_KEY = "route.notification";
+
+    // 创建 Direct 交换机
+    @Bean
+    public DirectExchange directExchange() {
+        return new DirectExchange(DIRECT_EXCHANGE, true, false);
+    }
+
+    // 创建 Topic 交换机
+    @Bean
+    public TopicExchange topicExchange() {
+        return new TopicExchange(TOPIC_EXCHANGE, true, false);
+    }
+
+    // 创建 Fanout 交换机
+    @Bean
+    public FanoutExchange fanoutExchange() {
+        return new FanoutExchange(FANOUT_EXCHANGE, true, false);
+    }
+
+    // 创建聊天队列
+    @Bean
+    public Queue chatQueue() {
+        return new Queue(CHAT_QUEUE, true);
+    }
+
+    @Bean
+    public Queue infoQueue() {
+        return new Queue(INFO_QUEUE, true);
+    }
+
+    @Bean
+    public Queue warningQueue() {
+        return new Queue(WARNING_QUEUE, true);
+    }
+
+    @Bean
+    public Queue errorQueue() {
+        return new Queue(ERROR_QUEUE, true);
+    }
+
+    @Bean
+    public Queue orderQueue() {
+        return new Queue(ORDER_QUEUE, true);
+    }
+
+    @Bean
+    public Queue notificationQueue() {
+        return new Queue(NOTIFICATION_QUEUE, true);
+    }
+
+    // 绑定关系
+    @Bean
+    public Binding chatBinding(FanoutExchange fanoutExchange, Queue chatQueue) {
+        return BindingBuilder.bind(chatQueue).to(fanoutExchange);
+    }
+
+    @Bean
+    public Binding infoBinding(DirectExchange directExchange, Queue infoQueue) {
+        return BindingBuilder.bind(infoQueue).to(directExchange).with(INFO_ROUTING_KEY);
+    }
+
+    @Bean
+    public Binding warningBinding(DirectExchange directExchange, Queue warningQueue) {
+        return BindingBuilder.bind(warningQueue).to(directExchange).with(WARNING_ROUTING_KEY);
+    }
+
+    @Bean
+    public Binding errorBinding(DirectExchange directExchange, Queue errorQueue) {
+        return BindingBuilder.bind(errorQueue).to(directExchange).with(ERROR_ROUTING_KEY);
+    }
+
+    @Bean
+    public Binding orderBinding(TopicExchange topicExchange, Queue orderQueue) {
+        return BindingBuilder.bind(orderQueue).to(topicExchange).with("order.*");
+    }
+
+    @Bean
+    public Binding notificationBinding(FanoutExchange fanoutExchange, Queue notificationQueue) {
+        return BindingBuilder.bind(notificationQueue).to(fanoutExchange);
+    }
+
+    // JSON 消息转换器
+    @Bean
+    public Jackson2JsonMessageConverter jsonMessageConverter() {
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JavaTimeModule());
+        objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        return new Jackson2JsonMessageConverter(objectMapper);
+    }
+
+    // RabbitTemplate
+    @Bean
+    public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory) {
+        RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);
+        rabbitTemplate.setMessageConverter(jsonMessageConverter());
+        return rabbitTemplate;
+    }
+
+    // 消息监听容器工厂
+    @Bean
+    public SimpleRabbitListenerContainerFactory rabbitListenerContainerFactory(
+            ConnectionFactory connectionFactory) {
+        SimpleRabbitListenerContainerFactory factory = 
+            new SimpleRabbitListenerContainerFactory();
+        factory.setConnectionFactory(connectionFactory);
+        factory.setMessageConverter(jsonMessageConverter());
+        factory.setAcknowledgeMode(AcknowledgeMode.AUTO);
+        return factory;
+    }
+
+    @Bean
+    public RabbitAdmin rabbitAdmin(ConnectionFactory connectionFactory) {
+        return new RabbitAdmin(connectionFactory);
+    }
+}</code></pre>
+          <h3>2.4 三种交换机类型对比</h3>
+          <table>
+            <tr>
+              <th>交换机类型</th>
+              <th>路由方式</th>
+              <th>使用场景</th>
+            </tr>
+            <tr>
+              <td>Direct Exchange</td>
+              <td>精确匹配路由键</td>
+              <td>INFO、WARNING、ERROR 消息按类型分发</td>
+            </tr>
+            <tr>
+              <td>Topic Exchange</td>
+              <td>通配符匹配路由键</td>
+              <td>ORDER 消息支持 order.create、order.update 等子类型</td>
+            </tr>
+            <tr>
+              <td>Fanout Exchange</td>
+              <td>广播到所有绑定队列</td>
+              <td>聊天消息、NOTIFICATION 消息全员接收</td>
+            </tr>
+          </table>
+        </div>
+        <div class="section" id="dto">
+          <h2>三、消息数据模型</h2>
+          <h3>3.1 MessageDTO</h3>
+          <p><strong>MessageDTO.java - 消息数据传输对象：</strong></p>
+          <pre><code>public class MessageDTO implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
+    private String messageId;
+    private String content;
+    private String sender;
+    private MessageType type;
+    private LocalDateTime timestamp;
+
+    public MessageDTO() {
+    }
+
+    public MessageDTO(String messageId, String content, String sender, MessageType type) {
+        this.messageId = messageId;
+        this.content = content;
+        this.sender = sender;
+        this.type = type;
+        this.timestamp = LocalDateTime.now();
+    }
+
+    // 静态工厂方法
+    public static MessageDTO createChatMessage(String content, String sender) {
+        return new MessageDTO(
+            UUID.randomUUID().toString(),
+            content,
+            sender,
+            MessageType.CHAT
+        );
+    }
+
+    public static MessageDTO createInfoMessage(String content, String sender) {
+        return new MessageDTO(
+            UUID.randomUUID().toString(),
+            content,
+            sender,
+            MessageType.INFO
+        );
+    }
+
+    public static MessageDTO createWarningMessage(String content, String sender) {
+        return new MessageDTO(
+            UUID.randomUUID().toString(),
+            content,
+            sender,
+            MessageType.WARNING
+        );
+    }
+
+    public static MessageDTO createErrorMessage(String content, String sender) {
+        return new MessageDTO(
+            UUID.randomUUID().toString(),
+            content,
+            sender,
+            MessageType.ERROR
+        );
+    }
+
+    public static MessageDTO createOrderMessage(String content, String sender) {
+        return new MessageDTO(
+            UUID.randomUUID().toString(),
+            content,
+            sender,
+            MessageType.ORDER
+        );
+    }
+
+    public static MessageDTO createNotificationMessage(String content, String sender) {
+        return new MessageDTO(
+            UUID.randomUUID().toString(),
+            content,
+            sender,
+            MessageType.NOTIFICATION
+        );
+    }
+
+    // 消息类型枚举
+    public enum MessageType {
+        INFO,       // 信息消息
+        WARNING,    // 警告消息
+        ERROR,      // 错误消息
+        ORDER,      // 订单消息
+        NOTIFICATION, // 通知消息
+        CHAT        // 聊天消息
+    }
+
+    // Getters and Setters
+    public String getMessageId() { return messageId; }
+    public void setMessageId(String messageId) { this.messageId = messageId; }
+    public String getContent() { return content; }
+    public void setContent(String content) { this.content = content; }
+    public String getSender() { return sender; }
+    public void setSender(String sender) { this.sender = sender; }
+    public MessageType getType() { return type; }
+    public void setType(MessageType type) { this.type = type; }
+    public LocalDateTime getTimestamp() { return timestamp; }
+    public void setTimestamp(LocalDateTime timestamp) { this.timestamp = timestamp; }
+
+    @Override
+    public String toString() {
+        return "MessageDTO{" +
+                "messageId='" + messageId + '\'' +
+                ", content='" + content + '\'' +
+                ", sender='" + sender + '\'' +
+                ", type=" + type +
+                ", timestamp=" + timestamp +
+                '}';
+    }
+}</code></pre>
+          <p><strong>说明：</strong></p>
+          <ul>
+            <li>实现 <code>Serializable</code> 接口支持网络传输</li>
+            <li>提供 6 个静态工厂方法，方便创建不同类型的消息</li>
+            <li><code>MessageType</code> 枚举定义了 6 种消息类型</li>
+            <li>重写 <code>toString()</code> 方法方便日志输出</li>
+          </ul>
+        </div>
+        <div class="section" id="producer">
+          <h2>四、消息生产者</h2>
+          <h3>4.1 ChatProducer</h3>
+          <pre><code>@Component
+public class ChatProducer {
+
+    private static final Logger logger = LoggerFactory.getLogger(ChatProducer.class);
+
+    @Autowired
+    private RabbitTemplate rabbitTemplate;
+
+    // 发送聊天消息（广播模式）
+    public void sendChatMessage(String content, String sender) {
+        MessageDTO message = new MessageDTO(
+            UUID.randomUUID().toString(),
+            content,
+            sender,
+            MessageDTO.MessageType.CHAT
+        );
+        rabbitTemplate.convertAndSend(
+            RabbitMQConfig.FANOUT_EXCHANGE,
+            "",
+            message
+        );
+        logger.info("发送聊天消息: {} -> {}", sender, content);
+    }
+
+    // 发送 INFO 消息
+    public void sendInfoMessage(String content, String sender) {
+        MessageDTO message = new MessageDTO(
+            UUID.randomUUID().toString(),
+            content,
+            sender,
+            MessageDTO.MessageType.INFO
+        );
+        rabbitTemplate.convertAndSend(
+            RabbitMQConfig.DIRECT_EXCHANGE,
+            RabbitMQConfig.INFO_ROUTING_KEY,
+            message
+        );
+        logger.info("发送INFO消息: {}", message);
+    }
+
+    // 发送 WARNING 消息
+    public void sendWarningMessage(String content, String sender) {
+        MessageDTO message = new MessageDTO(
+            UUID.randomUUID().toString(),
+            content,
+            sender,
+            MessageDTO.MessageType.WARNING
+        );
+        rabbitTemplate.convertAndSend(
+            RabbitMQConfig.DIRECT_EXCHANGE,
+            RabbitMQConfig.WARNING_ROUTING_KEY,
+            message
+        );
+        logger.info("发送WARNING消息: {}", message);
+    }
+
+    // 发送 ERROR 消息
+    public void sendErrorMessage(String content, String sender) {
+        MessageDTO message = new MessageDTO(
+            UUID.randomUUID().toString(),
+            content,
+            sender,
+            MessageDTO.MessageType.ERROR
+        );
+        rabbitTemplate.convertAndSend(
+            RabbitMQConfig.DIRECT_EXCHANGE,
+            RabbitMQConfig.ERROR_ROUTING_KEY,
+            message
+        );
+        logger.info("发送ERROR消息: {}", message);
+    }
+
+    // 发送 ORDER 消息
+    public void sendOrderMessage(String content, String sender) {
+        MessageDTO message = new MessageDTO(
+            UUID.randomUUID().toString(),
+            content,
+            sender,
+            MessageDTO.MessageType.ORDER
+        );
+        rabbitTemplate.convertAndSend(
+            RabbitMQConfig.TOPIC_EXCHANGE,
+            "order.create",
+            message
+        );
+        logger.info("发送ORDER消息: {}", message);
+    }
+
+    // 发送 NOTIFICATION 消息
+    public void sendNotificationMessage(String content, String sender) {
+        MessageDTO message = new MessageDTO(
+            UUID.randomUUID().toString(),
+            content,
+            sender,
+            MessageDTO.MessageType.NOTIFICATION
+        );
+        rabbitTemplate.convertAndSend(
+            RabbitMQConfig.FANOUT_EXCHANGE,
+            "",
+            message
+        );
+        logger.info("发送NOTIFICATION消息: {}", message);
+    }
+
+    // 通用发送方法
+    public void sendMessage(MessageDTO.MessageType type, String content, String sender) {
+        switch (type) {
+            case INFO:
+                sendInfoMessage(content, sender);
+                break;
+            case WARNING:
+                sendWarningMessage(content, sender);
+                break;
+            case ERROR:
+                sendErrorMessage(content, sender);
+                break;
+            case ORDER:
+                sendOrderMessage(content, sender);
+                break;
+            case NOTIFICATION:
+                sendNotificationMessage(content, sender);
+                break;
+            case CHAT:
+                sendChatMessage(content, sender);
+                break;
+            default:
+                logger.warn("未知消息类型: {}", type);
+        }
+    }
+}</code></pre>
+        </div>
+        <div class="section" id="consumer">
+          <h2>五、消息消费者</h2>
+          <h3>5.1 ChatConsumer</h3>
+          <pre><code>@Component
+public class ChatConsumer {
+
+    private static final Logger logger = LoggerFactory.getLogger(ChatConsumer.class);
+
+    // 监听聊天队列（Fanout 广播模式）
+    @RabbitListener(queues = RabbitMQConfig.CHAT_QUEUE, 
+                    containerFactory = "rabbitListenerContainerFactory")
+    public void receiveChatMessage(MessageDTO message) {
+        processMessage("CHAT", message);
+    }
+
+    // 监听 INFO 队列
+    @RabbitListener(queues = RabbitMQConfig.INFO_QUEUE, 
+                    containerFactory = "rabbitListenerContainerFactory")
+    public void receiveInfoMessage(MessageDTO message) {
+        processMessage("INFO", message);
+    }
+
+    // 监听 WARNING 队列
+    @RabbitListener(queues = RabbitMQConfig.WARNING_QUEUE, 
+                    containerFactory = "rabbitListenerContainerFactory")
+    public void receiveWarningMessage(MessageDTO message) {
+        processMessage("WARNING", message);
+    }
+
+    // 监听 ERROR 队列
+    @RabbitListener(queues = RabbitMQConfig.ERROR_QUEUE, 
+                    containerFactory = "rabbitListenerContainerFactory")
+    public void receiveErrorMessage(MessageDTO message) {
+        processMessage("ERROR", message);
+    }
+
+    // 监听 ORDER 队列
+    @RabbitListener(queues = RabbitMQConfig.ORDER_QUEUE, 
+                    containerFactory = "rabbitListenerContainerFactory")
+    public void receiveOrderMessage(MessageDTO message) {
+        processMessage("ORDER", message);
+    }
+
+    // 监听 NOTIFICATION 队列
+    @RabbitListener(queues = RabbitMQConfig.NOTIFICATION_QUEUE, 
+                    containerFactory = "rabbitListenerContainerFactory")
+    public void receiveNotificationMessage(MessageDTO message) {
+        processMessage("NOTIFICATION", message);
+    }
+
+    // 统一消息处理方法
+    private void processMessage(String type, MessageDTO message) {
+        logger.info("========== 接收{}消息 ==========", type);
+        logger.info("消息ID: {}", message.getMessageId());
+        logger.info("发送者: {}", message.getSender());
+        logger.info("内容: {}", message.getContent());
+        logger.info("时间: {}", message.getTimestamp());
+        executeProcess(type, message);
+        logger.info("==================================");
+    }
+
+    // 消息处理分发
+    private void executeProcess(String type, MessageDTO message) {
+        switch (type) {
+            case "CHAT":
+                logger.info("处理CHAT消息: 推送给在线用户");
+                // TODO: 通过 WebSocket/SSE 推送给前端
+                break;
+            case "INFO":
+                logger.info("处理INFO消息: 记录系统日志");
+                break;
+            case "WARNING":
+                logger.info("处理WARNING消息: 发送告警通知");
+                break;
+            case "ERROR":
+                logger.info("处理ERROR消息: 发送邮件通知管理员");
+                break;
+            case "ORDER":
+                logger.info("处理ORDER消息: 更新订单状态");
+                break;
+            case "NOTIFICATION":
+                logger.info("处理NOTIFICATION消息: 推送通知给用户");
+                break;
+        }
+    }
+}</code></pre>
+          <h3>5.2 @RabbitListener 注解说明</h3>
+          <table>
+            <tr>
+              <th>属性</th>
+              <th>说明</th>
+            </tr>
+            <tr>
+              <td>queues</td>
+              <td>指定要监听的队列名称</td>
+            </tr>
+            <tr>
+              <td>containerFactory</td>
+              <td>指定消息监听容器工厂，包含消息转换器配置</td>
+            </tr>
+          </table>
+          <p><strong>工作原理：</strong></p>
+          <ul>
+            <li>Spring 启动时自动创建消费者监听器</li>
+            <li>消费者持续监听指定队列</li>
+            <li>当队列中有消息时，自动从 JSON 反序列化为 MessageDTO 对象</li>
+            <li>调用对应的方法处理消息</li>
+            <li>处理完成后自动发送 ACK 确认（AUTO 模式）</li>
+          </ul>
+        </div>
+        <div class="section" id="controller">
+          <h2>六、聊天控制器</h2>
+          <h3>6.1 ChatController</h3>
+          <pre><code>@RestController
+@RequestMapping("/api/chat")
+public class ChatController {
+
+    @Autowired
+    private ChatService chatService;
+
+    // 发送聊天消息
+    @PostMapping("/send")
+    public ResponseEntity&lt;Map&lt;String, String&gt;&gt; sendChatMessage(
+            @RequestBody Map&lt;String, String&gt; request) {
+        String content = request.get("content");
+        String sender = request.getOrDefault("sender", "Anonymous");
+
+        if (content == null || content.trim().isEmpty()) {
+            return ResponseEntity.badRequest()
+                .body(Map.of("status", "error", "message", "消息内容不能为空"));
+        }
+
+        chatService.sendChatMessage(content, sender);
+        return ResponseEntity.ok(Map.of(
+            "status", "success", 
+            "message", "消息已发送"
+        ));
+    }
+
+    // 获取聊天消息类型列表
+    @GetMapping("/types")
+    public ResponseEntity&lt;MessageDTO.MessageType[]&gt; getMessageTypes() {
+        return ResponseEntity.ok(MessageDTO.MessageType.values());
+    }
+
+    // 模拟场景：用户登录通知
+    @PostMapping("/simulate/login")
+    public ResponseEntity&lt;Map&lt;String, String&gt;&gt; simulateLogin(
+            @RequestParam String username) {
+        chatService.simulateUserLogin(username);
+        return ResponseEntity.ok(Map.of(
+            "status", "success", 
+            "message", "模拟登录已触发"
+        ));
+    }
+
+    // 模拟场景：交易讨论
+    @PostMapping("/simulate/trade-discuss")
+    public ResponseEntity&lt;Map&lt;String, String&gt;&gt; simulateTradeDiscuss(
+            @RequestParam String sender,
+            @RequestParam String tradeDetail) {
+        chatService.simulateTradeDiscuss(sender, tradeDetail);
+        return ResponseEntity.ok(Map.of(
+            "status", "success", 
+            "message", "交易讨论已触发"
+        ));
+    }
+}</code></pre>
+          <h3>6.2 ChatService</h3>
+          <pre><code>@Service
+public class ChatService {
+
+    private static final Logger logger = LoggerFactory.getLogger(ChatService.class);
+
+    @Autowired
+    private ChatProducer chatProducer;
+
+    // 发送聊天消息
+    public void sendChatMessage(String content, String sender) {
+        chatProducer.sendChatMessage(content, sender);
+        logger.info("聊天消息已发送: {} -> {}", sender, content);
+    }
+
+    // 模拟用户登录
+    public void simulateUserLogin(String username) {
+        chatProducer.sendInfoMessage(
+            "用户 [" + username + "] 登录区块链平台", 
+            "AuthService"
+        );
+        chatProducer.sendNotificationMessage(
+            "欢迎 " + username + " 加入区块链平台！", 
+            "NotificationService"
+        );
+    }
+
+    // 模拟交易讨论
+    public void simulateTradeDiscuss(String sender, String tradeDetail) {
+        chatProducer.sendChatMessage(
+            "关于交易: " + tradeDetail, 
+            sender
+        );
+        chatProducer.sendOrderMessage(
+            "交易记录: " + tradeDetail, 
+            "TradeService"
+        );
+    }
+
+    // 通用消息发送
+    public void sendCustomMessage(MessageDTO.MessageType type, 
+                                   String content, 
+                                   String sender) {
+        chatProducer.sendMessage(type, content, sender);
+    }
+}</code></pre>
+        </div>
+        <div class="section" id="api">
+          <h2>七、API 接口文档</h2>
+          <h3>7.1 发送聊天消息</h3>
+          <pre><code>POST /api/chat/send
+Content-Type: application/json
+
+{
+    "content": "你好，我想讨论一下这个交易",
+    "sender": "user1"
+}
+
+Response:
+{
+    "status": "success",
+    "message": "消息已发送"
+}</code></pre>
+          <h3>7.2 发送各类消息</h3>
+          <pre><code># 发送 INFO 消息
+POST /api/chat/simulate/login?username=zhangsan
+
+Response:
+{
+    "status": "success",
+    "message": "模拟登录已触发"
+}
+
+# 发送交易讨论消息
+POST /api/chat/simulate/trade-discuss?sender=user1&tradeDetail=交易金额100
+
+Response:
+{
+    "status": "success",
+    "message": "交易讨论已触发"
+}</code></pre>
+          <h3>7.3 获取消息类型</h3>
+          <pre><code>GET /api/chat/types
+
+Response:
+["INFO", "WARNING", "ERROR", "ORDER", "NOTIFICATION", "CHAT"]</code></pre>
+        </div>
+        <div class="section">
+          <h2>八、前端聊天界面实现参考</h2>
+          <h3>8.1 聊天组件</h3>
+          <pre><code>&lt;template&gt;
+  &lt;div class="chat-container"&gt;
+    &lt;h2&gt;平台成员即时聊天&lt;/h2&gt;
+    
+    &lt;!-- 消息展示区 --&gt;
+    &lt;div class="chat-messages"&gt;
+      &lt;div 
+        v-for="(msg, index) in messages" 
+        :key="index"
+        class="chat-message"
+        :class="{ 'self-message': msg.sender === currentUser }"
+      &gt;
+        &lt;div class="message-header"&gt;
+          &lt;span class="sender"&gt;{{ msg.sender }}&lt;/span&gt;
+          &lt;span class="time"&gt;{{ formatTime(msg.timestamp) }}&lt;/span&gt;
+        &lt;/div&gt;
+        &lt;div class="message-body"&gt;
+          &lt;el-tag size="small" :type="getMessageType(msg.type)"&gt;
+            {{ msg.type }}
+          &lt;/el-tag&gt;
+          &lt;span class="content"&gt;{{ msg.content }}&lt;/span&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+
+    &lt;!-- 消息输入区 --&gt;
+    &lt;div class="chat-input"&gt;
+      &lt;el-input
+        v-model="newMessage"
+        type="textarea"
+        :rows="2"
+        placeholder="输入消息..."
+        @keyup.enter="sendMessage"
+      /&gt;
+      &lt;el-button type="primary" @click="sendMessage"&gt;发送&lt;/el-button&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+&lt;/template&gt;
+
+&lt;script setup&gt;
+import { ref, onMounted } from 'vue'
+import axios from 'axios'
+
+const messages = ref([])
+const newMessage = ref('')
+const currentUser = ref(localStorage.getItem('username') || 'guest')
+
+// 发送消息
+async function sendMessage() {
+  if (!newMessage.value.trim()) return
+  
+  try {
+    await axios.post('/api/chat/send', {
+      content: newMessage.value,
+      sender: currentUser.value
+    })
+    
+    // 添加到本地消息列表
+    messages.value.push({
+      messageId: Date.now().toString(),
+      content: newMessage.value,
+      sender: currentUser.value,
+      type: 'CHAT',
+      timestamp: new Date().toISOString()
+    })
+    
+    newMessage.value = ''
+  } catch (error) {
+    alert('消息发送失败')
+  }
+}
+
+// 格式化时间
+function formatTime(timestamp) {
+  if (!timestamp) return ''
+  const date = new Date(timestamp)
+  return date.toLocaleTimeString()
+}
+
+// 获取消息类型标签颜色
+function getMessageType(type) {
+  const map = {
+    'INFO': 'info',
+    'WARNING': 'warning',
+    'ERROR': 'danger',
+    'ORDER': 'success',
+    'NOTIFICATION': '',
+    'CHAT': ''
+  }
+  return map[type] || ''
+}
+
+// 定时轮询获取新消息
+onMounted(() => {
+  setInterval(async () => {
+    // TODO: 通过 WebSocket/SSE 实时获取消息
+    // 或使用轮询方式获取最新消息
+  }, 2000)
+})
+&lt;/script&gt;
+
+&lt;style scoped&gt;
+.chat-container {
+  display: flex;
+  flex-direction: column;
+  height: 600px;
+}
+
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  background: #f5f5f5;
+}
+
+.chat-message {
+  margin-bottom: 12px;
+  padding: 8px 12px;
+  background: white;
+  border-radius: 8px;
+  max-width: 70%;
+}
+
+.self-message {
+  margin-left: auto;
+  background: #e3f2fd;
+}
+
+.message-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.message-body {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.content {
+  flex: 1;
+}
+
+.chat-input {
+  display: flex;
+  gap: 8px;
+  padding: 12px;
+  background: white;
+  border-top: 1px solid #eee;
+}
+&lt;/style&gt;</code></pre>
+        </div>
+      </main>
+    </div>
+  </body>
+</html>

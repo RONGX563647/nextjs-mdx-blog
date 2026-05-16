@@ -2,7 +2,7 @@ import { WEBSITE_HOST_URL } from '@/lib/constants'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { getCategories, getArticles } from '@/lib/blog'
-import { BookOpen, ArrowRight, FileText } from 'lucide-react'
+import { BookOpen, ArrowRight, FileText, Code, Layers } from 'lucide-react'
 import { BlogSearch } from './BlogSearch'
 import { FeishuEmbed } from '@/components/blog/FeishuEmbed'
 import { siteConfig } from '@/data/site'
@@ -106,6 +106,33 @@ export default async function BlogPage() {
 
             {/* 分类卡片 */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" style={{ marginTop: '224px' }}>
+              {/* 软件工程课程设计入口 */}
+              <a
+                href="/html/软件工程期中考课程设计/index.html"
+                className="group block p-8 border-2 border-dashed border-primary/30 hover:border-primary bg-primary/5 hover:bg-primary/10 transition-all duration-300"
+              >
+                <div className="flex items-start justify-between mb-6">
+                  <div className="p-3 bg-primary/20 group-hover:bg-primary/30 transition-colors">
+                    <Code className="h-6 w-6 text-primary" />
+                  </div>
+                  <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                </div>
+                
+                <h2 className="text-2xl font-bold mb-3 group-hover:text-primary transition-colors"> 软件工程课程设计</h2>
+                
+                <p className="text-muted-foreground mb-6 line-clamp-3 leading-relaxed">区块链可视化管理交易系统 - 完整开发教程（6个阶段从基础设施到系统集成）</p>
+                
+                <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-2">
+                    <Layers className="h-4 w-4" />
+                    <span>6 个开发阶段</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-primary font-medium">点击新窗口打开 →</span>
+                  </div>
+                </div>
+              </a>
+
               {categoriesWithCount.map((category) => (
                 <Link
                   key={category.id}

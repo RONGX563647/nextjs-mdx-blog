@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>区块链可视化管理交易系统 - 开发教程导览</title>
+    <link rel="stylesheet" href="../../docs/learn/css/style.css" />
+  </head>
+  <body>
+    <div class="main-container">
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          <h1>区块链可视化管理交易系统</h1>
+          <p>开发教程文档</p>
+        </div>
+        <nav class="sidebar-nav">
+          <div class="nav-section">
+            <div class="nav-section-title">首页</div>
+            <a href="index.html" class="nav-item active">教程导览</a>
+          </div>
+          <div class="nav-section">
+            <div class="nav-section-title">开发阶段</div>
+            <a href="stage1-infrastructure.html" class="nav-item">阶段一：项目基础设施</a>
+            <a href="stage2-user.html" class="nav-item">阶段二：用户模块</a>
+            <a href="stage3-blockchain.html" class="nav-item">阶段三：区块链节点管理</a>
+            <a href="stage4-chat.html" class="nav-item">阶段四：即时聊天功能</a>
+            <a href="stage5-frontend.html" class="nav-item">阶段五：前端可视化界面</a>
+            <a href="stage6-integration.html" class="nav-item">阶段六：系统集成与测试</a>
+          </div>
+        </nav>
+      </aside>
+      <main class="content">
+        <div class="content-header">
+          <div class="breadcrumb">
+            <a href="index.html">首页</a> / 教程导览
+          </div>
+          <h1>区块链可视化管理交易系统 - 开发教程</h1>
+        </div>
+        <div class="section">
+          <h2>项目概述</h2>
+          <p>本教程基于《区块链可视化管理交易系统功能需求文档》编写，按照项目开发流程分为六个阶段，从项目基础设施搭建到系统集成测试，逐步引导完成整个系统的开发。</p>
+          <div class="tip-box">
+            <strong>提示：</strong>本教程为开发流程指南，帮助你了解整体开发步骤。建议按照阶段顺序逐步学习，在开始编码前先通读一遍对应阶段的教程。
+          </div>
+        </div>
+        <div class="section">
+          <h2>技术栈介绍</h2>
+          <p>本项目采用前后端分离架构，适合小组协作开发：</p>
+          <ul>
+            <li><strong>前端 (Vue3)</strong>：负责页面展示、用户交互、路由管理</li>
+            <li><strong>后端 (Spring Boot)</strong>：负责业务逻辑、区块链P2P节点、RabbitMQ消息通信、用户管理等服务</li>
+            <li><strong>中间件 (RabbitMQ)</strong>：实现成员即时聊天通信</li>
+          </ul>
+        </div>
+        <div class="section">
+          <h2>开发阶段导航</h2>
+          <div class="stage-grid">
+            <div class="stage-card">
+              <div class="stage-number">1</div>
+              <h3>项目基础设施</h3>
+              <p>开发环境搭建、项目结构设计、技术选型、区块链核心模型实现、P2P网络节点实现</p>
+              <a href="stage1-infrastructure.html" class="stage-link">开始学习 →</a>
+            </div>
+            <div class="stage-card">
+              <div class="stage-number">2</div>
+              <h3>用户模块</h3>
+              <p>用户注册、用户登录、区块链钱包生成、节点自动创建、用户-节点绑定</p>
+              <a href="stage2-user.html" class="stage-link">开始学习 →</a>
+            </div>
+            <div class="stage-card">
+              <div class="stage-number">3</div>
+              <h3>区块链节点管理</h3>
+              <p>节点信息展示、区块链查询、交易创建、挖矿操作、余额查询、数据防篡改验证、邻居节点管理、节点同步</p>
+              <a href="stage3-blockchain.html" class="stage-link">开始学习 →</a>
+            </div>
+            <div class="stage-card">
+              <div class="stage-number">4</div>
+              <h3>即时聊天功能</h3>
+              <p>RabbitMQ配置、消息生产者、消息消费者、聊天控制器、成员即时交流</p>
+              <a href="stage4-chat.html" class="stage-link">开始学习 →</a>
+            </div>
+            <div class="stage-card">
+              <div class="stage-number">5</div>
+              <h3>前端可视化界面</h3>
+              <p>登录界面、主界面布局、区块链交易界面、聊天界面、Vue3组件开发</p>
+              <a href="stage5-frontend.html" class="stage-link">开始学习 →</a>
+            </div>
+            <div class="stage-card">
+              <div class="stage-number">6</div>
+              <h3>系统集成与测试</h3>
+              <p>系统集成配置、功能测试、系统演示流程、PPT汇报内容、常见问题解决</p>
+              <a href="stage6-integration.html" class="stage-link">开始学习 →</a>
+            </div>
+          </div>
+        </div>
+        <div class="section">
+          <h2>项目目录结构</h2>
+          <pre><code>qzk-case/
+├── docs/
+│   ├── 功能需求文档.md
+│   └── learn/
+│       ├── index.html                  # 本文件：教程导览
+│       ├── stage1-infrastructure.html  # 阶段一：项目基础设施
+│       ├── stage2-user.html            # 阶段二：用户模块
+│       ├── stage3-blockchain.html      # 阶段三：区块链节点管理
+│       ├── stage4-chat.html            # 阶段四：即时聊天功能
+│       ├── stage5-frontend.html        # 阶段五：前端可视化界面
+│       └── stage6-integration.html     # 阶段六：系统集成与测试
+├── backend/                            # 后端统一服务
+│   ├── pom.xml
+│   ├── src/main/java/com/example/blockchain/
+│   │   ├── BlockchainApplication.java  # 启动类
+│   │   ├── controller/                 # 控制器层
+│   │   ├── core/                       # 区块链核心逻辑
+│   │   ├── model/                      # 数据模型
+│   │   ├── network/                    # P2P网络模块
+│   │   ├── service/                    # 业务逻辑层
+│   │   ├── config/                     # 配置类
+│   │   ├── producer/                   # 消息生产者
+│   │   └── consumer/                   # 消息消费者
+│   └── src/main/resources/
+│       └── application.yml             # 配置文件
+── frontend/                           # 前端 Vue3 项目
+    ├── package.json
+    ├── vite.config.js
+    ├── index.html
+    └── src/
+        ├── main.js
+        ├── App.vue
+        ├── router/                     # 路由配置
+        ├── api/                        # API请求封装
+        └── views/                      # 页面组件</code></pre>
+        </div>
+        <div class="section">
+          <h2>交付要求</h2>
+          <p>项目以小组汇报形式验收，交付内容分为 PPT 展示与系统现场演示：</p>
+          <ul>
+            <li><strong>PPT 内容</strong>：包含系统体系结构视图、开发视图、部署视图，配套现场讲解</li>
+            <li><strong>系统演示</strong>：小组成员现场操作系统，展示全部功能</li>
+          </ul>
+        </div>
+      </main>
+    </div>
+  </body>
+</html>

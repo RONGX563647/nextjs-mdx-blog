@@ -1,0 +1,696 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>阶段一：项目基础设施 - 区块链可视化管理交易系统教程</title>
+    <link rel="stylesheet" href="../../docs/learn/css/style.css" />
+  </head>
+  <body>
+    <div class="main-container">
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          <h1>区块链可视化管理交易系统</h1>
+          <p>开发教程文档</p>
+        </div>
+        <nav class="sidebar-nav">
+          <div class="nav-section">
+            <div class="nav-section-title">首页</div>
+            <a href="index.html" class="nav-item">教程导览</a>
+          </div>
+          <div class="nav-section">
+            <div class="nav-section-title">开发阶段</div>
+            <a href="stage1-infrastructure.html" class="nav-item active"
+              >阶段一：项目基础设施</a
+            >
+            <a
+              href="stage1-infrastructure.html#env"
+              class="nav-item nav-item-sub"
+              >开发环境</a
+            >
+            <a
+              href="stage1-infrastructure.html#structure"
+              class="nav-item nav-item-sub"
+              >项目结构</a
+            >
+            <a
+              href="stage1-infrastructure.html#tech"
+              class="nav-item nav-item-sub"
+              >技术选型</a
+            >
+            <a href="stage2-user.html" class="nav-item">阶段二：用户模块</a>
+            <a href="stage3-blockchain.html" class="nav-item"
+              >阶段三：区块链节点管理</a
+            >
+            <a href="stage4-chat.html" class="nav-item">阶段四：即时聊天功能</a>
+            <a href="stage5-frontend.html" class="nav-item"
+              >阶段五：前端可视化界面</a
+            >
+            <a href="stage6-integration.html" class="nav-item"
+              >阶段六：系统集成与测试</a
+            >
+          </div>
+        </nav>
+      </aside>
+      <main class="content">
+        <div class="content-header">
+          <div class="breadcrumb">
+            <a href="index.html">首页</a> / 阶段一：项目基础设施
+          </div>
+          <h1>阶段一：项目基础设施</h1>
+        </div>
+        <div class="section">
+          <h2>一、项目概述</h2>
+          <p>
+            区块链可视化管理交易系统是一个基于前后端分离架构的综合项目，集成区块链平台、区块链节点管理系统、RabbitMQ即时通讯服务平台，实现用户注册登录、区块链节点管理、交易挖矿、数据验证、成员即时聊天等功能。
+          </p>
+          <h3>1.1 项目目标</h3>
+          <ul>
+            <li>
+              <strong>区块链基础平台</strong
+              >：实现区块生成、交易打包、挖矿、链式存储、防篡改、P2P节点同步
+            </li>
+            <li>
+              <strong>区块链节点管理系统</strong
+              >：实现用户-节点绑定、节点信息管理、交易操作、数据验证、节点同步
+            </li>
+            <li>
+              <strong>RabbitMQ交流服务平台</strong
+              >：实现平台成员即时聊天、交易事宜沟通
+            </li>
+          </ul>
+        </div>
+        <div class="section" id="env">
+          <h2>二、开发环境搭建</h2>
+          <h3>2.1 技术栈要求</h3>
+          <table>
+            <tr>
+              <th>技术组件</th>
+              <th>版本要求</th>
+              <th>用途</th>
+            </tr>
+            <tr>
+              <td>Java</td>
+              <td>JDK 17+</td>
+              <td>后端开发语言</td>
+            </tr>
+            <tr>
+              <td>Spring Boot</td>
+              <td>2.7.x</td>
+              <td>后端框架</td>
+            </tr>
+            <tr>
+              <td>Spring Data JPA</td>
+              <td>2.7.x</td>
+              <td>数据持久层框架</td>
+            </tr>
+            <tr>
+              <td>MySQL</td>
+              <td>8.0+</td>
+              <td>关系型数据库</td>
+            </tr>
+            <tr>
+              <td>Vue.js</td>
+              <td>Vue 3.x</td>
+              <td>前端框架</td>
+            </tr>
+            <tr>
+              <td>Element Plus</td>
+              <td>2.14.x</td>
+              <td>前端 UI 组件库</td>
+            </tr>
+            <tr>
+              <td>RabbitMQ</td>
+              <td>3.x</td>
+              <td>消息队列服务</td>
+            </tr>
+            <tr>
+              <td>Node.js</td>
+              <td>16.x+</td>
+              <td>前端构建工具</td>
+            </tr>
+            <tr>
+              <td>Maven</td>
+              <td>3.8.x</td>
+              <td>项目构建工具</td>
+            </tr>
+            <tr>
+              <td>Vite</td>
+              <td>4.4.x</td>
+              <td>前端构建工具</td>
+            </tr>
+          </table>
+          <h3>2.2 环境安装步骤</h3>
+          <pre><code># 1. 安装 JDK 17
+# 下载并安装 Oracle JDK 或 OpenJDK 17
+java -version
+
+# 2. 安装 Maven
+# 确保 Maven 已添加到系统环境变量
+mvn -version
+
+# 3. 安装 Node.js
+# 推荐使用 nvm 进行版本管理
+node -v
+npm -v
+
+# 4. 安装 RabbitMQ
+# Windows: 使用 Chocolatey 或手动安装
+choco install rabbitmq
+
+# 5. 启动 RabbitMQ 服务
+rabbitmq-service start
+
+# 6. 启用 RabbitMQ 管理插件
+rabbitmq-plugins enable rabbitmq_management
+
+# 7. 访问管理控制台
+# 浏览器打开 http://localhost:15672
+# 默认账号: guest / guest</code></pre>
+        </div>
+        <div class="section" id="structure">
+          <h2>三、项目结构设计</h2>
+          <h3>3.1 整体目录结构</h3>
+          <pre><code>qzk-case/
+├── docs/
+│   ├── 功能需求文档.md
+│   └── learn/
+│       ├── index.html                  # 教程导览
+│       ├── stage1-infrastructure.html  # 阶段一教程
+│       ├── stage2-user.html            # 阶段二教程
+│       ├── stage3-blockchain.html      # 阶段三教程
+│       ├── stage4-chat.html            # 阶段四教程
+│       ├── stage5-frontend.html        # 阶段五教程
+│       └── stage6-integration.html     # 阶段六教程
+├── backend/                            # 后端服务（统一目录）
+│   ├── pom.xml
+│   ├── mvnw.cmd                        # Windows Maven wrapper
+│   ├── mvnw                            # Linux/Mac Maven wrapper
+│   ├── src/main/java/com/example/blockchain/
+│   │   ├── BlockchainApplication.java  # 启动类
+│   │   ├── controller/                 # 控制器层
+│   │   │   ├── BlockchainController.java  # 区块链 API
+│   │   │   └── UserController.java       # 用户 API
+│   │   ├── core/                       # 区块链核心逻辑
+│   │   │   └── Blockchain.java
+│   │   ├── model/                      # 数据模型
+│   │   │   ├── Block.java
+│   │   │   ├── Transaction.java
+│   │   │   ├── User.java
+│   │   │   ├── NodeInfo.java
+│   │   │   └── MessageDTO.java
+│   │   ├── network/                    # P2P 网络模块
+│   │   │   └── Node.java
+│   │   ├── service/                    # 业务逻辑层
+│   │   │   ├── BlockchainService.java
+│   │   │   ├── UserService.java
+│   │   │   ├── NodeService.java
+│   │   │   └── ChatService.java
+│   │   ├── config/                     # 配置类
+│   │   │   ├── BlockchainConfig.java
+│   │   │   ├── RabbitMQConfig.java
+│   │   │   └── WebSocketConfig.java
+│   │   ├── mq/                         # RabbitMQ 消息处理
+│   │   │   ├── ChatProducer.java
+│   │   │   └── ChatConsumer.java
+│   │   ├── repository/                 # 数据访问层
+│   │   │   └── UserRepository.java
+│   │   └── util/                       # 工具类
+│   │       ├── HashUtil.java
+│   │       └── Wallet.java
+│   └── src/main/resources/
+│       └── application.yml             # 配置文件
+└── frontend/                           # 前端 Vue3 项目
+    ├── package.json
+    ├── vite.config.js
+    ├── index.html
+    └── src/
+        ├── main.js
+        ├── App.vue
+        ├── style.css
+        ├── router/                     # 路由配置
+        │   └── index.js
+        ├── api/                        # API 请求封装
+        │   ├── blockchain.js
+        │   └── user.js
+        └── views/                      # 页面组件
+            ├── Home.vue
+            ├── Login.vue
+            ├── Register.vue
+            ├── Dashboard.vue
+            ├── BlockchainView.vue
+            ├── NodeManagement.vue
+            ├── ProfileView.vue
+            └── ChatView.vue</code></pre>
+        </div>
+        <div class="section" id="tech">
+          <h2>四、核心技术实现</h2>
+          <h3>4.1 后端 Spring Boot 区块链服务</h3>
+          <p><strong>核心依赖配置 (pom.xml)：</strong></p>
+          <pre><code>&lt;parent&gt;
+    &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+    &lt;artifactId&gt;spring-boot-starter-parent&lt;/artifactId&gt;
+    &lt;version&gt;2.7.0&lt;/version&gt;
+&lt;/parent&gt;
+
+&lt;dependencies&gt;
+    &lt;!-- Spring Boot Web --&gt;
+    &lt;dependency&gt;
+        &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+        &lt;artifactId&gt;spring-boot-starter-web&lt;/artifactId&gt;
+    &lt;/dependency&gt;
+    
+    &lt;!-- Spring Boot Data JPA --&gt;
+    &lt;dependency&gt;
+        &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+        &lt;artifactId&gt;spring-boot-starter-data-jpa&lt;/artifactId&gt;
+    &lt;/dependency&gt;
+    
+    &lt;!-- Spring Security Crypto (用于密码加密) --&gt;
+    &lt;dependency&gt;
+        &lt;groupId&gt;org.springframework.security&lt;/groupId&gt;
+        &lt;artifactId&gt;spring-security-crypto&lt;/artifactId&gt;
+        &lt;version&gt;5.7.0&lt;/version&gt;
+    &lt;/dependency&gt;
+    
+    &lt;!-- MySQL Driver --&gt;
+    &lt;dependency&gt;
+        &lt;groupId&gt;mysql&lt;/groupId&gt;
+        &lt;artifactId&gt;mysql-connector-java&lt;/artifactId&gt;
+        &lt;scope&gt;runtime&lt;/scope&gt;
+    &lt;/dependency&gt;
+    
+    &lt;!-- Spring Boot WebFlux (用于 P2P 通信) --&gt;
+    &lt;dependency&gt;
+        &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+        &lt;artifactId&gt;spring-boot-starter-webflux&lt;/artifactId&gt;
+    &lt;/dependency&gt;
+    
+    &lt;!-- Spring Boot RabbitMQ --&gt;
+    &lt;dependency&gt;
+        &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+        &lt;artifactId&gt;spring-boot-starter-amqp&lt;/artifactId&gt;
+    &lt;/dependency&gt;
+    
+    &lt;!-- Spring Boot WebSocket --&gt;
+    &lt;dependency&gt;
+        &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+        &lt;artifactId&gt;spring-boot-starter-websocket&lt;/artifactId&gt;
+    &lt;/dependency&gt;
+    
+    &lt;!-- Jackson JSR310 (Java 8 时间类型支持) --&gt;
+    &lt;dependency&gt;
+        &lt;groupId&gt;com.fasterxml.jackson.datatype&lt;/groupId&gt;
+        &lt;artifactId&gt;jackson-datatype-jsr310&lt;/artifactId&gt;
+    &lt;/dependency&gt;
+    
+    &lt;!-- Spring Boot DevTools (热部署) --&gt;
+    &lt;dependency&gt;
+        &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+        &lt;artifactId&gt;spring-boot-devtools&lt;/artifactId&gt;
+        &lt;scope&gt;runtime&lt;/scope&gt;
+        &lt;optional&gt;true&lt;/optional&gt;
+    &lt;/dependency&gt;
+    
+    &lt;!-- Lombok --&gt;
+    &lt;dependency&gt;
+        &lt;groupId&gt;org.projectlombok&lt;/groupId&gt;
+        &lt;artifactId&gt;lombok&lt;/artifactId&gt;
+        &lt;optional&gt;true&lt;/optional&gt;
+    &lt;/dependency&gt;
+&lt;/dependencies&gt;</code></pre>
+          <h3>4.2 区块链核心模型</h3>
+          <p><strong>Block.java - 区块数据结构：</strong></p>
+          <pre><code>public class Block {
+    private String hash;           // 当前区块哈希值
+    private String previousHash;   // 前一区块哈希值
+    private List&lt;Transaction&gt; transactions;  // 交易列表
+    private long timestamp;        // 时间戳
+    private int nonce;             // 工作量证明随机数
+    private int index;             // 区块索引
+
+    public Block(int index, String previousHash, List&lt;Transaction&gt; transactions) {
+        this.index = index;
+        this.previousHash = previousHash;
+        this.transactions = transactions != null ? transactions : new ArrayList&lt;&gt;();
+        this.timestamp = System.currentTimeMillis();
+        this.nonce = 0;
+        this.hash = calculateHash();
+    }
+
+    public String calculateHash() {
+        String data = index + previousHash + timestamp + nonce + transactions.toString();
+        return HashUtil.sha256(data);
+    }
+
+    public void mineBlock(int difficulty) {
+        String target = new String(new char[difficulty]).replace('\0', '0');
+        while (!hash.substring(0, difficulty).equals(target)) {
+            nonce++;
+            hash = calculateHash();
+        }
+        System.out.println("区块挖掘完成! Hash: " + hash);
+    }
+}</code></pre>
+          <p><strong>字段说明：</strong></p>
+          <table>
+            <tr>
+              <th>字段</th>
+              <th>说明</th>
+            </tr>
+            <tr>
+              <td>hash</td>
+              <td>当前区块的 SHA-256 哈希值</td>
+            </tr>
+            <tr>
+              <td>previousHash</td>
+              <td>链中前一个区块的哈希值，保证链式结构</td>
+            </tr>
+            <tr>
+              <td>transactions</td>
+              <td>该区块包含的所有交易记录</td>
+            </tr>
+            <tr>
+              <td>timestamp</td>
+              <td>区块创建时间戳</td>
+            </tr>
+            <tr>
+              <td>nonce</td>
+              <td>用于工作量证明的随机数</td>
+            </tr>
+            <tr>
+              <td>index</td>
+              <td>区块在链中的索引位置</td>
+            </tr>
+          </table>
+          <h3>4.3 Blockchain 核心类</h3>
+          <p><strong>Blockchain.java - 区块链核心逻辑：</strong></p>
+          <pre><code>public class Blockchain {
+    private List&lt;Block&gt; chain;
+    private List&lt;Transaction&gt; pendingTransactions;
+    private int difficulty;
+    private double miningReward;
+
+    public Blockchain() {
+        this.chain = new ArrayList&lt;&gt;();
+        this.pendingTransactions = new ArrayList&lt;&gt;();
+        this.difficulty = 4;
+        this.miningReward = 10.0;
+        createGenesisBlock();
+    }
+
+    private void createGenesisBlock() {
+        Block genesisBlock = new Block(0, "0", new ArrayList&lt;&gt;());
+        genesisBlock.mineBlock(difficulty);
+        chain.add(genesisBlock);
+    }
+
+    public void addTransaction(Transaction transaction) {
+        if (transaction.getSenderAddress() == null || transaction.getRecipientAddress() == null) {
+            throw new IllegalArgumentException("交易地址不能为空");
+        }
+        if (transaction.getAmount() &lt;= 0) {
+            throw new IllegalArgumentException("交易金额必须大于 0");
+        }
+        pendingTransactions.add(transaction);
+    }
+
+    public boolean minePendingTransactions(String minerAddress) {
+        if (pendingTransactions.isEmpty()) {
+            return false;
+        }
+        Block newBlock = new Block(chain.size(), getLatestBlock().getHash(), pendingTransactions);
+        newBlock.mineBlock(difficulty);
+        chain.add(newBlock);
+        Transaction rewardTransaction = new Transaction("0", minerAddress, miningReward);
+        pendingTransactions = new ArrayList&lt;&gt;();
+        pendingTransactions.add(rewardTransaction);
+        return true;
+    }
+
+    public Block getLatestBlock() {
+        return chain.get(chain.size() - 1);
+    }
+
+    public double getBalance(String address) {
+        double balance = 0;
+        for (Block block : chain) {
+            for (Transaction transaction : block.getTransactions()) {
+                if (transaction.getRecipientAddress().equals(address)) {
+                    balance += transaction.getAmount();
+                }
+                if (transaction.getSenderAddress().equals(address)) {
+                    balance -= transaction.getAmount();
+                }
+            }
+        }
+        return balance;
+    }
+
+    public boolean isChainValid() {
+        for (int i = 1; i &lt; chain.size(); i++) {
+            Block currentBlock = chain.get(i);
+            Block previousBlock = chain.get(i - 1);
+            if (!currentBlock.getHash().equals(currentBlock.calculateHash())) {
+                return false;
+            }
+            if (!currentBlock.getPreviousHash().equals(previousBlock.getHash())) {
+                return false;
+            }
+        }
+        return true;
+    }
+}</code></pre>
+          <h3>4.4 配置文件</h3>
+          <p><strong>application.yml - 应用配置文件：</strong></p>
+          <pre><code>server:
+  port: 8080
+
+spring:
+  application:
+    name: blockchain-system
+  devtools:
+    restart:
+      enabled: true
+      additional-paths: src/main/java
+  datasource:
+    url: jdbc:mysql://localhost:3306/blockchain_db?useUnicode=true&amp;characterEncoding=utf8&amp;serverTimezone=Asia/Shanghai&amp;createDatabaseIfNotExist=true
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root
+    password: 123456
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.MySQL8Dialect
+
+blockchain:
+  difficulty: 4
+  mining-reward: 10.0</code></pre>
+          <h3>4.5 启动类</h3>
+          <p>
+            <strong>BlockchainApplication.java - Spring Boot 启动类：</strong>
+          </p>
+          <pre><code>package com.example.blockchain;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class BlockchainApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(BlockchainApplication.class, args);
+    }
+}</code></pre>
+          <h3>4.4 P2P 网络节点</h3>
+          <p><strong>Node.java - 网络节点通信：</strong></p>
+          <pre><code>public class Node {
+    private static final Logger logger = LoggerFactory.getLogger(Node.class);
+
+    private String nodeId;
+    private String host;
+    private int port;
+    private List&lt;String&gt; peerNodes;
+    private ConcurrentHashMap&lt;String, NodeInfo&gt; knownNodes;
+    private Blockchain blockchain;
+
+    public Node(String host, int port, Blockchain blockchain) {
+        this.nodeId = UUID.randomUUID().toString();
+        this.host = host;
+        this.port = port;
+        this.peerNodes = new ArrayList&lt;&gt;();
+        this.knownNodes = new ConcurrentHashMap&lt;&gt;();
+        this.blockchain = blockchain;
+        logger.info("节点创建成功：{}:{}", host, port);
+    }
+
+    public void addPeer(String peerAddress) {
+        if (!peerNodes.contains(peerAddress)) {
+            peerNodes.add(peerAddress);
+            logger.info("已添加节点：{}", peerAddress);
+        }
+    }
+
+    public void removePeer(String peerAddress) {
+        peerNodes.remove(peerAddress);
+        knownNodes.remove(peerAddress);
+        logger.info("已移除节点：{}", peerAddress);
+    }
+
+    public void broadcastBlock(Block block) {
+        for (String peer : peerNodes) {
+            try {
+                WebClient.create("http://" + peer)
+                    .post()
+                    .uri("/api/blockchain/block")
+                    .bodyValue(block)
+                    .retrieve()
+                    .toBodilessEntity()
+                    .block();
+                logger.info("区块已广播到节点：{}", peer);
+            } catch (Exception e) {
+                logger.error("广播区块到节点 {} 失败：{}", peer, e.getMessage());
+                removePeer(peer);
+            }
+        }
+    }
+
+    public void broadcastTransaction(Transaction transaction) {
+        for (String peer : peerNodes) {
+            try {
+                WebClient.create("http://" + peer)
+                    .post()
+                    .uri("/api/blockchain/transaction/receive")
+                    .bodyValue(transaction)
+                    .retrieve()
+                    .toBodilessEntity()
+                    .block();
+                logger.info("交易已广播到节点：{}", peer);
+            } catch (Exception e) {
+                logger.error("广播交易到节点 {} 失败：{}", peer, e.getMessage());
+                removePeer(peer);
+            }
+        }
+    }
+
+    public void syncWithNetwork() {
+        logger.info("开始与网络同步...");
+        
+        for (String peer : peerNodes) {
+            List&lt;Block&gt; peerChain = requestChainFromPeer(peer);
+            
+            if (peerChain != null &amp;&amp; peerChain.size() &gt; 0) {
+                logger.info("从节点 {} 获取到链，长度：{}", peer, peerChain.size());
+                
+                if (peerChain.size() &gt; blockchain.getChain().size()) {
+                    if (isValidChain(peerChain)) {
+                        blockchain.setChain(peerChain);
+                        logger.info("已同步更长的有效链");
+                    }
+                }
+            }
+        }
+        logger.info("同步完成");
+    }
+
+    public List&lt;Block&gt; requestChainFromPeer(String peerAddress) {
+        try {
+            return WebClient.create("http://" + peerAddress)
+                .get()
+                .uri("/api/blockchain/chain")
+                .retrieve()
+                .bodyToMono(List.class)
+                .block();
+        } catch (Exception e) {
+            logger.error("从节点 {} 获取链失败：{}", peerAddress, e.getMessage());
+            removePeer(peerAddress);
+            return null;
+        }
+    }
+
+    private boolean isValidChain(List&lt;Block&gt; chainToValidate) {
+        for (int i = 1; i &lt; chainToValidate.size(); i++) {
+            Block currentBlock = chainToValidate.get(i);
+            Block previousBlock = chainToValidate.get(i - 1);
+            
+            if (!currentBlock.getHash().equals(currentBlock.calculateHash())) {
+                return false;
+            }
+            if (!currentBlock.getPreviousHash().equals(previousBlock.getHash())) {
+                return false;
+            }
+        }
+        return true;
+    }
+}</code></pre>
+        </div>
+        <div class="section">
+          <h2>五、项目运行</h2>
+          <h3>5.1 启动后端服务</h3>
+          <pre><code># 进入后端目录
+cd backend
+
+# 启动后端服务（支持热部署）
+# Windows
+mvnw.cmd spring-boot:run
+
+# Linux/Mac
+./mvnw spring-boot:run
+
+# 或使用已安装的 Maven
+mvn spring-boot:run</code></pre>
+          <h3>5.2 启动前端服务</h3>
+          <pre><code># 进入前端目录
+cd frontend
+
+# 安装依赖（首次运行）
+npm install
+
+# 启动 Vue3 前端项目
+npm run dev</code></pre>
+          <h3>5.3 服务访问地址</h3>
+          <table>
+            <tr>
+              <th>服务</th>
+              <th>地址</th>
+              <th>说明</th>
+            </tr>
+            <tr>
+              <td>前端应用</td>
+              <td>http://localhost:5173</td>
+              <td>Vue3 开发服务器（Vite）</td>
+            </tr>
+            <tr>
+              <td>后端 API</td>
+              <td>http://localhost:8080</td>
+              <td>Spring Boot 后端服务</td>
+            </tr>
+            <tr>
+              <td>区块链 API</td>
+              <td>http://localhost:8080/api/blockchain</td>
+              <td>区块链相关接口</td>
+            </tr>
+            <tr>
+              <td>用户 API</td>
+              <td>http://localhost:8080/api/user</td>
+              <td>用户相关接口</td>
+            </tr>
+            <tr>
+              <td>MySQL 数据库</td>
+              <td>localhost:3306</td>
+              <td>数据库服务</td>
+            </tr>
+            <tr>
+              <td>RabbitMQ 控制台</td>
+              <td>http://localhost:15672</td>
+              <td>消息队列管理界面</td>
+            </tr>
+          </table>
+        </div>
+      </main>
+    </div>
+  </body>
+</html>

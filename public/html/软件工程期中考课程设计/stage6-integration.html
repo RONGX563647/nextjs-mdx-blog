@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>阶段六：系统集成与测试 - 区块链可视化管理交易系统教程</title>
+    <link rel="stylesheet" href="../../docs/learn/css/style.css" />
+  </head>
+  <body>
+    <div class="main-container">
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          <h1>区块链可视化管理交易系统</h1>
+          <p>开发教程文档</p>
+        </div>
+        <nav class="sidebar-nav">
+          <div class="nav-section">
+            <div class="nav-section-title">首页</div>
+            <a href="index.html" class="nav-item">教程导览</a>
+          </div>
+          <div class="nav-section">
+            <div class="nav-section-title">开发阶段</div>
+            <a href="stage1-infrastructure.html" class="nav-item">阶段一：项目基础设施</a>
+            <a href="stage2-user.html" class="nav-item">阶段二：用户模块</a>
+            <a href="stage3-blockchain.html" class="nav-item">阶段三：区块链节点管理</a>
+            <a href="stage4-chat.html" class="nav-item">阶段四：即时聊天功能</a>
+            <a href="stage5-frontend.html" class="nav-item">阶段五：前端可视化界面</a>
+            <a href="stage6-integration.html" class="nav-item active">阶段六：系统集成与测试</a>
+            <a href="stage6-integration.html#integration" class="nav-item nav-item-sub">系统集成</a>
+            <a href="stage6-integration.html#testing" class="nav-item nav-item-sub">功能测试</a>
+            <a href="stage6-integration.html#demo" class="nav-item nav-item-sub">系统演示</a>
+            <a href="stage6-integration.html#ppt" class="nav-item nav-item-sub">PPT 汇报</a>
+          </div>
+        </nav>
+      </aside>
+      <main class="content">
+        <div class="content-header">
+          <div class="breadcrumb">
+            <a href="index.html">首页</a> / 阶段六：系统集成与测试
+          </div>
+          <h1>阶段六：系统集成与测试</h1>
+        </div>
+        <div class="section" id="integration">
+          <h2>一、系统集成</h2>
+          <h3>1.1 集成架构</h3>
+          <pre><code>+---------------------+       HTTP API       +------------------+
+|    Vue3 前端         |  &lt;------------------&gt; |   Spring Boot    |
+|   (frontend/)        |                     |   (backend/)     |
+|                     |                     |                  |
+|  - 登录/注册界面     |                     |  - UserController |
+|  - 区块链管理界面    |                     |  - BlockchainCtrl |
+|  - 即时聊天界面      |                     |  - ChatController |
++---------------------+                     +------------------+
+                                                    |
+                                          +------------------+
+                                          |   RabbitMQ       |
+                                          |   (消息中间件)    |
+                                          +------------------+
+                                          |  - Exchange      |
+                                          |  - Queue         |
+                                          |  - Consumer      |
+                                          +------------------+</code></pre>
+          <h3>1.2 后端集成配置</h3>
+          <p><strong>application.yml 完整配置：</strong></p>
+          <pre><code>server:
+  port: 8080
+
+spring:
+  # 数据库配置
+  datasource:
+    url: jdbc:mysql://localhost:3306/blockchain_db?useUnicode=true&characterEncoding=utf8
+    username: root
+    password: your_password
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  
+  # JPA 配置
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+  
+  # RabbitMQ 配置
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+    virtual-host: /
+    listener:
+      simple:
+        acknowledge-mode: auto
+
+# 区块链配置
+blockchain:
+  difficulty: 4
+  mining-reward: 10.0</code></pre>
+          <h3>1.3 跨域配置</h3>
+          <p><strong>WebConfig.java - CORS 跨域配置：</strong></p>
+          <pre><code>@Configuration
+public class WebConfig implements WebMvcConfigurer {
+
+    @Override
+    public void addCorsMappings(CorsRegistry registry) {
+        registry.addMapping("/api/**")
+            .allowedOrigins("http://localhost:5173")
+            .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+            .allowedHeaders("*")
+            .allowCredentials(true);
+    }
+}</code></pre>
+          <h3>1.4 前端 API 封装</h3>
+          <p><strong>api/request.js - Axios 封装：</strong></p>
+          <pre><code>import axios from 'axios'
+import { ElMessage } from 'element-plus'
+
+const request = axios.create({
+  baseURL: '/api',
+  timeout: 10000
+})
+
+// 请求拦截器
+request.interceptors.request.use(
+  config => {
+    const userInfo = localStorage.getItem('userInfo')
+    if (userInfo) {
+      config.headers['Authorization'] = 'Bearer ' + JSON.parse(userInfo).token
+    }
+    return config
+  },
+  error => {
+    return Promise.reject(error)
+  }
+)
+
+// 响应拦截器
+request.interceptors.response.use(
+  response => {
+    return response.data
+  },
+  error => {
+    ElMessage.error(error.response?.data?.message || '请求失败')
+    return Promise.reject(error)
+  }
+)
+
+export default request</code></pre>
+        </div>
+        <div class="section" id="testing">
+          <h2>二、功能测试</h2>
+          <h3>2.1 测试清单</h3>
+          <table>
+            <tr>
+              <th>序号</th>
+              <th>测试模块</th>
+              <th>测试项</th>
+              <th>预期结果</th>
+            </tr>
+            <tr>
+              <td>1</td>
+              <td>用户注册</td>
+              <td>输入用户名和密码，点击注册</td>
+              <td>注册成功，自动生成钱包和节点</td>
+            </tr>
+            <tr>
+              <td>2</td>
+              <td>用户登录</td>
+              <td>使用已注册账号登录</td>
+              <td>登录成功，跳转到主界面</td>
+            </tr>
+            <tr>
+              <td>3</td>
+              <td>节点信息展示</td>
+              <td>查看节点信息卡片</td>
+              <td>正确显示节点ID、钱包地址、余额等</td>
+            </tr>
+            <tr>
+              <td>4</td>
+              <td>创建交易</td>
+              <td>填写接收方地址和金额，提交交易</td>
+              <td>交易创建成功，加入待处理队列</td>
+            </tr>
+            <tr>
+              <td>5</td>
+              <td>挖矿操作</td>
+              <td>点击挖矿按钮</td>
+              <td>打包交易，生成新区块，获得奖励</td>
+            </tr>
+            <tr>
+              <td>6</td>
+              <td>余额查询</td>
+              <td>查看钱包余额</td>
+              <td>正确显示挖矿奖励后的余额</td>
+            </tr>
+            <tr>
+              <td>7</td>
+              <td>区块链查询</td>
+              <td>查看区块链数据</td>
+              <td>正确显示所有区块及其详情</td>
+            </tr>
+            <tr>
+              <td>8</td>
+              <td>数据验证</td>
+              <td>点击验证链按钮</td>
+              <td>显示链是否有效</td>
+            </tr>
+            <tr>
+              <td>9</td>
+              <td>邻居节点管理</td>
+              <td>添加/移除邻居节点</td>
+              <td>节点列表正确更新</td>
+            </tr>
+            <tr>
+              <td>10</td>
+              <td>节点同步</td>
+              <td>点击同步网络按钮</td>
+              <td>从邻居节点同步最新链数据</td>
+            </tr>
+            <tr>
+              <td>11</td>
+              <td>即时聊天</td>
+              <td>发送聊天消息</td>
+              <td>消息发送成功，其他用户收到消息</td>
+            </tr>
+          </table>
+          <h3>2.2 API 测试脚本</h3>
+          <p><strong>api_test.py - 自动化 API 测试：</strong></p>
+          <pre><code>import requests
+import json
+
+BASE_URL = "http://localhost:8080/api"
+
+def test_user_register():
+    """测试用户注册"""
+    url = f"{BASE_URL}/user/register"
+    data = {"username": "testuser", "password": "password123"}
+    response = requests.post(url, json=data)
+    assert response.status_code == 200
+    result = response.json()
+    assert result["status"] == "success"
+    print("用户注册测试通过")
+    return result
+
+def test_user_login():
+    """测试用户登录"""
+    url = f"{BASE_URL}/user/login"
+    data = {"username": "testuser", "password": "password123"}
+    response = requests.post(url, json=data)
+    assert response.status_code == 200
+    result = response.json()
+    assert result["status"] == "success"
+    print("用户登录测试通过")
+    return result
+
+def test_create_transaction():
+    """测试创建交易"""
+    url = f"{BASE_URL}/blockchain/transaction"
+    params = {
+        "senderAddress": "addr1",
+        "recipientAddress": "addr2",
+        "amount": 50
+    }
+    response = requests.post(url, params=params)
+    assert response.status_code == 200
+    print("创建交易测试通过")
+
+def test_mine_block():
+    """测试挖矿"""
+    url = f"{BASE_URL}/blockchain/mine"
+    params = {"minerAddress": "miner1"}
+    response = requests.post(url, params=params)
+    assert response.status_code == 200
+    result = response.json()
+    assert result["success"] == True
+    print("挖矿测试通过")
+
+def test_validate_chain():
+    """测试区块链验证"""
+    url = f"{BASE_URL}/blockchain/validate"
+    response = requests.get(url)
+    assert response.status_code == 200
+    result = response.json()
+    assert result["valid"] == True
+    print("区块链验证测试通过")
+
+def test_send_chat():
+    """测试发送聊天消息"""
+    url = f"{BASE_URL}/chat/send"
+    data = {"content": "测试消息", "sender": "testuser"}
+    response = requests.post(url, json=data)
+    assert response.status_code == 200
+    result = response.json()
+    assert result["status"] == "success"
+    print("聊天消息测试通过")
+
+if __name__ == "__main__":
+    print("=== 开始 API 测试 ===")
+    test_user_register()
+    test_user_login()
+    test_create_transaction()
+    test_mine_block()
+    test_validate_chain()
+    test_send_chat()
+    print("=== 所有测试通过 ===")</code></pre>
+          <h3>2.3 测试运行</h3>
+          <pre><code># 安装依赖
+pip install requests
+
+# 运行测试
+python api_test.py
+
+# 预期输出:
+# === 开始 API 测试 ===
+# 用户注册测试通过
+# 用户登录测试通过
+# 创建交易测试通过
+# 挖矿测试通过
+# 区块链验证测试通过
+# 聊天消息测试通过
+# === 所有测试通过 ===</code></pre>
+        </div>
+        <div class="section" id="demo">
+          <h2>三、系统演示流程</h2>
+          <h3>3.1 演示准备</h3>
+          <ol>
+            <li><strong>启动 RabbitMQ 服务</strong>：确保 RabbitMQ 已安装并运行</li>
+            <li><strong>启动后端服务</strong>：cd backend && ./mvnw spring-boot:run</li>
+            <li><strong>启动前端服务</strong>：cd frontend && npm run dev</li>
+            <li><strong>准备演示账号</strong>：创建 2-3 个测试用户</li>
+          </ol>
+          <h3>3.2 演示步骤</h3>
+          <table>
+            <tr>
+              <th>步骤</th>
+              <th>操作</th>
+              <th>说明</th>
+              <th>时间</th>
+            </tr>
+            <tr>
+              <td>1</td>
+              <td>打开浏览器访问前端</td>
+              <td>访问 http://localhost:5173</td>
+              <td>30秒</td>
+            </tr>
+            <tr>
+              <td>2</td>
+              <td>用户注册</td>
+              <td>注册两个账号：user1、user2</td>
+              <td>1分钟</td>
+            </tr>
+            <tr>
+              <td>3</td>
+              <td>用户登录</td>
+              <td>使用 user1 登录系统</td>
+              <td>30秒</td>
+            </tr>
+            <tr>
+              <td>4</td>
+              <td>查看节点信息</td>
+              <td>展示节点ID、钱包地址、余额等</td>
+              <td>1分钟</td>
+            </tr>
+            <tr>
+              <td>5</td>
+              <td>创建交易</td>
+              <td>发起一笔交易到 user2</td>
+              <td>1分钟</td>
+            </tr>
+            <tr>
+              <td>6</td>
+              <td>执行挖矿</td>
+              <td>打包交易，生成新区块</td>
+              <td>2分钟</td>
+            </tr>
+            <tr>
+              <td>7</td>
+              <td>查看区块链</td>
+              <td>展示创世区块和新生成的区块</td>
+              <td>1分钟</td>
+            </tr>
+            <tr>
+              <td>8</td>
+              <td>验证区块链</td>
+              <td>点击验证按钮，确认链有效性</td>
+              <td>30秒</td>
+            </tr>
+            <tr>
+              <td>9</td>
+              <td>邻居节点管理</td>
+              <td>添加邻居节点，展示同步功能</td>
+              <td>1分钟</td>
+            </tr>
+            <tr>
+              <td>10</td>
+              <td>即时聊天</td>
+              <td>用 user2 登录，与 user1 聊天交流</td>
+              <td>2分钟</td>
+            </tr>
+            <tr>
+              <td>11</td>
+              <td>余额查询</td>
+              <td>展示挖矿奖励后的余额变化</td>
+              <td>30秒</td>
+            </tr>
+          </table>
+          <p><strong>总演示时间：约 10-12 分钟</strong></p>
+        </div>
+        <div class="section" id="ppt">
+          <h2>四、PPT 汇报内容</h2>
+          <h3>4.1 PPT 结构建议</h3>
+          <table>
+            <tr>
+              <th>章节</th>
+              <th>内容</th>
+              <th>页数</th>
+            </tr>
+            <tr>
+              <td>封面</td>
+              <td>项目名称、小组成员、日期</td>
+              <td>1</td>
+            </tr>
+            <tr>
+              <td>目录</td>
+              <td>汇报内容概览</td>
+              <td>1</td>
+            </tr>
+            <tr>
+              <td>系统体系结构视图</td>
+              <td>前后端分离架构、技术选型、模块划分</td>
+              <td>3-4</td>
+            </tr>
+            <tr>
+              <td>开发视图</td>
+              <td>项目结构、代码分层、关键技术实现</td>
+              <td>3-4</td>
+            </tr>
+            <tr>
+              <td>部署视图</td>
+              <td>开发环境、依赖服务、部署方式</td>
+              <td>2-3</td>
+            </tr>
+            <tr>
+              <td>功能展示</td>
+              <td>核心功能截图、流程说明</td>
+              <td>4-5</td>
+            </tr>
+            <tr>
+              <td>总结与展望</td>
+              <td>项目成果、不足与改进方向</td>
+              <td>1-2</td>
+            </tr>
+          </table>
+          <h3>4.2 体系结构视图要点</h3>
+          <ul>
+            <li><strong>前端层</strong>：Vue 3 + Vite + Element Plus + Axios</li>
+            <li><strong>后端层</strong>：Spring Boot + Spring MVC + JPA</li>
+            <li><strong>中间件层</strong>：RabbitMQ 消息队列</li>
+            <li><strong>数据存储</strong>：MySQL 数据库</li>
+            <li><strong>区块链核心</strong>：Block、Transaction、Wallet、Blockchain、Node</li>
+          </ul>
+          <h3>4.3 开发视图要点</h3>
+          <ul>
+            <li><strong>Controller 层</strong>：处理 HTTP 请求，调用 Service 层</li>
+            <li><strong>Service 层</strong>：业务逻辑实现，事务管理</li>
+            <li><strong>Model 层</strong>：数据模型定义（Block、Transaction、Wallet、User）</li>
+            <li><strong>Core 层</strong>：区块链核心逻辑（Blockchain、HashUtil）</li>
+            <li><strong>Network 层</strong>：P2P 网络通信（Node、NodeInfo）</li>
+            <li><strong>Config 层</strong>：RabbitMQ 配置、CORS 配置</li>
+          </ul>
+          <h3>4.4 部署视图要点</h3>
+          <ul>
+            <li><strong>开发环境</strong>：JDK 17、Node.js 16+、Maven 3.8+、RabbitMQ 3.x</li>
+            <li><strong>后端部署</strong>：./mvnw spring-boot:run 或 java -jar</li>
+            <li><strong>前端部署</strong>：npm run dev（开发）或 npm run build（生产）</li>
+            <li><strong>服务端口</strong>：前端 5173，后端 8080，RabbitMQ 5672/15672</li>
+          </ul>
+          <h3>4.5 小组分工建议</h3>
+          <table>
+            <tr>
+              <th>成员</th>
+              <th>负责模块</th>
+              <th>演示内容</th>
+            </tr>
+            <tr>
+              <td>成员 A</td>
+              <td>后端区块链核心</td>
+              <td>Block、Transaction、Blockchain 实现讲解</td>
+            </tr>
+            <tr>
+              <td>成员 B</td>
+              <td>后端 API 与 RabbitMQ</td>
+              <td>Controller、Service、消息队列配置讲解</td>
+            </tr>
+            <tr>
+              <td>成员 C</td>
+              <td>前端开发</td>
+              <td>Vue3 界面实现、路由、组件讲解</td>
+            </tr>
+          </table>
+        </div>
+        <div class="section">
+          <h2>五、常见问题与解决方案</h2>
+          <h3>5.1 后端启动失败</h3>
+          <pre><code># 问题：端口被占用
+# 解决：修改 application.yml 中的 server.port
+server:
+  port: 8081
+
+# 问题：RabbitMQ 连接失败
+# 解决：确保 RabbitMQ 服务已启动
+# Windows: net start RabbitMQ
+# 或: rabbitmq-service start</code></pre>
+          <h3>5.2 前端无法访问后端 API</h3>
+          <pre><code># 问题：跨域错误
+# 解决：确保 WebConfig 中配置了 CORS
+# 检查 application.yml 中前端地址是否正确
+
+# 问题：API 请求 404
+# 解决：检查 Controller 的 @RequestMapping 路径
+# 确保前端 axios 的 baseURL 配置正确</code></pre>
+          <h3>5.3 挖矿耗时过长</h3>
+          <pre><code># 问题：挖矿难度过高导致等待时间太长
+# 解决：降低 difficulty 值
+# 在 Blockchain 构造函数中修改:
+this.difficulty = 2;  // 从 4 降低到 2
+
+# 或在 application.yml 中配置:
+blockchain:
+  difficulty: 2</code></pre>
+          <h3>5.4 消息队列消息未消费</h3>
+          <pre><code># 问题：消费者未启动
+# 解决：确保 RabbitMQ 服务运行正常
+# 检查消费者类的 @RabbitListener 注解是否正确
+
+# 问题：消息未路由到队列
+# 解决：检查 Exchange 和 Queue 的绑定关系
+# 访问 http://localhost:15672 查看绑定状态</code></pre>
+        </div>
+      </main>
+    </div>
+  </body>
+</html>
