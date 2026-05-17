@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第七章：垃圾回收算法 - 深入底层原理</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary: #6366f1; --secondary: #f59e0b; --bg-dark: #1e1e2e;
+            --bg-card: #27273a; --text-light: #f8f8f8; --text-gray: #a1a1aa;
+            --border: #3f3f5a; --success: #22c55e; --danger: #ef4444; --info: #3b82f6;
+        }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg-dark); color: var(--text-light); padding: 40px; line-height: 1.6; }
+        .chapter { margin-bottom: 60px; }
+        .chapter-title { font-size: 32px; margin-bottom: 15px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .chapter-desc { color: var(--text-gray); font-size: 16px; margin-bottom: 30px; line-height: 1.8; }
+        .gc-algorithm { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; }
+        .gc-type { background: var(--bg-card); border-radius: 12px; padding: 20px; flex: 1; min-width: 200px; max-width: 300px; border: 1px solid var(--border); transition: all 0.3s; }
+        .gc-type:hover { transform: translateY(-5px); border-color: var(--primary); }
+        .gc-type h5 { color: var(--secondary); margin-bottom: 15px; font-size: 16px; }
+        .memory-visual { display: flex; gap: 5px; margin: 15px 0; }
+        .memory-block { width: 20px; height: 20px; border-radius: 3px; animation: blockChange 2s ease-in-out infinite; }
+        .memory-block.used { background: var(--success); } .memory-block.free { background: var(--border); } .memory-block.collecting { background: var(--danger); }
+        .memory-block:nth-child(odd) { animation-delay: 0.2s; } .memory-block:nth-child(even) { animation-delay: 0.6s; }
+        @keyframes blockChange { 0%, 40% { opacity: 1; } 50% { opacity: 0.3; } 60%, 100% { opacity: 1; } }
+        .highlight-box { background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%); border-left: 4px solid var(--primary); padding: 20px; border-radius: 0 10px 10px 0; margin: 20px 0; }
+        .highlight-box h4 { margin-bottom: 10px; color: var(--primary); }
+        .card { background: var(--bg-card); border-radius: 12px; padding: 25px; margin-bottom: 20px; border: 1px solid var(--border); }
+        .card h4 { font-size: 18px; margin-bottom: 15px; color: var(--info); }
+        .card ul { list-style: none; padding-left: 0; }
+        .card ul li { padding: 8px 0; padding-left: 20px; position: relative; color: var(--text-gray); }
+        .card ul li::before { content: '→'; position: absolute; left: 0; color: var(--primary); }
+        .code-block { background: #0d0d1a; padding: 15px; border-radius: 8px; margin: 15px 0; overflow-x: auto; }
+        .code-block code { font-family: 'Courier New', monospace; font-size: 13px; color: #e0e0e0; }
+        .table-wrapper { overflow-x: auto; margin: 20px 0; }
+        table { width: 100%; border-collapse: collapse; background: var(--bg-card); border-radius: 8px; overflow: hidden; }
+        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid var(--border); }
+        th { background: rgba(99, 102, 241, 0.2); color: var(--info); font-weight: 600; }
+        td { color: var(--text-gray); }
+        .tri-color { display: flex; gap: 20px; margin: 20px 0; flex-wrap: wrap; justify-content: center; }
+        .tri-item { padding: 15px 25px; border-radius: 10px; text-align: center; flex: 1; min-width: 150px; }
+        .tri-item.white { background: rgba(255, 255, 255, 0.1); border: 2px solid #fff; }
+        .tri-item.gray { background: rgba(128, 128, 128, 0.2); border: 2px solid #888; }
+        .tri-item.black { background: rgba(0, 0, 0, 0.3); border: 2px solid #555; }
+        .tri-item h6 { margin-bottom: 8px; }
+        .tri-item p { font-size: 12px; color: var(--text-gray); }
+        .animation-container { background: #0f0f1a; border-radius: 12px; padding: 30px; margin: 25px 0; border: 1px solid var(--border); overflow: hidden; }
+        .animation-title { text-align: center; font-size: 14px; color: var(--text-gray); margin-bottom: 20px; }
+        .tlab-visual { background: linear-gradient(135deg, #1a1a3e 0%, #2a1a4e 100%); border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .thread-slots { display: flex; gap: 15px; flex-wrap: wrap; }
+        .thread-slot { background: rgba(34, 197, 94, 0.2); padding: 15px; border-radius: 8px; flex: 1; min-width: 150px; }
+        .thread-slot h6 { color: var(--success); margin-bottom: 8px; }
+        .arrow-flow { display: flex; align-items: center; justify-content: center; margin: 20px 0; flex-wrap: wrap; }
+        .flow-node { background: rgba(99, 102, 241, 0.2); padding: 12px 20px; border-radius: 8px; margin: 0 10px; text-align: center; }
+        .flow-arrow { color: var(--secondary); font-size: 20px; }
+        
+        /* 算法对比可视化 */
+        .algo-comparison { background: linear-gradient(135deg, #0f0f1a 0%, #1a1a3e 100%); border-radius: 10px; padding: 25px; margin: 20px 0; }
+        .algo-visual { display: flex; gap: 20px; margin: 20px 0; flex-wrap: wrap; }
+        .algo-item { flex: 1; min-width: 200px; padding: 20px; background: rgba(99, 102, 241, 0.1); border-radius: 10px; text-align: center; }
+        .algo-item h5 { color: var(--secondary); margin-bottom: 15px; }
+        .memory-layout { display: flex; gap: 3px; margin: 10px 0; justify-content: center; flex-wrap: wrap; }
+        .mem-cell { width: 25px; height: 25px; border-radius: 4px; text-align: center; line-height: 25px; font-size: 10px; font-weight: bold; }
+        .mem-cell.alive { background: var(--success); color: white; }
+        .mem-cell.dead { background: var(--danger); color: white; }
+        .mem-cell.free { background: var(--border); color: var(--text-gray); }
+        .mem-label { font-size: 11px; color: var(--text-gray); margin-top: 8px; }
+        
+        /* 三色标记动画 */
+        .tri-color-anim { background: #0f0f1a; border-radius: 10px; padding: 25px; margin: 20px 0; position: relative; height: 200px; }
+        .tri-node { position: absolute; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 12px; }
+        .tri-node.white-node { background: #fff; color: #000; border: 2px solid #ccc; }
+        .tri-node.gray-node { background: #888; color: #fff; border: 2px solid #666; animation: pulseGray 2s ease-in-out infinite; }
+        .tri-node.black-node { background: #333; color: #fff; border: 2px solid #222; }
+        @keyframes pulseGray { 0%, 100% { box-shadow: 0 0 0 0 rgba(136, 136, 136, 0.4); } 50% { box-shadow: 0 0 0 10px rgba(136, 136, 136, 0); } }
+        
+        /* 卡表可视化 */
+        .card-table-visual { background: #0f0f1a; border-radius: 10px; padding: 25px; margin: 20px 0; }
+        .card-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 3px; margin: 15px 0; }
+        .card-cell { background: var(--border); padding: 10px; text-align: center; border-radius: 4px; font-size: 11px; }
+        .card-cell.dirty { background: var(--danger); animation: pulseDirty 2s ease-in-out infinite; }
+        .card-cell.clean { background: var(--success); }
+        @keyframes pulseDirty { 0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); } 50% { box-shadow: 0 0 0 5px rgba(239, 68, 68, 0); } }
+        .card-legend { display: flex; gap: 15px; justify-content: center; margin-top: 10px; }
+        .legend-item { display: flex; align-items: center; gap: 5px; font-size: 12px; }
+        .legend-box { width: 15px; height: 15px; border-radius: 3px; }
+        
+        /* Mermaid图容器 */
+        .mermaid-container { background: #fff; border-radius: 10px; padding: 20px; margin: 20px 0; }
+        .mermaid-title { text-align: center; color: var(--text-gray); margin-bottom: 15px; font-size: 14px; }
+        
+        /* 分代年龄可视化 */
+        .age-visual { background: linear-gradient(135deg, #0f0f1a 0%, #1a1a3e 100%); border-radius: 10px; padding: 25px; margin: 20px 0; }
+        .age-steps { display: flex; gap: 10px; align-items: flex-end; height: 100px; margin: 20px 0; }
+        .age-step { flex: 1; background: linear-gradient(to top, var(--success), var(--info)); border-radius: 4px 4px 0 0; position: relative; }
+        .age-step span { position: absolute; bottom: -20px; left: 50%; transform: translateX(-50%); font-size: 10px; color: var(--text-gray); }
+        .age-step .age-num { position: absolute; top: 5px; left: 50%; transform: translateX(-50%); font-size: 12px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="chapter">
+        <h2 class="chapter-title">第七章：垃圾回收算法 - 深入底层原理</h2>
+        <p class="chapter-desc">不同的垃圾回收算法有不同的特点和适用场景。本章深入探讨算法实现、三色标记理论和底层数据结构。</p>
+
+        <!-- 标记-清除算法 -->
+        <div class="card">
+            <h4>7.1 标记-清除算法（Mark-Sweep）</h4>
+            <ul>
+                <li><strong>执行阶段</strong>：标记阶段（从GC Roots扫描存活对象）+ 清除阶段（回收未标记对象）</li>
+                <li><strong>标记实现</strong>：使用Bitmap（位图）标记对象，1=存活，0=可回收</li>
+                <li><strong>底层数据结构</strong>：Mark Bitmap（标记位图），每个对象对应1个bit</li>
+                <li><strong>优点</strong>：实现简单、无需额外空间、不移动对象</li>
+                <li><strong>致命缺点</strong>：产生大量内存碎片，导致大对象无法分配</li>
+                <li><strong>空间复杂度</strong>：O(1)额外空间（位图），但碎片导致利用率降低</li>
+                <li><strong>使用场景</strong>：CMS收集器的老年代回收</li>
+            </ul>
+            
+            <!-- 标记-清除算法可视化 -->
+            <div class="animation-container">
+                <div class="animation-title">标记-清除算法执行过程</div>
+                <div class="algo-comparison">
+                    <div class="algo-item">
+                        <h5>阶段1: 标记</h5>
+                        <div class="memory-layout">
+                            <div class="mem-cell alive">✓</div>
+                            <div class="mem-cell alive">✓</div>
+                            <div class="mem-cell dead">✗</div>
+                            <div class="mem-cell alive">✓</div>
+                            <div class="mem-cell dead">✗</div>
+                            <div class="mem-cell alive">✓</div>
+                        </div>
+                        <div class="mem-label">扫描所有对象，标记存活对象</div>
+                    </div>
+                    <div class="flow-arrow">→</div>
+                    <div class="algo-item" style="background: rgba(239, 68, 68, 0.1);">
+                        <h5>阶段2: 清除</h5>
+                        <div class="memory-layout">
+                            <div class="mem-cell alive">✓</div>
+                            <div class="mem-cell free"></div>
+                            <div class="mem-cell alive">✓</div>
+                            <div class="mem-cell free"></div>
+                            <div class="mem-cell free"></div>
+                            <div class="mem-cell alive">✓</div>
+                        </div>
+                        <div class="mem-label">回收未标记对象，产生碎片</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 标记-清除流程图 -->
+            <div class="mermaid-container">
+                <div class="mermaid-title">📊 标记-清除算法流程</div>
+                <div class="mermaid">
+graph TD
+    A[开始Mark-Sweep] --> B[标记阶段]
+    B --> C[从GC Roots遍历]
+    C --> D{对象可达?}
+    D -->|是| E[标记为存活]
+    D -->|否| F[保持未标记]
+    E --> G{还有未扫描对象?}
+    G -->|是| C
+    G -->|否| H[清除阶段]
+    
+    H --> I[遍历堆内存]
+    I --> J{对象已标记?}
+    J -->|否| K[回收内存]
+    J -->|是| L[清除标记]
+    K --> M[加入空闲链表]
+    L --> N{还有对象?}
+    M --> N
+    N -->|是| I
+    N -->|否| O[GC完成]
+    
+    classDef primary fill:#6366f1,stroke:#4f46e5,color:#fff
+    classDef mark fill:#22c55e,stroke:#16a34a,color:#fff
+    classDef sweep fill:#ef4444,stroke:#dc2626,color:#fff
+    classDef decision fill:#f59e0b,stroke:#d97706,color:#fff
+    class A,B primary
+    class C,D,E,G mark
+    class H,I,J,K,L,M,N,O sweep
+    class D,G,J,N decision
+                </div>
+            </div>
+            
+            <div class="code-block">
+                <code>
+// 标记-清除算法伪代码<br>
+void markSweep() {<br>
+&nbsp;&nbsp;// 标记阶段 - DFS遍历所有存活对象<br>
+&nbsp;&nbsp;for (root : gcRoots) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;mark(root);  // 递归标记所有可达对象<br>
+&nbsp;&nbsp;}<br><br>
+&nbsp;&nbsp;// 清除阶段 - 扫描堆内存，回收未标记对象<br>
+&nbsp;&nbsp;for (obj : heap) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;if (!isMarked(obj)) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;free(obj);  // 释放内存，加入空闲链表<br>
+&nbsp;&nbsp;&nbsp;&nbsp;} else {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;unmark(obj);  // 清除标记，为下次GC准备<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;}<br>
+}<br><br>
+// 内存碎片问题：<br>
+// [存活][空闲][存活][空闲][存活][空闲]  ← 碎片化严重！<br>
+// 需要100字节的大对象无法分配，即使总空闲空间>100
+                </code>
+            </div>
+        </div>
+
+        <!-- 标记-复制算法 -->
+        <div class="card">
+            <h4>7.2 标记-复制算法（Mark-Copy）</h4>
+            <ul>
+                <li><strong>核心思想</strong>：将内存分为两块，每次只使用一块，GC时将存活对象复制到另一块</li>
+                <li><strong>底层实现</strong>：Eden + Survivor0 + Survivor1（8:1:1比例）</li>
+                <li><strong>指针碰撞分配</strong>：空闲内存连续，使用指针分配，仅需CAS操作</li>
+                <li><strong>优点</strong>：无内存碎片、分配效率极高、实现简单</li>
+                <li><strong>缺点</strong>：可用内存缩小为一半（实际新生代为90%）</li>
+                <li><strong>复制开销</strong>：仅复制存活对象，新生代存活率低（通常<10%）</li>
+                <li><strong>使用场景</strong>：所有新生代收集器（Serial Copy、ParNew、PS Scavenge、G1 Young）</li>
+            </ul>
+            
+            <!-- 标记-复制算法可视化 -->
+            <div class="animation-container">
+                <div class="animation-title">标记-复制算法内存布局</div>
+                <div class="tlab-visual">
+                    <div style="color: #f59e0b; font-weight: bold; margin-bottom: 15px;">新生代内存布局（标记-复制）</div>
+                    <div class="thread-slots">
+                        <div class="thread-slot" style="background: rgba(34, 197, 94, 0.2);">
+                            <h6>Eden区（80%）</h6>
+                            <div class="memory-layout">
+                                <div class="mem-cell alive">✓</div>
+                                <div class="mem-cell alive">✓</div>
+                                <div class="mem-cell dead">✗</div>
+                                <div class="mem-cell alive">✓</div>
+                                <div class="mem-cell dead">✗</div>
+                                <div class="mem-cell dead">✗</div>
+                            </div>
+                            <p style="font-size: 12px; color: #a1a1aa;">新对象分配区域</p>
+                        </div>
+                        <div class="thread-slot" style="background: rgba(59, 130, 246, 0.2);">
+                            <h6>Survivor0 - From（10%）</h6>
+                            <div class="memory-layout">
+                                <div class="mem-cell alive">✓</div>
+                                <div class="mem-cell free"></div>
+                                <div class="mem-cell free"></div>
+                            </div>
+                            <p style="font-size: 12px; color: #a1a1aa;">上次GC存活对象</p>
+                        </div>
+                        <div class="thread-slot" style="background: rgba(168, 85, 247, 0.2);">
+                            <h6>Survivor1 - To（10%）</h6>
+                            <div class="memory-layout">
+                                <div class="mem-cell free"></div>
+                                <div class="mem-cell free"></div>
+                                <div class="mem-cell free"></div>
+                            </div>
+                            <p style="font-size: 12px; color: #a1a1aa;">GC目标区域</p>
+                        </div>
+                    </div>
+                    <div style="text-align: center; font-size: 12px; color: #a1a1aa; margin-top: 15px;">
+                        GC过程：Eden+S0存活对象 → 复制到S1 → S1成为新From区 → 角色互换
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 标记-复制流程图 -->
+            <div class="mermaid-container">
+                <div class="mermaid-title">📊 标记-复制算法流程</div>
+                <div class="mermaid">
+graph TD
+    A[Young GC触发] --> B[Eden区满]
+    B --> C[扫描Eden+S0]
+    C --> D{对象存活?}
+    D -->|是| E[复制到S1]
+    D -->|否| F[回收内存]
+    E --> G[年龄+1]
+    G --> H{年龄>=阈值?}
+    H -->|是| I[晋升到老年代]
+    H -->|否| J[留在S1]
+    F --> K{还有对象?}
+    J --> K
+    I --> K
+    K -->|是| C
+    K -->|否| L[S0和S1角色互换]
+    L --> M[GC完成]
+    
+    classDef primary fill:#6366f1,stroke:#4f46e5,color:#fff
+    classDef success fill:#22c55e,stroke:#16a34a,color:#fff
+    classDef danger fill:#ef4444,stroke:#dc2626,color:#fff
+    classDef warning fill:#f59e0b,stroke:#d97706,color:#fff
+    class A,B,C primary
+    class E,G,J,L,M success
+    class F danger
+    class D,H,K warning
+    class I fill:#3b82f6,stroke:#2563eb,color:#fff
+                </div>
+            </div>
+        </div>
+
+        <!-- 标记-整理算法 -->
+        <div class="card">
+            <h4>7.3 标记-整理算法（Mark-Compact）</h4>
+            <ul>
+                <li><strong>核心思想</strong>：标记存活对象后，将所有存活对象向一端移动，然后清理边界外内存</li>
+                <li><strong>实现难点</strong>：需要更新所有引用对象的地址（指针）</li>
+                <li><strong>三步实现（Lisp2算法）</strong>：<br>
+&nbsp;&nbsp;① 标记阶段：计算每个存活对象的新地址<br>
+&nbsp;&nbsp;② 更新引用：遍历所有引用，更新为新地址<br>
+&nbsp;&nbsp;③ 移动对象：复制对象到新位置</li>
+                <li><strong>优点</strong>：无内存碎片、内存利用率高</li>
+                <li><strong>缺点</strong>：移动对象开销大、需要暂停所有线程（STW）</li>
+                <li><strong>使用场景</strong>：老年代回收（Serial Old、Parallel Old）</li>
+            </ul>
+            
+            <!-- 标记-整理可视化 -->
+            <div class="animation-container">
+                <div class="animation-title">标记-整理算法执行过程</div>
+                <div class="algo-comparison">
+                    <div class="algo-visual">
+                        <div class="algo-item" style="background: rgba(99, 102, 241, 0.1);">
+                            <h5>阶段1: 标记</h5>
+                            <div class="memory-layout">
+                                <div class="mem-cell alive">✓</div>
+                                <div class="mem-cell dead">✗</div>
+                                <div class="mem-cell alive">✓</div>
+                                <div class="mem-cell dead">✗</div>
+                                <div class="mem-cell alive">✓</div>
+                                <div class="mem-cell dead">✗</div>
+                            </div>
+                            <div class="mem-label">标记存活对象</div>
+                        </div>
+                        <div class="algo-item" style="background: rgba(245, 158, 11, 0.1);">
+                            <h5>阶段2: 整理</h5>
+                            <div class="memory-layout">
+                                <div class="mem-cell alive" style="background: var(--secondary);">→</div>
+                                <div class="mem-cell alive" style="background: var(--secondary);">→</div>
+                                <div class="mem-cell alive" style="background: var(--secondary);">→</div>
+                                <div class="mem-cell free"></div>
+                                <div class="mem-cell free"></div>
+                                <div class="mem-cell free"></div>
+                            </div>
+                            <div class="mem-label">移动对象到一端</div>
+                        </div>
+                        <div class="algo-item" style="background: rgba(34, 197, 94, 0.1);">
+                            <h5>阶段3: 完成</h5>
+                            <div class="memory-layout">
+                                <div class="mem-cell alive">✓</div>
+                                <div class="mem-cell alive">✓</div>
+                                <div class="mem-cell alive">✓</div>
+                                <div class="mem-cell free"></div>
+                                <div class="mem-cell free"></div>
+                                <div class="mem-cell free"></div>
+                            </div>
+                            <div class="mem-label">无碎片，连续空闲</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 标记-整理流程图 -->
+            <div class="mermaid-container">
+                <div class="mermaid-title">📊 标记-整理算法流程（Lisp2）</div>
+                <div class="mermaid">
+graph TD
+    A[开始Mark-Compact] --> B[阶段1: 标记]
+    B --> C[遍历所有对象]
+    C --> D{对象存活?}
+    D -->|是| E[标记存活]
+    D -->|否| F[标记可回收]
+    E --> G{还有对象?}
+    F --> G
+    G -->|是| C
+    G -->|否| H[阶段2: 计算新地址]
+    
+    H --> I[设置存活对象起始位置]
+    I --> J[计算每个对象新地址]
+    J --> K[设置转发指针]
+    K --> L[阶段3: 更新引用]
+    
+    L --> M[遍历所有引用]
+    M --> N[根据转发指针更新地址]
+    N --> O{还有引用?}
+    O -->|是| M
+    O -->|否| P[阶段4: 移动对象]
+    
+    P --> Q[复制对象到新地址]
+    Q --> R{还有对象?}
+    R -->|是| Q
+    R -->|否| S[GC完成]
+    
+    classDef primary fill:#6366f1,stroke:#4f46e5,color:#fff
+    classDef mark fill:#22c55e,stroke:#16a34a,color:#fff
+    classDef compact fill:#f59e0b,stroke:#d97706,color:#fff
+    classDef move fill:#ef4444,stroke:#dc2626,color:#fff
+    class A,B,H,L,P primary
+    class C,D,E,G,I,J,K mark
+    class M,N,O compact
+    class Q,R,S move
+                </div>
+            </div>
+            
+            <div class="code-block">
+                <code>
+// 标记-整理算法伪代码（Lisp2简化版）<br>
+void markCompact() {<br>
+&nbsp;&nbsp;// 阶段1：标记存活对象<br>
+&nbsp;&nbsp;markPhase();<br><br>
+&nbsp;&nbsp;// 阶段2：计算新地址<br>
+&nbsp;&nbsp;address newAddress = heapStart;<br>
+&nbsp;&nbsp;for (obj : heap) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;if (isMarked(obj)) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;setForwardingPointer(obj, newAddress);  // 设置转发指针<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;newAddress += obj.size;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;}<br><br>
+&nbsp;&nbsp;// 阶段3：更新所有引用<br>
+&nbsp;&nbsp;updateAllReferences();  // 遍历GC Roots和对象引用<br><br>
+&nbsp;&nbsp;// 阶段4：移动对象<br>
+&nbsp;&nbsp;for (obj : heap) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;if (isMarked(obj)) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;move(obj, getForwardingPointer(obj));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;}<br>
+}
+                </code>
+            </div>
+        </div>
+
+        <!-- 三色标记法 -->
+        <div class="card">
+            <h4>7.4 三色标记法（Tri-Color Marking）- 并发GC理论基础</h4>
+            <p style="color: var(--text-gray); margin-bottom: 15px;">三色标记法是并发垃圾回收的核心理论，用于描述对象在并发标记过程中的状态。</p>
+            
+            <!-- 三色标记动画 -->
+            <div class="animation-container">
+                <div class="animation-title">三色标记状态转换</div>
+                <div class="tri-color-anim">
+                    <div class="tri-node black-node" style="left: 10%; top: 30%;">
+                        <div>
+                            <div>黑色</div>
+                            <div style="font-size: 9px;">已处理</div>
+                        </div>
+                    </div>
+                    <div class="tri-node gray-node" style="left: 35%; top: 20%;">
+                        <div>
+                            <div>灰色</div>
+                            <div style="font-size: 9px;">处理中</div>
+                        </div>
+                    </div>
+                    <div class="tri-node white-node" style="left: 60%; top: 40%;">
+                        <div>
+                            <div>白色</div>
+                            <div style="font-size: 9px;">未处理</div>
+                        </div>
+                    </div>
+                    <div class="tri-node white-node" style="left: 80%; top: 60%;">
+                        <div>
+                            <div>白色</div>
+                            <div style="font-size: 9px;">未处理</div>
+                        </div>
+                    </div>
+                    <div style="position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); padding: 8px 15px; border-radius: 20px; font-size: 12px;">
+                        GC Roots → 黑色 → 灰色(处理中) → 白色(待处理)
+                    </div>
+                </div>
+            </div>
+            
+            <div class="tri-color">
+                <div class="tri-item white">
+                    <h6 style="color: #fff;">⬜ 白色对象</h6>
+                    <p>尚未被GC访问到<br>可能是可回收对象</p>
+                </div>
+                <div class="tri-item gray">
+                    <h6 style="color: #aaa;">⬛ 灰色对象</h6>
+                    <p>已被访问但子引用未处理<br>等待进一步扫描</p>
+                </div>
+                <div class="tri-item black">
+                    <h6 style="color: #666;">⬛ 黑色对象</h6>
+                    <p>自身和子引用都已处理<br>确定是存活对象</p>
+                </div>
+            </div>
+            
+            <!-- 三色标记流程图 -->
+            <div class="mermaid-container">
+                <div class="mermaid-title">📊 三色标记状态转换图</div>
+                <div class="mermaid">
+graph LR
+    A[⬜ 白色] -->|GC访问| B[⬛ 灰色]
+    B -->|处理完所有引用| C[⬛ 黑色]
+    
+    style A fill:#fff,stroke:#ccc,color:#000
+    style B fill:#888,stroke:#666,color:#fff
+    style C fill:#333,stroke:#222,color:#fff
+                </div>
+            </div>
+            
+            <!-- 并发标记Mermaid图 -->
+            <div class="mermaid-container">
+                <div class="mermaid-title">📊 并发三色标记完整流程</div>
+                <div class="mermaid">
+graph TD
+    A[开始并发标记] --> B[初始标记 STW]
+    B --> C[GC Roots变灰色]
+    C --> D[并发标记阶段]
+    
+    D --> E{有灰色对象?}
+    E -->|是| F[处理灰色对象引用]
+    F --> G[子对象白色→灰色]
+    G --> H[灰色对象→黑色]
+    H --> E
+    
+    E -->|否| I[最终标记 STW]
+    I --> J[处理并发期间变化]
+    J --> K[清理白色对象]
+    K --> L[GC完成]
+    
+    classDef primary fill:#6366f1,stroke:#4f46e5,color:#fff
+    classDef stw fill:#ef4444,stroke:#dc2626,color:#fff
+    classDef concurrent fill:#22c55e,stroke:#16a34a,color:#fff
+    class A,B,C primary
+    class I,J stw
+    class D,E,F,G,H,K,L concurrent
+                </div>
+            </div>
+            
+            <ul>
+                <li><strong>初始状态</strong>：所有对象都是白色</li>
+                <li><strong>标记过程</strong>：从GC Roots开始，根对象变为灰色 → 扫描灰色对象 → 变为黑色</li>
+                <li><strong>并发标记问题</strong>：用户线程和GC线程并发执行，可能导致对象状态变化</li>
+                <li><strong>两种破坏情况（导致漏标）</strong>：<br>
+&nbsp;&nbsp;① 黑色对象引用指向白色对象（赋值插入）<br>
+&nbsp;&nbsp;② 灰色对象到白色对象的引用被断开</li>
+                <li><strong>解决方案</strong>：增量更新（Incremental Update）或SATB（Snapshot At The Beginning）</li>
+            </ul>
+            
+            <div class="code-block">
+                <code>
+// 三色标记过程伪代码<br>
+void concurrentMark() {<br>
+&nbsp;&nbsp;// 1. 初始标记（STW） - 标记GC Roots直接引用的对象<br>
+&nbsp;&nbsp;for (root : gcRoots) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;markGray(root);<br>
+&nbsp;&nbsp;}<br><br>
+&nbsp;&nbsp;// 2. 并发标记 - 与用户线程并发执行<br>
+&nbsp;&nbsp;while (hasGrayObjects()) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;grayObj = getGrayObject();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;for (ref : grayObj.references) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if (isWhite(ref)) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;markGray(ref);  // 白色→灰色<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;markBlack(grayObj);  // 灰色→黑色<br>
+&nbsp;&nbsp;}<br><br>
+&nbsp;&nbsp;// 3. 最终标记（STW） - 处理并发期间的变化<br>
+&nbsp;&nbsp;processSatbLog();  // 或处理增量更新日志<br><br>
+&nbsp;&nbsp;// 4. 清理阶段<br>
+&nbsp;&nbsp;sweepWhiteObjects();  // 回收所有白色对象<br>
+}
+                </code>
+            </div>
+        </div>
+
+        <!-- 读写屏障 -->
+        <div class="card">
+            <h4>7.5 读写屏障（Read/Write Barrier）- 并发GC核心机制</h4>
+            <ul>
+                <li><strong>读屏障</strong>：在读取对象引用时插入的代码，用于维护并发标记的正确性</li>
+                <li><strong>写屏障</strong>：在修改对象引用时插入的代码，用于记录引用变化</li>
+                <li><strong>底层实现</strong>：通过JVM编译器在字节码层面自动插入</li>
+                <li><strong>开销</strong>：每次读写操作额外增加几纳秒开销，但可实现并发GC</li>
+                <li><strong>SATB（初始快照）</strong>：写屏障记录引用删除，使用SATB日志</li>
+                <li><strong>增量更新</strong>：写屏障记录引用新增，CMS采用此方案</li>
+            </ul>
+            
+            <!-- 读写屏障Mermaid图 -->
+            <div class="mermaid-container">
+                <div class="mermaid-title">📊 读写屏障工作流程</div>
+                <div class="mermaid">
+graph TD
+    A[对象引用操作] --> B{读还是写?}
+    B -->|读| C[读屏障]
+    B -->|写| D[写屏障]
+    
+    C --> E{引用需要重新映射?}
+    E -->|是| F[remap引用]
+    E -->|否| G[返回引用]
+    F --> G
+    
+    D --> H{SATB方案}
+    D --> I{增量更新方案}
+    
+    H --> J{旧引用是白色?}
+    J -->|是| K[记录到SATB日志]
+    J -->|否| L[直接赋值]
+    K --> L
+    
+    I --> M{新引用可达?}
+    M -->|是| N[标记新引用]
+    M -->|否| O[直接赋值]
+    N --> O
+    
+    classDef primary fill:#6366f1,stroke:#4f46e5,color:#fff
+    classDef read fill:#22c55e,stroke:#16a34a,color:#fff
+    classDef write fill:#f59e0b,stroke:#d97706,color:#fff
+    classDef satb fill:#ef4444,stroke:#dc2626,color:#fff
+    classDef incr fill:#3b82f6,stroke:#2563eb,color:#fff
+    class A,B primary
+    class C,E,F,G read
+    class D,H,I write
+    class J,K,L satb
+    class M,N,O incr
+                </div>
+            </div>
+            
+            <div class="code-block">
+                <code>
+// 写屏障伪代码（SATB方案）<br>
+void writeBarrier(Object* obj, int fieldOffset, Object* newValue) {<br>
+&nbsp;&nbsp;Object* oldValue = obj->getField(fieldOffset);<br><br>
+&nbsp;&nbsp;// SATB写屏障：如果删除了到白色对象的引用，记录到日志<br>
+&nbsp;&nbsp;if (concurrentMarking && isMarked(obj) && isWhite(oldValue)) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;satbLog.add(oldValue);  // 记录被删除的引用<br>
+&nbsp;&nbsp;}<br><br>
+&nbsp;&nbsp;// 执行实际赋值<br>
+&nbsp;&nbsp;obj->setField(fieldOffset, newValue);<br>
+}<br><br>
+// 读屏障伪代码（ZGC的染色指针方案）<br>
+Object* readBarrier(Object* ref) {<br>
+&nbsp;&nbsp;if (needsRemapping(ref)) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;ref = remapReference(ref);  // 重新映射引用<br>
+&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;return ref;<br>
+}
+                </code>
+            </div>
+        </div>
+
+        <!-- 记忆集和卡表 -->
+        <div class="card">
+            <h4>7.6 记忆集（Remembered Set）与卡表（Card Table）</h4>
+            <ul>
+                <li><strong>记忆集</strong>：记录从非收集区指向收集区的引用，避免全堆扫描</li>
+                <li><strong>卡表</strong>：记忆集的一种实现，将堆内存划分为固定大小的"卡页"（通常512字节）</li>
+                <li><strong>底层数据结构</strong>：byte数组（Card Table），每个byte对应一个卡页</li>
+                <li><strong>卡页状态</strong>：0=干净（无跨代引用），非0=脏（有跨代引用）</li>
+                <li><strong>写屏障更新卡表</strong>：当老年代引用新生代对象时，标记对应卡页为"脏"</li>
+                <li><strong>GC时处理</strong>：只需扫描脏卡页中的对象，大幅降低扫描开销</li>
+            </ul>
+            
+            <!-- 卡表可视化 -->
+            <div class="animation-container">
+                <div class="animation-title">卡表（Card Table）数据结构</div>
+                <div class="card-table-visual">
+                    <div style="color: #f59e0b; font-weight: bold; margin-bottom: 15px;">堆内存分区（512字节/卡页）</div>
+                    <div class="card-grid">
+                        <div class="card-cell clean">0</div>
+                        <div class="card-cell clean">0</div>
+                        <div class="card-cell dirty">1</div>
+                        <div class="card-cell clean">0</div>
+                        <div class="card-cell clean">0</div>
+                        <div class="card-cell dirty">1</div>
+                        <div class="card-cell clean">0</div>
+                        <div class="card-cell clean">0</div>
+                        <div class="card-cell clean">0</div>
+                        <div class="card-cell dirty">1</div>
+                        <div class="card-cell clean">0</div>
+                        <div class="card-cell clean">0</div>
+                        <div class="card-cell clean">0</div>
+                        <div class="card-cell clean">0</div>
+                        <div class="card-cell dirty">1</div>
+                        <div class="card-cell clean">0</div>
+                    </div>
+                    <div class="card-legend">
+                        <div class="legend-item">
+                            <div class="legend-box" style="background: var(--success);"></div>
+                            <span>干净卡页（无跨代引用）</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-box" style="background: var(--danger);"></div>
+                            <span>脏卡页（有跨代引用）</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 卡表工作流程Mermaid图 -->
+            <div class="mermaid-container">
+                <div class="mermaid-title">📊 卡表工作流程</div>
+                <div class="mermaid">
+graph TD
+    A[老年代对象引用新生代对象] --> B[写屏障触发]
+    B --> C[计算卡页索引]
+    C --> D[标记卡页为脏]
+    
+    D --> E[Young GC触发]
+    E --> F[扫描脏卡页]
+    F --> G{卡页是脏?}
+    G -->|是| H[扫描卡页中的对象]
+    G -->|否| I[跳过该卡页]
+    H --> J[找到跨代引用]
+    J --> K[加入GC Roots集合]
+    K --> L{还有脏卡页?}
+    I --> L
+    L -->|是| F
+    L -->|否| M[执行Young GC]
+    
+    classDef primary fill:#6366f1,stroke:#4f46e5,color:#fff
+    classDef barrier fill:#f59e0b,stroke:#d97706,color:#fff
+    classDef gc fill:#22c55e,stroke:#16a34a,color:#fff
+    classDef scan fill:#ef4444,stroke:#dc2626,color:#fff
+    class A,B,C,D primary
+    class E,F,G,L gc
+    class H,J,K scan
+    class I,M fill:#3b82f6,stroke:#2563eb,color:#fff
+                </div>
+            </div>
+            
+            <div class="code-block">
+                <code>
+// 卡表数据结构<br>
+byte[] cardTable;  // 每个元素对应512字节的堆内存<br><br>
+// 写屏障更新卡表<br>
+void oop_write_barrier(Object* oldObj, Object* newObj) {<br>
+&nbsp;&nbsp;if (isOldGeneration(oldObj) && isNewGeneration(newObj)) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;// 老年代引用新生代，标记对应卡页为脏<br>
+&nbsp;&nbsp;&nbsp;&nbsp;size_t cardIndex = (uintptr_t)oldObj >> 9;  // 除以512<br>
+&nbsp;&nbsp;&nbsp;&nbsp;cardTable[cardIndex] = 1;  // 标记为脏卡页<br>
+&nbsp;&nbsp;}<br>
+}<br><br>
+// Young GC时扫描脏卡页<br>
+void youngGC() {<br>
+&nbsp;&nbsp;for (card : cardTable) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;if (card == DIRTY) {  // 只处理脏卡页<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;scanCard(card);  // 扫描跨代引用<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;// 之后执行常规的Young GC标记-复制<br>
+}
+                </code>
+            </div>
+        </div>
+
+        <!-- TLAB -->
+        <div class="card">
+            <h4>7.7 TLAB（Thread Local Allocation Buffer）- 线程本地分配缓冲区</h4>
+            <ul>
+                <li><strong>目的</strong>：避免多线程在Eden区竞争分配内存时的同步开销</li>
+                <li><strong>实现原理</strong>：每个线程预先分配一小块Eden区，优先在TLAB中分配</li>
+                <li><strong>默认大小</strong>：约Eden区的1%，可通过-XX:TLABSize调整</li>
+                <li><strong>分配流程</strong>：TLAB有空间 → 直接分配（无锁）；TLAB满 → 申请新TLAB或直接在Eden分配</li>
+                <li><strong>优点</strong>：极大提升多线程对象分配性能</li>
+                <li><strong>控制参数</strong>：-XX:+UseTLAB（默认开启）、-XX:TLABSize</li>
+            </ul>
+            
+            <!-- TLAB可视化 -->
+            <div class="animation-container">
+                <div class="animation-title">TLAB线程本地分配示意图</div>
+                <div class="tlab-visual">
+                    <div class="thread-slots">
+                        <div class="thread-slot">
+                            <h6>线程1的TLAB</h6>
+                            <div class="memory-layout">
+                                <div class="mem-cell alive">✓</div>
+                                <div class="mem-cell alive">✓</div>
+                                <div class="mem-cell free"></div>
+                                <div class="mem-cell free"></div>
+                            </div>
+                            <p style="font-size: 11px; color: var(--text-gray);">无锁分配，高效</p>
+                        </div>
+                        <div class="thread-slot" style="background: rgba(59, 130, 246, 0.2);">
+                            <h6>线程2的TLAB</h6>
+                            <div class="memory-layout">
+                                <div class="mem-cell alive">✓</div>
+                                <div class="mem-cell free"></div>
+                                <div class="mem-cell free"></div>
+                                <div class="mem-cell free"></div>
+                            </div>
+                            <p style="font-size: 11px; color: var(--text-gray);">独立空间</p>
+                        </div>
+                        <div class="thread-slot" style="background: rgba(168, 85, 247, 0.2);">
+                            <h6>线程3的TLAB</h6>
+                            <div class="memory-layout">
+                                <div class="mem-cell alive">✓</div>
+                                <div class="mem-cell alive">✓</div>
+                                <div class="mem-cell alive">✓</div>
+                                <div class="mem-cell free"></div>
+                            </div>
+                            <p style="font-size: 11px; color: var(--text-gray);">TLAB满时申请新空间</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- TLAB工作流程Mermaid图 -->
+            <div class="mermaid-container">
+                <div class="mermaid-title">📊 TLAB分配流程</div>
+                <div class="mermaid">
+graph TD
+    A[新对象需要分配] --> B[线程TLAB有空间?]
+    B -->|是| C[直接在TLAB分配]
+    B -->|否| D[TLAB满]
+    
+    C --> E[无锁分配，返回对象]
+    
+    D --> F[申请新TLAB]
+    F --> G[Eden区有足够空间?]
+    G -->|是| H[分配新TLAB]
+    G -->|否| I[触发Young GC]
+    
+    H --> J[在新TLAB分配对象]
+    I --> K[GC后重新尝试]
+    K --> F
+    
+    J --> L[对象分配完成]
+    E --> L
+    
+    classDef primary fill:#6366f1,stroke:#4f46e5,color:#fff
+    classDef tlab fill:#22c55e,stroke:#16a34a,color:#fff
+    classDef alloc fill:#f59e0b,stroke:#d97706,color:#fff
+    classDef gc fill:#ef4444,stroke:#dc2626,color:#fff
+    class A,B primary
+    class C,E tlab
+    class D,F,G,H,J alloc
+    class I,K gc
+    class L fill:#3b82f6,stroke:#2563eb,color:#fff
+                </div>
+            </div>
+        </div>
+
+        <!-- 分代收集理论 -->
+        <div class="card">
+            <h4>7.8 分代收集理论（Generational Collection）</h4>
+            <ul>
+                <li><strong>弱分代假说</strong>：绝大多数对象朝生夕死，熬过GC的次数越多越难回收</li>
+                <li><strong>强分代假说</strong>：熬过越多次GC的对象，越有可能是存活对象</li>
+                <li><strong>跨代引用假说</strong>：跨代引用相对较少，新生代主要被新生代对象引用</li>
+                <li><strong>区域划分</strong>：新生代（Young）+ 老年代（Old），不同代使用不同算法</li>
+                <li><strong>对象年龄</strong>：对象头中的age字段（4位，最大15），每次Minor GC+1</li>
+                <li><strong>晋升规则</strong>：年龄达到阈值（-XX:MaxTenuringThreshold，默认15）→ 老年代</li>
+                <li><strong>动态年龄判定</strong>：如果同龄对象总大小超过Survivor区50%，年龄≥该年龄的对象直接晋升</li>
+            </ul>
+            
+            <!-- 对象年龄可视化 -->
+            <div class="animation-container">
+                <div class="animation-title">对象年龄增长与晋升过程</div>
+                <div class="age-visual">
+                    <div style="color: #f59e0b; font-weight: bold; margin-bottom: 15px;">对象年龄（age）增长</div>
+                    <div class="age-steps">
+                        <div class="age-step" style="height: 20%;">
+                            <div class="age-num">0</div>
+                            <span>新生代</span>
+                        </div>
+                        <div class="age-step" style="height: 30%;">
+                            <div class="age-num">1-3</div>
+                            <span>Young GC</span>
+                        </div>
+                        <div class="age-step" style="height: 40%;">
+                            <div class="age-num">4-7</div>
+                            <span>存活</span>
+                        </div>
+                        <div class="age-step" style="height: 60%;">
+                            <div class="age-num">8-12</div>
+                            <span>接近晋升</span>
+                        </div>
+                        <div class="age-step" style="height: 80%; background: linear-gradient(to top, var(--danger), var(--info));">
+                            <div class="age-num">15</div>
+                            <span>晋升老年代</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 分代收集Mermaid图 -->
+            <div class="mermaid-container">
+                <div class="mermaid-title">📊 分代收集理论</div>
+                <div class="mermaid">
+graph TD
+    A[分代收集理论] --> B[弱分代假说]
+    A --> C[强分代假说]
+    A --> D[跨代引用假说]
+    
+    B --> B1[绝大多数对象朝生夕死]
+    B --> B2[新生代使用复制算法]
+    
+    C --> C1[熬过GC越多越难回收]
+    C --> C2[老年代使用整理/清除]
+    
+    D --> D1[跨代引用相对较少]
+    D --> D2[卡表记录跨代引用]
+    
+    classDef primary fill:#6366f1,stroke:#4f46e5,color:#fff
+    classDef young fill:#22c55e,stroke:#16a34a,color:#fff
+    classDef old fill:#f59e0b,stroke:#d97706,color:#fff
+    classDef card fill:#3b82f6,stroke:#2563eb,color:#fff
+    class A primary
+    class B,B1,B2 young
+    class C,C1,C2 old
+    class D,D1,D2 card
+                </div>
+            </div>
+        </div>
+
+        <!-- GC类型对比 -->
+        <div class="card">
+            <h4>7.9 GC类型对比</h4>
+            <div class="table-wrapper">
+                <table>
+                    <tr>
+                        <th>GC类型</th>
+                        <th>触发条件</th>
+                        <th>回收区域</th>
+                        <th>停顿时间</th>
+                        <th>使用算法</th>
+                    </tr>
+                    <tr>
+                        <td>Young GC</td>
+                        <td>Eden区满</td>
+                        <td>仅新生代</td>
+                        <td>几十毫秒</td>
+                        <td>标记-复制</td>
+                    </tr>
+                    <tr>
+                        <td>Old GC</td>
+                        <td>老年代满</td>
+                        <td>仅老年代</td>
+                        <td>几百毫秒</td>
+                        <td>标记-清除/整理</td>
+                    </tr>
+                    <tr>
+                        <td>Mixed GC</td>
+                        <td>G1特有</td>
+                        <td>新生代+部分老年代</td>
+                        <td>可控（目标停顿）</td>
+                        <td>标记-复制+整理</td>
+                    </tr>
+                    <tr>
+                        <td>Full GC</td>
+                        <td>空间分配担保失败</td>
+                        <td>整个堆+元空间</td>
+                        <td>秒级（严重）</td>
+                        <td>标记-清除-整理</td>
+                    </tr>
+                </table>
+            </div>
+            
+            <!-- GC类型对比Mermaid图 -->
+            <div class="mermaid-container">
+                <div class="mermaid-title">📊 GC类型触发流程</div>
+                <div class="mermaid">
+graph TD
+    A[对象分配] --> B{Eden区有空间?}
+    B -->|是| C[分配成功]
+    B -->|否| D[Young GC]
+    
+    D --> E[存活对象复制到Survivor]
+    E --> F{对象年龄>=阈值?}
+    F -->|是| G[晋升到老年代]
+    F -->|否| H[留在Survivor]
+    
+    G --> I{老年代有空间?}
+    H --> I
+    C --> I
+    
+    I -->|是| J[继续运行]
+    I -->|否| K[Old GC / Full GC]
+    
+    K --> L[回收整个堆]
+    L --> M{空间足够?}
+    M -->|是| J
+    M -->|否| N[OutOfMemoryError]
+    
+    classDef primary fill:#6366f1,stroke:#4f46e5,color:#fff
+    classDef young fill:#22c55e,stroke:#16a34a,color:#fff
+    classDef old fill:#f59e0b,stroke:#d97706,color:#fff
+    classDef full fill:#ef4444,stroke:#dc2626,color:#fff
+    class A,B primary
+    class C,D,E,F,H young
+    class G,I,K,L old
+    class M,N full
+    class J fill:#3b82f6,stroke:#2563eb,color:#fff
+                </div>
+            </div>
+        </div>
+
+        <div class="highlight-box">
+            <h4>💡 算法选择策略</h4>
+            <p><strong>新生代</strong>：使用标记-复制算法，因为新生代存活率低（通常<10%），复制开销小<br/>
+            <strong>老年代</strong>：使用标记-整理或标记-清除算法，因为老年代存活率高，复制开销大<br/>
+            <strong>现代JVM</strong>：采用分代收集理论，新生代和老年代使用不同的算法组合<br/>
+            <strong>并发GC</strong>：基于三色标记法，使用读写屏障实现并发标记，减少STW时间</p>
+        </div>
+    </div>
+    
+    <script>
+        mermaid.initialize({ 
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose',
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true,
+                curve: 'basis'
+            }
+        });
+    </script>
+</body>
+</html>

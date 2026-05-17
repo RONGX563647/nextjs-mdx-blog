@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第一章：JVM概述 - 深入底层原理</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary: #6366f1; --secondary: #f59e0b; --bg-dark: #1e1e2e;
+            --bg-card: #27273a; --text-light: #f8f8f8; --text-gray: #a1a1aa;
+            --border: #3f3f5a; --success: #22c55e; --danger: #ef4444; --info: #3b82f6;
+        }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg-dark); color: var(--text-light); padding: 40px; line-height: 1.8; }
+        .chapter { margin-bottom: 60px; }
+        .chapter-title { font-size: 32px; margin-bottom: 15px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .chapter-desc { color: var(--text-gray); font-size: 16px; margin-bottom: 30px; line-height: 1.8; }
+        .card { background: var(--bg-card); border-radius: 12px; padding: 25px; margin-bottom: 25px; border: 1px solid var(--border); }
+        .card h4 { font-size: 18px; margin-bottom: 15px; color: var(--info); border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+        .card h5 { font-size: 16px; margin: 15px 0 10px; color: var(--secondary); }
+        .card p { color: var(--text-gray); margin-bottom: 12px; line-height: 1.8; }
+        .card ul { list-style: none; padding-left: 0; }
+        .card ul li { padding: 8px 0 8px 20px; position: relative; color: var(--text-gray); line-height: 1.6; }
+        .card ul li::before { content: '→'; position: absolute; left: 0; color: var(--primary); }
+        .card strong { color: var(--text-light); }
+        .highlight-box { background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%); border-left: 4px solid var(--primary); padding: 20px; border-radius: 0 10px 10px 0; margin: 25px 0; }
+        .highlight-box.warning { background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(239, 68, 68, 0.1) 100%); border-left-color: var(--secondary); }
+        .highlight-box.success { background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(34, 211, 238, 0.1) 100%); border-left-color: var(--success); }
+        .highlight-box h4 { margin-bottom: 10px; }
+        .highlight-box p { color: var(--text-gray); line-height: 1.8; margin-bottom: 8px; }
+        .highlight-box.success h4 { color: var(--success); }
+        .highlight-box.warning h4 { color: var(--secondary); }
+        .code-block { background: #0f0f1a; border-radius: 10px; padding: 20px; margin: 15px 0; border: 1px solid var(--border); overflow-x: auto; }
+        .code-block code { font-family: 'Courier New', monospace; font-size: 13px; line-height: 1.6; color: var(--text-light); white-space: pre; }
+        .code-block .comment { color: #6b7280; } .code-block .keyword { color: #c678dd; } .code-block .string { color: #98c379; } .code-block .type { color: #e5c07b; } .code-block .number { color: #d19a66; } .code-block .cmd { color: #56b6c2; }
+        .animation-container { background: #0f0f1a; border-radius: 12px; padding: 30px; margin: 25px 0; border: 1px solid var(--border); overflow: hidden; }
+        .animation-title { text-align: center; font-size: 14px; color: var(--text-gray); margin-bottom: 20px; }
+        .step-flow { display: flex; align-items: center; gap: 15px; flex-wrap: wrap; justify-content: center; }
+        .step-box { background: linear-gradient(135deg, #1a1a3e 0%, #2a1a4e 100%); padding: 15px 20px; border-radius: 10px; text-align: center; animation: pulse 2s ease-in-out infinite; min-width: 120px; }
+        .step-box:nth-child(1) { animation-delay: 0s; } .step-box:nth-child(3) { animation-delay: 0.4s; } .step-box:nth-child(5) { animation-delay: 0.8s; } .step-box:nth-child(7) { animation-delay: 1.2s; } .step-box:nth-child(9) { animation-delay: 1.6s; }
+        .step-box h6 { color: var(--secondary); font-size: 12px; margin-bottom: 5px; }
+        .step-box p { color: var(--text-gray); font-size: 11px; }
+        .step-arrow { color: var(--primary); font-size: 20px; animation: arrowMove 1.5s ease-in-out infinite; }
+        @keyframes pulse { 0%, 100% { transform: scale(1); box-shadow: 0 0 0 rgba(99, 102, 241, 0); } 50% { transform: scale(1.05); box-shadow: 0 0 20px rgba(99, 102, 241, 0.4); } }
+        @keyframes arrowMove { 0%, 100% { opacity: 0.5; transform: translateX(0); } 50% { opacity: 1; transform: translateX(5px); } }
+        .param-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        .param-table th, .param-table td { padding: 12px 15px; text-align: left; border-bottom: 1px solid var(--border); font-size: 14px; }
+        .param-table th { background: rgba(99, 102, 241, 0.2); color: var(--primary); font-weight: 600; }
+        .param-table code { background: #0f0f1a; padding: 3px 8px; border-radius: 4px; font-family: 'Courier New', monospace; font-size: 12px; color: var(--secondary); }
+        .mermaid-container { background: #1a1a2e; padding: 20px; border-radius: 10px; margin: 20px 0; text-align: center; }
+        .mermaid-container svg { max-width: 100%; }
+        @media (max-width: 768px) { body { padding: 20px; } .step-flow { flex-direction: column; } .step-arrow { transform: rotate(90deg); } }
+    </style>
+</head>
+<body>
+    <div class="chapter">
+        <h2 class="chapter-title">第一章：JVM概述 - 深入底层原理</h2>
+        <p class="chapter-desc">
+            深入理解JVM的工作原理，从字节码到执行引擎，从跨平台实现到性能优化机制。
+        </p>
+
+        <!-- 1.1 JVM本质 -->
+        <div class="card">
+            <h4>1.1 JVM的本质：虚拟机与物理机的关系</h4>
+            <p>JVM本质上是一个软件实现的虚拟计算机，它拥有自己的指令集（字节码）、寄存器、堆栈、垃圾回收机制等。</p>
+            
+            <div class="mermaid-container">
+                <div class="mermaid">
+graph TD
+    A[Java开发者] -->|编写| B(源代码.java)
+    B -->|javac编译| C{字节码.class}
+    C -->|加载| D[JVM]
+    D -->|解释/JIT| E[操作系统]
+    E -->|运行| F[硬件CPU]
+    
+    subgraph JVM内部
+        D1[类加载器] --> D2[运行时数据区]
+        D2 --> D3[执行引擎]
+        D3 --> D4[本地方法接口]
+    end
+    
+    style C fill:#f59e0b,stroke:#333,color:#fff
+    style D fill:#6366f1,stroke:#333,color:#fff
+    style F fill:#22c55e,stroke:#333,color:#fff
+                </div>
+            </div>
+
+            <h5>硬件抽象层映射</h5>
+            <ul>
+                <li><strong>程序计数器（PC Register）</strong> ↔ 物理CPU的PC寄存器，记录当前执行指令地址</li>
+                <li><strong>Java栈（Stack）</strong> ↔ 物理机栈，存储局部变量表、操作数栈、动态链接、方法返回地址</li>
+                <li><strong>堆（Heap）</strong> ↔ 物理内存，所有对象实例的存储区域</li>
+                <li><strong>方法区（Method Area）</strong> ↔ 物理内存，存储类信息、常量、静态变量</li>
+            </ul>
+
+            <h5>JVM规范与实现</h5>
+            <ul>
+                <li><strong>Oracle HotSpot</strong>：最广泛使用的JVM实现，使用C++编写，包含解释器和JIT编译器</li>
+                <li><strong>OpenJ9</strong>：IBM开源JVM，优化了内存占用和启动速度</li>
+                <li><strong>GraalVM</strong>：Oracle的高性能JVM，支持多语言（Java、JavaScript、Python等）</li>
+                <li><strong>Zing</strong>：Azul Systems的商业JVM，专注于低延迟GC</li>
+            </ul>
+        </div>
+
+        <!-- 1.2 Java程序运行全流程 -->
+        <div class="card">
+            <h4>1.2 Java程序运行全流程（源码→运行）</h4>
+            
+            <div class="animation-container">
+                <div class="animation-title">Java程序完整生命周期</div>
+                <div class="step-flow">
+                    <div class="step-box"><h6>源代码.java</h6><p>开发者编写</p></div>
+                    <div class="step-arrow">→</div>
+                    <div class="step-box"><h6>javac编译</h6><p>词法分析→语法分析→语义分析→字节码生成</p></div>
+                    <div class="step-arrow">→</div>
+                    <div class="step-box"><h6>字节码.class</h6><p>平台无关的中间代码</p></div>
+                    <div class="step-arrow">→</div>
+                    <div class="step-box"><h6>类加载</h6><p>加载→验证→准备→解析→初始化</p></div>
+                    <div class="step-arrow">→</div>
+                    <div class="step-box"><h6>JVM执行</h6><p>解释执行 / JIT编译</p></div>
+                </div>
+            </div>
+
+            <div class="mermaid-container">
+                <div class="mermaid">
+sequenceDiagram
+    participant Dev as 开发者
+    participant Javac as javac编译器
+    participant Class as .class文件
+    participant Loader as 类加载器
+    participant JVM as JVM执行引擎
+    participant OS as 操作系统
+    
+    Dev->>Javac: 编写Hello.java
+    Javac->>Class: 编译生成字节码
+    Class->>Loader: 请求加载类
+    Loader->>JVM: 加载到内存
+    JVM->>JVM: 验证字节码
+    JVM->>JVM: 准备内存空间
+    JVM->>JVM: 解析符号引用
+    JVM->>JVM: 初始化静态变量
+    JVM->>OS: 调用main方法
+    OS-->>Dev: 程序运行结果
+                </div>
+            </div>
+
+            <h5>编译过程详解（javac内部工作原理）</h5>
+            <ul>
+                <li><strong>词法分析</strong>：将源代码字符流转换为Token流（关键字、标识符、运算符等）</li>
+                <li><strong>语法分析</strong>：根据Java语言规范构建抽象语法树（AST）</li>
+                <li><strong>语义分析</strong>：类型检查、常量折叠、方法重载解析等</li>
+                <li><strong>字节码生成</strong>：遍历AST生成Class文件字节码</li>
+            </ul>
+
+            <div class="highlight-box success">
+                <h4>✅ 实用：查看字节码的方法</h4>
+                <p><strong>方法1：使用javap工具</strong><br/>
+                <code class="cmd">javap -c -v MyClass.class</code> 查看字节码指令<br/>
+                <code class="cmd">javap -private MyClass.class</code> 查看私有成员</p>
+                <p><strong>方法2：使用IDE插件</strong><br/>
+                IntelliJ IDEA: 安装"Bytecode Viewer"插件<br/>
+                VS Code: 使用"Class Viewer"扩展</p>
+            </div>
+        </div>
+
+        <!-- 1.3 字节码深入解析 -->
+        <div class="card">
+            <h4>1.3 字节码深入解析</h4>
+            
+            <h5>Class文件结构</h5>
+            <p>每个.class文件都是一个二进制文件，遵循严格的结构规范：</p>
+            
+            <div class="mermaid-container">
+                <div class="mermaid">
+graph LR
+    A[魔数<br/>0xCAFEBABE] --> B[版本号<br/>major/minor]
+    B --> C[常量池<br/>constant_pool]
+    C --> D[访问标志<br/>access_flags]
+    D --> E[类索引<br/>this_class]
+    E --> F[父类索引<br/>super_class]
+    F --> G[接口集合<br/>interfaces]
+    G --> H[字段集合<br/>fields]
+    H --> I[方法集合<br/>methods]
+    I --> J[属性集合<br/>attributes]
+    
+    style A fill:#ef4444,stroke:#333,color:#fff
+    style C fill:#f59e0b,stroke:#333,color:#fff
+    style I fill:#6366f1,stroke:#333,color:#fff
+    style J fill:#22c55e,stroke:#333,color:#fff
+                </div>
+            </div>
+
+            <table class="param-table">
+                <thead>
+                    <tr><th>字段</th><th>说明</th><th>字节数</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td><code>magic</code></td><td>魔数：0xCAFEBABE，标识Class文件</td><td>4</td></tr>
+                    <tr><td><code>minor_version</code></td><td>次版本号</td><td>2</td></tr>
+                    <tr><td><code>major_version</code></td><td>主版本号（如52=JDK8, 55=JDK11）</td><td>2</td></tr>
+                    <tr><td><code>constant_pool_count</code></td><td>常量池数量</td><td>2</td></tr>
+                    <tr><td><code>constant_pool[]</code></td><td>常量池：字符串、类名、方法名等</td><td>变长</td></tr>
+                    <tr><td><code>access_flags</code></td><td>访问标志（public、final等）</td><td>2</td></tr>
+                    <tr><td><code>this_class</code></td><td>当前类在常量池中的索引</td><td>2</td></tr>
+                    <tr><td><code>super_class</code></td><td>父类在常量池中的索引</td><td>2</td></tr>
+                    <tr><td><code>interfaces[]</code></td><td>实现的接口</td><td>2 + n*2</td></tr>
+                    <tr><td><code>fields[]</code></td><td>字段信息</td><td>2 + n*长度</td></tr>
+                    <tr><td><code>methods[]</code></td><td>方法信息</td><td>2 + n*长度</td></tr>
+                    <tr><td><code>attributes[]</code></td><td>属性（Code、LineNumberTable等）</td><td>变长</td></tr>
+                </tbody>
+            </table>
+
+            <h5>常用字节码指令解析</h5>
+            <ul>
+                <li><code>aload_0</code>：加载局部变量表第0个引用类型变量（通常是this）</li>
+                <li><code>invokespecial</code>：调用实例初始化方法（&lt;init&gt;）、私有方法、父类方法</li>
+                <li><code>invokevirtual</code>：调用实例方法（根据运行时类型进行多态分派）</li>
+                <li><code>invokestatic</code>：调用静态方法</li>
+                <li><code>new</code>：创建对象，分配内存，调用&lt;init&gt;</li>
+                <li><code>ldc</code>：将常量池中的常量压入操作数栈</li>
+                <li><code>putfield/getfield</code>：设置/获取实例字段值</li>
+                <li><code>putstatic/getstatic</code>：设置/获取静态字段值</li>
+            </ul>
+        </div>
+
+        <!-- 1.4 跨平台实现原理 -->
+        <div class="card">
+            <h4>1.4 跨平台实现原理深入</h4>
+            
+            <h5>"Write Once, Run Anywhere" 的底层实现</h5>
+            
+            <div class="mermaid-container">
+                <div class="mermaid">
+graph TB
+    subgraph 应用层
+        A[Java应用程序]
+    end
+    
+    subgraph JVM抽象层
+        B[字节码解释器]
+        C[JIT编译器]
+        D[垃圾回收器]
+        E[内存管理]
+    end
+    
+    subgraph 操作系统适配层
+        F[Linux适配]
+        G[Windows适配]
+        H[macOS适配]
+    end
+    
+    subgraph 硬件层
+        I[x86 CPU]
+        J[ARM CPU]
+        K[内存]
+    end
+    
+    A --> B
+    A --> C
+    B --> D
+    C --> D
+    D --> E
+    E --> F
+    E --> G
+    E --> H
+    F --> I
+    G --> J
+    H --> K
+    
+    style A fill:#6366f1,stroke:#333,color:#fff
+    style B fill:#f59e0b,stroke:#333,color:#fff
+    style C fill:#f59e0b,stroke:#333,color:#fff
+    style F fill:#22c55e,stroke:#333,color:#fff
+    style G fill:#22c55e,stroke:#333,color:#fff
+    style H fill:#22c55e,stroke:#333,color:#fff
+                </div>
+            </div>
+
+            <ul>
+                <li><strong>第一层：统一字节码格式</strong><br/>Java编译器不针对特定CPU架构生成机器码，而是生成与平台无关的字节码。</li>
+                
+                <li><strong>第二层：JVM屏蔽OS差异</strong><br/>JVM内部封装了操作系统差异：<br/>
+                - 文件系统：JVM提供统一的File API<br/>
+                - 网络：Socket实现封装了BSD Socket（Linux）和Winsock（Windows）<br/>
+                - 线程：Linux使用pthread，Windows使用CreateThread</li>
+                
+                <li><strong>第三层：JNI本地方法</strong><br/>JVM通过JNI调用C/C++编写的本地方法库，这些库针对各平台单独编译。</li>
+            </ul>
+
+            <h5>JVM启动过程（从命令行到main方法执行）</h5>
+            <div class="code-block"><code><span class="comment"># 1. 启动JVM进程</span>
+<span class="cmd">java -Xms512m -Xmx1024m -cp . MyApp</span>
+
+<span class="comment"># 内部执行流程：</span>
+<span class="comment"># 2. 加载JVM动态链接库（libjvm.so / jvm.dll）</span>
+<span class="comment"># 3. 初始化JVM核心数据结构</span>
+<span class="comment"># 4. 解析命令行参数（-Xms, -Xmx, -cp等）</span>
+<span class="comment"># 5. 加载Bootstrap ClassLoader</span>
+<span class="comment"># 6. 加载java.lang.Object等核心类</span>
+<span class="comment"># 7. 创建main线程，调用MyApp.main()</span>
+<span class="comment"># 8. 开始执行Java程序</span></code></div>
+        </div>
+
+        <!-- 1.5 JIT编译器深度解析 -->
+        <div class="card">
+            <h4>1.5 JIT编译器深度解析</h4>
+            
+            <h5>为什么需要JIT？</h5>
+            <p>纯解释执行的JVM性能较差，因为每次执行字节码都需要翻译。JIT将热点字节码编译为本地机器码，使Java性能接近C++。</p>
+
+            <div class="mermaid-container">
+                <div class="mermaid">
+graph TD
+    A[字节码] --> B{热点代码检测}
+    B -->|未达阈值| C[解释执行]
+    B -->|达到阈值| D[JIT编译]
+    D --> E[C1编译<br/>快速编译]
+    D --> F[C2编译<br/>深度优化]
+    E --> G[本地机器码]
+    F --> G
+    G --> H[直接执行]
+    C --> B
+    
+    style A fill:#f59e0b,stroke:#333,color:#fff
+    style B fill:#6366f1,stroke:#333,color:#fff
+    style G fill:#22c55e,stroke:#333,color:#fff
+    style H fill:#22c55e,stroke:#333,color:#fff
+                </div>
+            </div>
+
+            <h5>HotSpot JIT编译器的两种编译器</h5>
+            <table class="param-table">
+                <thead>
+                    <tr><th>特性</th><th>C1（Client Compiler）</th><th>C2（Server Compiler）</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>编译速度</td><td>快（轻量级优化）</td><td>慢（深度优化）</td></tr>
+                    <tr><td>代码质量</td><td>一般</td><td>优秀</td></tr>
+                    <tr><td>适用场景</td><td>GUI应用、快速启动</td><td>服务端、长时间运行</td></tr>
+                    <tr><td>优化技术</td><td>基本优化</td><td>高级优化（循环展开、内联、逃逸分析）</td></tr>
+                </tbody>
+            </table>
+
+            <h5>分层编译（Tiered Compilation）</h5>
+            <ul>
+                <li><strong>Level 0</strong>：解释执行</li>
+                <li><strong>Level 1</strong>：C1编译，无性能分析</li>
+                <li><strong>Level 2</strong>：C1编译，带有限性能分析</li>
+                <li><strong>Level 3</strong>：C1编译，完整性能分析</li>
+                <li><strong>Level 4</strong>：C2编译，最高优化级别</li>
+            </ul>
+
+            <div class="highlight-box">
+                <h4>💡 实用技巧：查看JIT编译信息</h4>
+                <p><code class="cmd">java -XX:+PrintCompilation -jar app.jar</code> 查看哪些方法被JIT编译<br/>
+                <code class="cmd">java -XX:+UnlockDiagnosticVMOptions -XX:+PrintInlining -jar app.jar</code> 查看方法内联情况<br/>
+                <code class="cmd">java -XX:CompileCommand=print,com.example.MyClass.myMethod -jar app.jar</code> 查看特定方法的编译结果</p>
+            </div>
+        </div>
+
+        <!-- 1.6 常见JVM参数速查 -->
+        <div class="card">
+            <h4>1.6 常见JVM参数分类速查</h4>
+            
+            <h5>堆内存参数</h5>
+            <table class="param-table">
+                <tbody>
+                    <tr><td><code>-Xms</code></td><td>初始堆大小</td><td>建议与-Xmx相同</td></tr>
+                    <tr><td><code>-Xmx</code></td><td>最大堆大小</td><td>生产环境一般设为物理内存的1/4到1/2</td></tr>
+                    <tr><td><code>-Xmn</code></td><td>新生代大小</td><td>一般为堆的1/3到1/4</td></tr>
+                    <tr><td><code>-XX:MetaspaceSize</code></td><td>元空间初始大小</td><td>JDK 8+替代永久代</td></tr>
+                </tbody>
+            </table>
+
+            <h5>GC参数</h5>
+            <table class="param-table">
+                <tbody>
+                    <tr><td><code>-XX:+UseG1GC</code></td><td>使用G1垃圾收集器</td><td>JDK 9+默认</td></tr>
+                    <tr><td><code>-XX:MaxGCPauseMillis</code></td><td>最大GC停顿时间</td><td>默认200ms</td></tr>
+                    <tr><td><code>-XX:+PrintGCDetails</code></td><td>打印GC详细信息</td><td>诊断用</td></tr>
+                    <tr><td><code>-Xloggc:</code></td><td>GC日志文件路径</td><td>生产环境建议开启</td></tr>
+                </tbody>
+            </table>
+
+            <h5>诊断参数</h5>
+            <table class="param-table">
+                <tbody>
+                    <tr><td><code>-XX:+HeapDumpOnOutOfMemoryError</code></td><td>OOM时生成堆转储</td><td>生产环境必开</td></tr>
+                    <tr><td><code>-XX:HeapDumpPath</code></td><td>堆转储文件路径</td><td>建议配置</td></tr>
+                    <tr><td><code>-XX:+PrintCommandLineFlags</code></td><td>打印实际使用的JVM参数</td><td>诊断用</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 1.7 学习JVM的价值 -->
+        <div class="card">
+            <h4>1.7 为什么Java开发者必须学习JVM？</h4>
+            
+            <h5>直接收益</h5>
+            <ul>
+                <li><strong>性能调优能力</strong>：理解JVM才能写出高性能的Java代码，避免常见性能陷阱</li>
+                <li><strong>故障排查能力</strong>：OOM、CPU飙升、内存泄漏等问题需要JVM知识来诊断</li>
+                <li><strong>代码质量提升</strong>：理解对象创建、GC机制，写出对JVM友好的代码</li>
+                <li><strong>架构设计能力</strong>：合理设计内存模型、线程模型、缓存策略</li>
+            </ul>
+
+            <h5>面试高频问题</h5>
+            <ul>
+                <li>JVM内存模型各区域的作用和特点</li>
+                <li>垃圾回收算法和收集器的工作原理</li>
+                <li>类加载机制和双亲委派模型</li>
+                <li>JIT编译器和热点代码探测</li>
+                <li>JVM参数调优实战</li>
+            </ul>
+        </div>
+
+        <div class="highlight-box success">
+            <h4>✅ 本章小结</h4>
+            <p>JVM是Java程序运行的核心引擎，理解JVM是成为高级Java开发者的必经之路。本章介绍了JVM的本质、Java程序的完整生命周期、Class文件结构、字节码指令、跨平台实现原理、JIT编译器工作机制以及常用JVM参数。接下来的章节将深入探讨JVM的各个核心组件。</p>
+        </div>
+    </div>
+
+    <script>
+        mermaid.initialize({ 
+            startOnLoad: true,
+            theme: 'dark',
+            themeVariables: {
+                primaryColor: '#6366f1',
+                primaryTextColor: '#f8f8f8',
+                primaryBorderColor: '#3f3f5a',
+                lineColor: '#a1a1aa',
+                secondaryColor: '#27273a',
+                tertiaryColor: '#1e1e2e'
+            }
+        });
+    </script>
+</body>
+</html>

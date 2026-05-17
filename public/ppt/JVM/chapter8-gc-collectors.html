@@ -1,0 +1,1030 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第八章：垃圾收集器 - 深入底层原理</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary: #6366f1; --secondary: #f59e0b; --bg-dark: #1e1e2e;
+            --bg-card: #27273a; --text-light: #f8f8f8; --text-gray: #a1a1aa;
+            --border: #3f3f5a; --success: #22c55e; --danger: #ef4444; --info: #3b82f6;
+        }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg-dark); color: var(--text-light); padding: 40px; line-height: 1.6; }
+        .chapter { margin-bottom: 60px; }
+        .chapter-title { font-size: 32px; margin-bottom: 15px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .chapter-desc { color: var(--text-gray); font-size: 16px; margin-bottom: 30px; line-height: 1.8; }
+        .card { background: var(--bg-card); border-radius: 12px; padding: 25px; margin-bottom: 20px; border: 1px solid var(--border); }
+        .card h4 { font-size: 18px; margin-bottom: 15px; color: var(--info); }
+        .card ul { list-style: none; padding-left: 0; }
+        .card ul li { padding: 8px 0; padding-left: 20px; position: relative; color: var(--text-gray); }
+        .card ul li::before { content: '→'; position: absolute; left: 0; color: var(--primary); }
+        .highlight-box { background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(239, 68, 68, 0.1) 100%); border-left: 4px solid var(--secondary); padding: 20px; border-radius: 0 10px 10px 0; margin: 20px 0; }
+        .highlight-box h4 { margin-bottom: 10px; color: var(--secondary); }
+        .code-block { background: #0d0d1a; padding: 15px; border-radius: 8px; margin: 15px 0; overflow-x: auto; }
+        .code-block code { font-family: 'Courier New', monospace; font-size: 13px; color: #e0e0e0; }
+        .table-wrapper { overflow-x: auto; margin: 20px 0; }
+        table { width: 100%; border-collapse: collapse; background: var(--bg-card); border-radius: 8px; overflow: hidden; }
+        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid var(--border); }
+        th { background: rgba(99, 102, 241, 0.2); color: var(--info); font-weight: 600; }
+        td { color: var(--text-gray); }
+        .collector-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin: 20px 0; }
+        .collector-item { background: linear-gradient(135deg, #1a1a3e 0%, #2a1a4e 100%); padding: 20px; border-radius: 10px; border-left: 4px solid var(--primary); }
+        .collector-item h5 { color: var(--secondary); margin-bottom: 10px; font-size: 16px; }
+        .collector-item p { font-size: 13px; color: var(--text-gray); }
+        .timeline { position: relative; padding-left: 30px; margin: 20px 0; }
+        .timeline::before { content: ''; position: absolute; left: 10px; top: 0; bottom: 0; width: 2px; background: var(--primary); }
+        .timeline-item { position: relative; margin-bottom: 20px; padding-left: 20px; }
+        .timeline-item::before { content: ''; position: absolute; left: -24px; top: 5px; width: 12px; height: 12px; border-radius: 50%; background: var(--primary); border: 2px solid var(--bg-dark); }
+        .timeline-item h5 { color: var(--info); margin-bottom: 5px; }
+        .timeline-item p { font-size: 13px; color: var(--text-gray); }
+        .animation-container { background: #0f0f1a; border-radius: 12px; padding: 30px; margin: 25px 0; border: 1px solid var(--border); overflow: hidden; }
+        .animation-title { text-align: center; font-size: 14px; color: var(--text-gray); margin-bottom: 20px; }
+        .arrow-flow { display: flex; align-items: center; justify-content: center; margin: 20px 0; flex-wrap: wrap; }
+        .flow-node { background: rgba(99, 102, 241, 0.2); padding: 12px 20px; border-radius: 8px; margin: 0 10px; text-align: center; }
+        .flow-arrow { color: var(--secondary); font-size: 20px; }
+        .g1-region { display: flex; gap: 3px; flex-wrap: wrap; margin: 15px 0; }
+        .region { width: 30px; height: 30px; border-radius: 5px; text-align: center; line-height: 30px; font-size: 10px; }
+        .region.eden { background: rgba(34, 197, 94, 0.3); }
+        .region.survivor { background: rgba(59, 130, 246, 0.3); }
+        .region.old { background: rgba(168, 85, 247, 0.3); }
+        .region.humongous { background: rgba(239, 68, 68, 0.3); }
+        .region.free { background: rgba(63, 63, 90, 0.5); }
+        
+        /* Mermaid图容器 */
+        .mermaid-container { background: #fff; border-radius: 10px; padding: 20px; margin: 20px 0; }
+        .mermaid-title { text-align: center; color: var(--text-gray); margin-bottom: 15px; font-size: 14px; }
+        
+        /* 收集器对比可视化 */
+        .collector-comparison { background: linear-gradient(135deg, #0f0f1a 0%, #1a1a3e 100%); border-radius: 10px; padding: 25px; margin: 20px 0; }
+        .collector-bar { display: flex; align-items: center; gap: 10px; margin: 10px 0; }
+        .collector-name { min-width: 80px; font-size: 12px; font-weight: bold; }
+        .bar-container { flex: 1; height: 20px; background: var(--border); border-radius: 10px; overflow: hidden; }
+        .bar-fill { height: 100%; border-radius: 10px; transition: width 1s ease; }
+        .bar-fill.throughput { background: linear-gradient(to right, var(--success), var(--info)); }
+        .bar-fill.latency { background: linear-gradient(to right, var(--danger), var(--secondary)); }
+        .bar-label { min-width: 40px; font-size: 11px; color: var(--text-gray); }
+        
+        /* CMS阶段可视化 */
+        .cms-phases { background: linear-gradient(135deg, #0f0f1a 0%, #1a1a3e 100%); border-radius: 10px; padding: 25px; margin: 20px 0; }
+        .cms-phase { display: flex; align-items: center; gap: 15px; margin: 12px 0; padding: 12px; border-radius: 8px; }
+        .cms-phase.stw { background: rgba(239, 68, 68, 0.1); border-left: 4px solid var(--danger); }
+        .cms-phase.concurrent { background: rgba(34, 197, 94, 0.1); border-left: 4px solid var(--success); }
+        .phase-icon { font-size: 20px; }
+        .phase-content h6 { color: var(--info); margin-bottom: 3px; }
+        .phase-content p { font-size: 12px; color: var(--text-gray); }
+        .phase-time { min-width: 60px; text-align: right; font-size: 11px; font-weight: bold; }
+        .phase-time.stw-time { color: var(--danger); }
+        .phase-time.concurrent-time { color: var(--success); }
+        
+        /* ZGC染色指针可视化 */
+        .zgc-pointer { background: #0f0f1a; border-radius: 10px; padding: 25px; margin: 20px 0; }
+        .pointer-bits { display: flex; gap: 2px; margin: 15px 0; }
+        .bit-segment { flex: 1; text-align: center; padding: 15px 8px; border-radius: 5px; font-size: 11px; }
+        .bit-segment.address { background: rgba(99, 102, 241, 0.3); }
+        .bit-segment.finalizable { background: rgba(245, 158, 11, 0.3); }
+        .bit-segment.remapped { background: rgba(34, 197, 94, 0.3); }
+        .bit-segment.marked1 { background: rgba(239, 68, 68, 0.3); }
+        .bit-segment.marked0 { background: rgba(59, 130, 246, 0.3); }
+        .bit-label { font-weight: bold; margin-bottom: 5px; }
+        .bit-size { font-size: 10px; color: var(--text-gray); }
+        
+        /* 收集器决策树 */
+        .decision-tree { background: linear-gradient(135deg, #0f0f1a 0%, #1a1a3e 100%); border-radius: 10px; padding: 25px; margin: 20px 0; }
+        .decision-step { background: rgba(99, 102, 241, 0.1); padding: 15px; border-radius: 8px; margin: 10px 0; }
+        .decision-step h6 { color: var(--secondary); margin-bottom: 8px; }
+        .decision-options { display: flex; gap: 10px; flex-wrap: wrap; }
+        .decision-option { background: rgba(99, 102, 241, 0.2); padding: 8px 12px; border-radius: 5px; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <div class="chapter">
+        <h2 class="chapter-title">第八章：垃圾收集器 - 深入底层原理</h2>
+        <p class="chapter-desc">JVM提供了多种垃圾收集器，各有特定优化目标。本章深入剖析每种收集器的底层实现原理。</p>
+
+        <!-- 收集器发展历程 -->
+        <div class="card">
+            <h4>8.1 垃圾收集器发展历程</h4>
+            <div class="timeline">
+                <div class="timeline-item">
+                    <h5>JDK 1.0 - Serial收集器</h5>
+                    <p>单线程串行执行GC，所有用户线程暂停（STW），简单但停顿时间长</p>
+                </div>
+                <div class="timeline-item">
+                    <h5>JDK 1.4 - ParNew收集器</h5>
+                    <p>Serial的多线程版本，支持并发执行，通常配合CMS使用</p>
+                </div>
+                <div class="timeline-item">
+                    <h5>JDK 1.4 - Parallel Scavenge收集器</h5>
+                    <p>吞吐量优先的多线程新生代收集器，自适应调节新生代大小</p>
+                </div>
+                <div class="timeline-item">
+                    <h5>JDK 5 - CMS收集器</h5>
+                    <p>首次实现并发标记-清除，低延迟但产生碎片，JDK 9废弃</p>
+                </div>
+                <div class="timeline-item">
+                    <h5>JDK 7 - G1收集器</h5>
+                    <p>Region分区+并发标记+可预测停顿，JDK 9成为默认收集器</p>
+                </div>
+                <div class="timeline-item">
+                    <h5>JDK 11/15 - ZGC收集器</h5>
+                    <p>染色指针+读屏障，停顿时间<10ms，支持TB级堆内存</p>
+                </div>
+                <div class="timeline-item">
+                    <h5>JDK 11 - Shenandoah收集器</h5>
+                    <p>Brooks Pointers+读写屏障，Red Hat开发，类似ZGC的设计思路</p>
+                </div>
+            </div>
+            
+            <!-- 收集器发展历程Mermaid图 -->
+            <div class="mermaid-container">
+                <div class="mermaid-title">📊 垃圾收集器演进时间线</div>
+                <div class="mermaid">
+timeline
+    title JVM垃圾收集器发展历程
+    1996 JDK 1.0 : Serial收集器
+                  : 单线程STW
+    2002 JDK 1.4 : ParNew收集器
+                  : 多线程并行
+                  : Parallel Scavenge
+    2004 JDK 5   : CMS收集器
+                  : 首次并发标记清除
+    2011 JDK 7   : G1收集器
+                  : Region分区
+    2018 JDK 11  : ZGC(实验性)
+                  : Shenandoah
+                  : 染色指针技术
+    2020 JDK 15  : ZGC(生产就绪)
+                  : 停顿<10ms
+    2023 JDK 21  : 分代ZGC
+                  : 虚拟线程GC优化
+                </div>
+            </div>
+            
+            <!-- 收集器关系Mermaid图 -->
+            <div class="mermaid-container">
+                <div class="mermaid-title">📊 收集器配合关系图</div>
+                <div class="mermaid">
+graph TD
+    A[新生代收集器] --> B[Serial]
+    A --> C[ParNew]
+    A --> D[Parallel Scavenge]
+    A --> E[G1 Young]
+    A --> F[ZGC Young]
+    
+    G[老年代收集器] --> H[Serial Old]
+    G --> I[Parallel Old]
+    G --> J[CMS]
+    G --> K[G1 Old]
+    G --> L[ZGC Old]
+    
+    B --> H
+    C --> J
+    D --> I
+    E --> K
+    F --> L
+    
+    classDef young fill:#22c55e,stroke:#16a34a,color:#fff
+    classDef old fill:#f59e0b,stroke:#d97706,color:#fff
+    class A,B,C,D,E,F young
+    class G,H,I,J,K,L old
+                </div>
+            </div>
+        </div>
+
+        <!-- Serial收集器 -->
+        <div class="card">
+            <h4>8.2 Serial收集器 - 最基础的单线程收集器</h4>
+            <ul>
+                <li><strong>工作模式</strong>：单线程串行执行GC，所有用户线程必须暂停（STW）</li>
+                <li><strong>新生代算法</strong>：标记-复制算法（Serial Copy）</li>
+                <li><strong>老年代算法</strong>：标记-整理算法（Serial Old）</li>
+                <li><strong>优点</strong>：简单高效，无线程切换开销，单核CPU性能最佳</li>
+                <li><strong>缺点</strong>：停顿时间长，不适合交互式应用</li>
+                <li><strong>适用场景</strong>：客户端应用、小型应用、单核环境</li>
+                <li><strong>启用参数</strong>：-XX:+UseSerialGC</li>
+            </ul>
+            
+            <!-- Serial GC流程图 -->
+            <div class="mermaid-container">
+                <div class="mermaid-title">📊 Serial GC工作流程</div>
+                <div class="mermaid">
+graph TD
+    A[Serial GC触发] --> B[stopTheWorld]
+    B --> C{新生代满?}
+    C -->|是| D[Serial Copy]
+    C -->|否| E{老年代满?}
+    
+    D --> F[标记存活对象]
+    F --> G[复制到Survivor]
+    G --> H[resumeWorld]
+    
+    E -->|是| I[Serial Old]
+    E -->|否| H
+    
+    I --> J[标记存活对象]
+    J --> K[整理移动对象]
+    K --> L[清除边界外内存]
+    L --> H
+    
+    classDef primary fill:#6366f1,stroke:#4f46e5,color:#fff
+    classDef stw fill:#ef4444,stroke:#dc2626,color:#fff
+    classDef young fill:#22c55e,stroke:#16a34a,color:#fff
+    classDef old fill:#f59e0b,stroke:#d97706,color:#fff
+    class A,B primary
+    class C,E stw
+    class D,F,G,H young
+    class I,J,K,L old
+                </div>
+            </div>
+            
+            <div class="code-block">
+                <code>
+// Serial GC伪代码 - 单线程执行<br>
+void serialGC() {<br>
+&nbsp;&nbsp;stopTheWorld();  // 暂停所有用户线程<br><br>
+&nbsp;&nbsp;// 新生代GC - 标记复制<br>
+&nbsp;&nbsp;if (edenFull) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;youngGC();  // 单线程执行标记-复制<br>
+&nbsp;&nbsp;}<br><br>
+&nbsp;&nbsp;// 老年代GC - 标记整理<br>
+&nbsp;&nbsp;if (oldGenFull) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;oldGC();  // 单线程执行标记-整理<br>
+&nbsp;&nbsp;}<br><br>
+&nbsp;&nbsp;resumeWorld();  // 恢复所有用户线程<br>
+}
+                </code>
+            </div>
+        </div>
+
+        <!-- ParNew收集器 -->
+        <div class="card">
+            <h4>8.3 ParNew收集器 - Serial的多线程版本</h4>
+            <ul>
+                <li><strong>工作模式</strong>：多线程并行执行GC，仍需STW暂停用户线程</li>
+                <li><strong>线程数控制</strong>：-XX:ParallelGCThreads=N（默认等于CPU核数）</li>
+                <li><strong>与Serial区别</strong>：仅多线程执行GC，算法逻辑完全相同</li>
+                <li><strong>配合CMS</strong>：JDK 8时代CMS只能配合ParNew使用</li>
+                <li><strong>工作窃取</strong>：空闲线程从其他线程的任务队列窃取任务，提高并行效率</li>
+                <li><strong>启用参数</strong>：-XX:+UseParNewGC（JDK 8及之前）</li>
+            </ul>
+            
+            <!-- ParNew工作窃取Mermaid图 -->
+            <div class="mermaid-container">
+                <div class="mermaid-title">📊 ParNew工作窃取机制</div>
+                <div class="mermaid">
+graph TD
+    A[ParNew GC触发] --> B[分配任务队列]
+    B --> C[线程1处理任务队列1]
+    B --> D[线程2处理任务队列2]
+    B --> E[线程N处理任务队列N]
+    
+    C --> F{任务完成?}
+    D --> G{任务完成?}
+    E --> H{任务完成?}
+    
+    F -->|否| C
+    F -->|是| I{有其他队列任务?}
+    G -->|否| D
+    G -->|是| I
+    H -->|否| E
+    H -->|是| I
+    
+    I -->|是| J[窃取其他队列任务]
+    J --> K[继续处理]
+    I -->|否| L[等待其他线程]
+    
+    K --> M{所有任务完成?}
+    L --> M
+    M -->|否| C
+    M -->|是| N[GC完成,恢复线程]
+    
+    classDef primary fill:#6366f1,stroke:#4f46e5,color:#fff
+    classDef parallel fill:#22c55e,stroke:#16a34a,color:#fff
+    classDef steal fill:#f59e0b,stroke:#d97706,color:#fff
+    class A,B primary
+    class C,D,E,F,G,H,M,N parallel
+    class I,J,K,L steal
+                </div>
+            </div>
+        </div>
+
+        <!-- Parallel Scavenge收集器 -->
+        <div class="card">
+            <h4>8.4 Parallel Scavenge收集器 - 吞吐量优先</h4>
+            <ul>
+                <li><strong>设计目标</strong>：最大化吞吐量（用户代码运行时间占比）</li>
+                <li><strong>自适应调节策略</strong>：自动调整新生代大小、Survivor比例、对象晋升年龄</li>
+                <li><strong>控制参数</strong>：<br>
+&nbsp;&nbsp;-XX:MaxGCPauseMillis=N（最大停顿时间，不保证达到）<br>
+&nbsp;&nbsp;-XX:GCTimeRatio=N（吞吐量目标，默认19即95%）<br>
+&nbsp;&nbsp;-XX:+UseAdaptiveSizePolicy（开启自适应调节，默认开启）</li>
+                <li><strong>老年代配合</strong>：Parallel Old收集器（标记-整理算法）</li>
+                <li><strong>适用场景</strong>：后台计算型应用，对响应时间不敏感</li>
+                <li><strong>启用参数</strong>：-XX:+UseParallelGC</li>
+            </ul>
+            
+            <!-- Parallel GC自适应调节Mermaid图 -->
+            <div class="mermaid-container">
+                <div class="mermaid-title">📊 Parallel GC自适应调节策略</div>
+                <div class="mermaid">
+graph TD
+    A[Parallel GC] --> B[收集GC统计数据]
+    B --> C[计算实际吞吐量]
+    C --> D{达到目标?}
+    
+    D -->|否| E[调整新生代大小]
+    D -->|是| F[保持当前配置]
+    
+    E --> G{停顿时间过长?}
+    G -->|是| H[增大新生代]
+    G -->|否| I[减小新生代]
+    
+    H --> J[调整Survivor比例]
+    I --> J
+    
+    J --> K[调整晋升年龄阈值]
+    K --> L[应用新配置]
+    L --> B
+    
+    F --> M[继续运行]
+    
+    classDef primary fill:#6366f1,stroke:#4f46e5,color:#fff
+    classDef stats fill:#22c55e,stroke:#16a34a,color:#fff
+    classDef adjust fill:#f59e0b,stroke:#d97706,color:#fff
+    class A,B,C primary
+    class D,G stats
+    class E,H,I,J,K,L adjust
+    class F,M fill:#3b82f6,stroke:#2563eb,color:#fff
+                </div>
+            </div>
+        </div>
+
+        <!-- CMS收集器 -->
+        <div class="card">
+            <h4>8.5 CMS收集器（Concurrent Mark Sweep）- 低延迟先驱</h4>
+            <p style="color: var(--text-gray); margin-bottom: 15px;">CMS是第一个实现并发标记-清除的收集器，目标是减少GC停顿时间。</p>
+            
+            <!-- CMS阶段可视化 -->
+            <div class="cms-phases">
+                <div class="animation-title" style="margin-bottom: 20px;">CMS四阶段执行流程</div>
+                <div class="cms-phase stw">
+                    <div class="phase-icon">🛑</div>
+                    <div class="phase-content">
+                        <h6>1. 初始标记（Initial Mark）</h6>
+                        <p>标记GC Roots直接引用的对象</p>
+                    </div>
+                    <div class="phase-time stw-time">STW<br>极短</div>
+                </div>
+                <div class="cms-phase concurrent">
+                    <div class="phase-icon">🔄</div>
+                    <div class="phase-content">
+                        <h6>2. 并发标记（Concurrent Mark）</h6>
+                        <p>与用户线程并发执行可达性分析</p>
+                    </div>
+                    <div class="phase-time concurrent-time">并发<br>较长</div>
+                </div>
+                <div class="cms-phase stw">
+                    <div class="phase-icon">🛑</div>
+                    <div class="phase-content">
+                        <h6>3. 重新标记（Remark）</h6>
+                        <p>修正并发标记期间的对象变化</p>
+                    </div>
+                    <div class="phase-time stw-time">STW<br>中等</div>
+                </div>
+                <div class="cms-phase concurrent">
+                    <div class="phase-icon">🔄</div>
+                    <div class="phase-content">
+                        <h6>4. 并发清除（Concurrent Sweep）</h6>
+                        <p>清理未标记对象</p>
+                    </div>
+                    <div class="phase-time concurrent-time">并发<br>较长</div>
+                </div>
+            </div>
+            
+            <!-- CMS GC完整流程图 -->
+            <div class="mermaid-container">
+                <div class="mermaid-title">📊 CMS GC完整流程</div>
+                <div class="mermaid">
+graph TD
+    A[CMS GC触发] --> B[初始标记 STW]
+    B --> C[标记GC Roots直接引用]
+    C --> D[并发标记]
+    
+    D --> E[用户线程并发执行]
+    E --> F[GC线程遍历对象图]
+    F --> G{还有未标记对象?}
+    G -->|是| F
+    G -->|否| H[重新标记 STW]
+    
+    H --> I[处理增量更新日志]
+    I --> J[修正并发期间的引用变化]
+    J --> K[并发清除]
+    
+    K --> L[用户线程并发执行]
+    L --> M[GC线程清理未标记对象]
+    M --> N{还有垃圾对象?}
+    N -->|是| M
+    N -->|否| O[并发重置]
+    
+    O --> P[重置CMS数据结构]
+    P --> Q[GC完成]
+    
+    classDef primary fill:#6366f1,stroke:#4f46e5,color:#fff
+    classDef stw fill:#ef4444,stroke:#dc2626,color:#fff
+    classDef concurrent fill:#22c55e,stroke:#16a34a,color:#fff
+    class A,B,C,H,I,J primary
+    class D,G,N stw
+    class E,F,K,L,M,O,P,Q concurrent
+                </div>
+            </div>
+            
+            <ul>
+                <li><strong>初始标记（Initial Mark）</strong>：标记GC Roots直接引用的对象，STW时间极短</li>
+                <li><strong>并发标记（Concurrent Mark）</strong>：与用户线程并发执行，进行可达性分析</li>
+                <li><strong>重新标记（Remark）</strong>：修正并发标记期间用户线程产生的对象变化，STW</li>
+                <li><strong>并发清除（Concurrent Sweep）</strong>：清理未标记对象，与用户线程并发</li>
+                <li><strong>并发重置（Concurrent Reset）</strong>：重置CMS数据结构，为下次GC准备</li>
+                <li><strong>增量更新（Incremental Update）</strong>：记录并发标记期间新增的引用</li>
+                <li><strong>致命缺点</strong>：<br>
+&nbsp;&nbsp;① 产生内存碎片（标记-清除算法）<br>
+&nbsp;&nbsp;② 浮动垃圾（并发清除时新产生的垃圾）<br>
+&nbsp;&nbsp;③ Concurrent Mode Failure（并发失败触发Full GC）</li>
+                <li><strong>启用参数</strong>：-XX:+UseConcMarkSweepGC（JDK 8）</li>
+                <li><strong>碎片处理</strong>：-XX:+UseCMSCompactAtFullCollection（Full GC后压缩）</li>
+            </ul>
+            
+            <div class="code-block">
+                <code>
+// CMS GC伪代码<br>
+void cmsGC() {<br>
+&nbsp;&nbsp;// 1. 初始标记（STW，很短）<br>
+&nbsp;&nbsp;stopTheWorld();<br>
+&nbsp;&nbsp;markDirectReferences(gcRoots);<br>
+&nbsp;&nbsp;resumeWorld();<br><br>
+&nbsp;&nbsp;// 2. 并发标记（与用户线程并发）<br>
+&nbsp;&nbsp;while (hasUnmarkedObjects()) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;markObjects();  // 并发标记<br>
+&nbsp;&nbsp;&nbsp;&nbsp;// 同时用户线程继续执行<br>
+&nbsp;&nbsp;}<br><br>
+&nbsp;&nbsp;// 3. 重新标记（STW）<br>
+&nbsp;&nbsp;stopTheWorld();<br>
+&nbsp;&nbsp;processIncrementalUpdateLog();  // 处理增量更新日志<br>
+&nbsp;&nbsp;resumeWorld();<br><br>
+&nbsp;&nbsp;// 4. 并发清除（与用户线程并发）<br>
+&nbsp;&nbsp;while (hasUnmarkedObjects()) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;sweepObject();  // 并发清除<br>
+&nbsp;&nbsp;}<br>
+}
+                </code>
+            </div>
+        </div>
+
+        <!-- G1收集器 -->
+        <div class="card">
+            <h4>8.6 G1收集器（Garbage-First）- JDK 9+默认收集器</h4>
+            <p style="color: var(--text-gray); margin-bottom: 15px;">G1采用Region分区+并发标记+可预测停顿设计，是目前最主流的收集器。</p>
+            
+            <ul>
+                <li><strong>Region分区</strong>：堆内存划分为多个大小相等的Region（1-32MB，2的幂次方）</li>
+                <li><strong>Region类型</strong>：Eden、Survivor、Old、Humongous（大对象，≥Region 50%）</li>
+                <li><strong>并发标记</strong>：基于三色标记法，使用SATB（Snapshot At The Beginning）方案</li>
+                <li><strong>价值回收</strong>：优先回收垃圾最多的Region（Garbage-First）</li>
+                <li><strong>可预测停顿</strong>：-XX:MaxGCPauseMillis=N，G1根据此目标选择回收Region数</li>
+                <li><strong>Remembered Set</strong>：每个Region维护RSet，记录引用该Region的其他Region</li>
+                <li><strong>避免全堆扫描</strong>：RSet记录跨Region引用，Young GC无需扫描整个老年代</li>
+            </ul>
+            
+            <div class="animation-container">
+                <div class="animation-title">G1 Region分区示意图</div>
+                <div class="g1-region">
+                    <div class="region eden">E</div>
+                    <div class="region eden">E</div>
+                    <div class="region eden">E</div>
+                    <div class="region eden">E</div>
+                    <div class="region survivor">S</div>
+                    <div class="region survivor">S</div>
+                    <div class="region old">O</div>
+                    <div class="region old">O</div>
+                    <div class="region old">O</div>
+                    <div class="region humongous">H</div>
+                    <div class="region humongous">H</div>
+                    <div class="region free">F</div>
+                    <div class="region free">F</div>
+                    <div class="region free">F</div>
+                    <div class="region old">O</div>
+                    <div class="region old">O</div>
+                </div>
+                <div style="text-align: center; font-size: 12px; color: #a1a1aa; margin-top: 10px;">
+                    <span style="color: #22c55e;">■</span> Eden 
+                    <span style="color: #3b82f6; margin-left: 10px;">■</span> Survivor 
+                    <span style="color: #a855f7; margin-left: 10px;">■</span> Old 
+                    <span style="color: #ef4444; margin-left: 10px;">■</span> Humongous
+                    <span style="color: #3f3f5a; margin-left: 10px;">■</span> Free
+                </div>
+            </div>
+            
+            <!-- G1 GC完整流程图 -->
+            <div class="mermaid-container">
+                <div class="mermaid-title">📊 G1 GC完整流程</div>
+                <div class="mermaid">
+graph TD
+    A[G1 GC触发] --> B[初始标记 STW]
+    B --> C[标记GC Roots]
+    C --> D[根区域扫描 并发]
+    
+    D --> E[扫描Survivor引用的老年代Region]
+    E --> F[并发标记]
+    
+    F --> G[全局并发标记]
+    G --> H[处理SATB写屏障]
+    H --> I{还有灰色对象?}
+    I -->|是| G
+    I -->|否| J[重新标记 STW]
+    
+    J --> K[处理SATB日志]
+    K --> L[计算Region存活数据]
+    L --> M[筛选回收 STW]
+    
+    M --> N[选择收益最高的Region]
+    N --> O[Mixed GC]
+    O --> P[回收新生代+部分老年代]
+    P --> Q[GC完成]
+    
+    classDef primary fill:#6366f1,stroke:#4f46e5,color:#fff
+    classDef stw fill:#ef4444,stroke:#dc2626,color:#fff
+    classDef concurrent fill:#22c55e,stroke:#16a34a,color:#fff
+    class A,B,C primary
+    class D,J,M stw
+    class E,F,G,H,I,K,L,N,O,P,Q concurrent
+                </div>
+            </div>
+            
+            <!-- G1 RSet机制 -->
+            <div class="mermaid-container">
+                <div class="mermaid-title">📊 G1 Remembered Set机制</div>
+                <div class="mermaid">
+graph TD
+    A[Region A引用Region B] --> B[记录到RSet]
+    B --> C[RSet B包含A的引用]
+    
+    C --> D[Young GC触发]
+    D --> E{Region B需要回收?}
+    
+    E -->|是| F[检查RSet B]
+    F --> G[找到所有引用B的Region]
+    G --> H[扫描这些Region的对象]
+    H --> I[更新引用关系]
+    I --> J[完成GC]
+    
+    E -->|否| J
+    
+    classDef primary fill:#6366f1,stroke:#4f46e5,color:#fff
+    classDef rset fill:#f59e0b,stroke:#d97706,color:#fff
+    classDef gc fill:#22c55e,stroke:#16a34a,color:#fff
+    class A,B,C primary
+    class F,G,H,I rset
+    class D,E,J gc
+                </div>
+            </div>
+            
+            <div class="arrow-flow">
+                <div class="flow-node" style="background: rgba(239, 68, 68, 0.3);">初始标记<br>(STW)</div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-node" style="background: rgba(34, 197, 94, 0.2);">根区域扫描<br>(并发)</div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-node" style="background: rgba(34, 197, 94, 0.2);">并发标记<br>(并发)</div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-node" style="background: rgba(239, 68, 68, 0.3);">重新标记<br>(STW)</div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-node" style="background: rgba(59, 130, 246, 0.2);">筛选回收<br>(STW)</div>
+            </div>
+            
+            <ul>
+                <li><strong>初始标记（Initial Mark）</strong>：标记GC Roots，STW，在Young GC时顺便完成</li>
+                <li><strong>根区域扫描（Root Region Scanning）</strong>：扫描Survivor区域引用的老年代Region，并发</li>
+                <li><strong>并发标记（Concurrent Mark）</strong>：全局并发标记，与用户线程并发执行</li>
+                <li><strong>重新标记（Remark）</strong>：处理SATB日志，STW，使用多线程并行</li>
+                <li><strong>筛选回收（Cleanup）</strong>：统计Region存活数据，选择最优回收集合，STW</li>
+                <li><strong>SATB写屏障</strong>：记录标记期间被删除的引用，确保不错误回收</li>
+                <li><strong>Mixed GC</strong>：同时回收所有新生代+部分高收益老年代Region</li>
+                <li><strong>启用参数</strong>：-XX:+UseG1GC（JDK 8需显式开启，JDK 9+默认）</li>
+            </ul>
+            
+            <div class="code-block">
+                <code>
+// G1写屏障（SATB）伪代码<br>
+void g1WriteBarrier(Object* obj, int fieldOffset, Object* newValue) {<br>
+&nbsp;&nbsp;Object* oldValue = obj->getField(fieldOffset);<br><br>
+&nbsp;&nbsp;// SATB：记录被删除的引用（如果指向白色对象）<br>
+&nbsp;&nbsp;if (concurrentMarking && isMarked(obj) && isWhite(oldValue)) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;satbBuffer.add(oldValue);  // 加入SATB日志缓冲区<br>
+&nbsp;&nbsp;&nbsp;&nbsp;if (satbBuffer.isFull()) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;flushSatbBuffer();  // 缓冲区满，触发处理<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;}<br><br>
+&nbsp;&nbsp;// 执行赋值<br>
+&nbsp;&nbsp;obj->setField(fieldOffset, newValue);<br>
+}<br><br>
+// G1 Mixed GC选择回收集合<br>
+void chooseCollectionSet() {<br>
+&nbsp;&nbsp;List&lt;Region&gt; collectionSet = new ArrayList&lt;&gt;();<br>
+&nbsp;&nbsp;// 1. 必须包含所有新生代Region<br>
+&nbsp;&nbsp;collectionSet.addAll(youngRegions);<br><br>
+&nbsp;&nbsp;// 2. 选择收益最高的老年代Region（垃圾最多）<br>
+&nbsp;&nbsp;sort(oldRegions, byGarbageRatio);<br>
+&nbsp;&nbsp;for (region : oldRegions) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;if (canFinishInTime(region, maxPauseTime)) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;collectionSet.add(region);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;} else {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;  // 超出时间目标，停止选择<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;}<br>
+}
+                </code>
+            </div>
+        </div>
+
+        <!-- ZGC收集器 -->
+        <div class="card">
+            <h4>8.7 ZGC收集器（Z Garbage Collector）- 超低停顿</h4>
+            <p style="color: var(--text-gray); margin-bottom: 15px;">ZGC是Oracle开发的超低停顿收集器，停顿时间始终<10ms，与堆大小和存活对象数无关。</p>
+            
+            <!-- ZGC染色指针可视化 -->
+            <div class="animation-container">
+                <div class="animation-title">ZGC染色指针结构（64位系统）</div>
+                <div class="zgc-pointer">
+                    <div class="pointer-bits">
+                        <div class="bit-segment address">
+                            <div class="bit-label">物理地址</div>
+                            <div class="bit-size">42 bits</div>
+                        </div>
+                        <div class="bit-segment finalizable">
+                            <div class="bit-label">Finalizable</div>
+                            <div class="bit-size">1 bit</div>
+                        </div>
+                        <div class="bit-segment remapped">
+                            <div class="bit-label">Remapped</div>
+                            <div class="bit-size">1 bit</div>
+                        </div>
+                        <div class="bit-segment marked1">
+                            <div class="bit-label">Marked1</div>
+                            <div class="bit-size">1 bit</div>
+                        </div>
+                        <div class="bit-segment marked0">
+                            <div class="bit-label">Marked0</div>
+                            <div class="bit-size">1 bit</div>
+                        </div>
+                    </div>
+                    <div style="text-align: center; font-size: 12px; color: var(--text-gray); margin-top: 15px;">
+                        4位染色位存储对象状态 → 读屏障根据染色位决定是否重新映射
+                    </div>
+                </div>
+            </div>
+            
+            <!-- ZGC完整流程图 -->
+            <div class="mermaid-container">
+                <div class="mermaid-title">📊 ZGC GC完整流程</div>
+                <div class="mermaid">
+graph TD
+    A[ZGC GC触发] --> B[暂停阶段1 STW]
+    B --> C[停止用户线程]
+    C --> D[标记GC Roots]
+    D --> E[恢复用户线程]
+    
+    E --> F[并发标记阶段]
+    F --> G[遍历对象图]
+    G --> H[标记存活对象染色位]
+    H --> I{还有对象?}
+    I -->|是| G
+    I -->|否| J[暂停阶段2 STW]
+    
+    J --> K[处理并发期间变化]
+    K --> L[恢复用户线程]
+    
+    L --> M[并发重定位阶段]
+    M --> N[分配新内存区域]
+    N --> O[移动对象到新区域]
+    O --> P[更新引用指向新地址]
+    P --> Q[释放旧内存区域]
+    Q --> R[GC完成]
+    
+    classDef primary fill:#6366f1,stroke:#4f46e5,color:#fff
+    classDef stw fill:#ef4444,stroke:#dc2626,color:#fff
+    classDef concurrent fill:#22c55e,stroke:#16a34a,color:#fff
+    class A,B,C,D,E,J,K primary
+    class B,J stw
+    class F,G,H,I,M,N,O,P,Q,R concurrent
+                </div>
+            </div>
+            
+            <ul>
+                <li><strong>染色指针（Colored Pointers）</strong>：利用64位指针的高4位存储状态信息</li>
+                <li><strong>指针结构</strong>：[42位地址][0未用][1位Finalizable][1位Remapped][1位Marked1][1位Marked0]</li>
+                <li><strong>读屏障</strong>：每次读取对象引用时检查染色位，必要时重新映射</li>
+                <li><strong>多重映射（Multi-Mapping）</strong>：同一物理内存映射到多个虚拟地址空间</li>
+                <li><strong>并发移动对象</strong>：通过读屏障+转发指针实现并发对象移动</li>
+                <li><strong>暂停时间</strong>：始终<10ms，与堆大小无关（已测试过16TB堆）</li>
+                <li><strong>适用场景</strong>：超大堆内存（数百GB-数TB），对延迟极度敏感的应用</li>
+                <li><strong>启用参数</strong>：-XX:+UseZGC（JDK 11实验性，JDK 15+生产就绪）</li>
+            </ul>
+            
+            <div class="code-block">
+                <code>
+// ZGC染色指针结构（64位系统）<br>
+// [42位物理地址][0][Finalizable][Remapped][Marked1][Marked0]<br>
+//                                                      ↓ 4位染色位<br><br>
+// 读屏障伪代码<br>
+Object* zgcReadBarrier(Object* ref) {<br>
+&nbsp;&nbsp;int markBits = getMarkBits(ref);  // 获取染色位<br><br>
+&nbsp;&nbsp;if (isMarked0(ref)) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;// 对象需要重新映射<br>
+&nbsp;&nbsp;&nbsp;&nbsp;if (!isRemapped(ref)) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// 重新映射到新的地址视图<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;remap(ref);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;// 返回重新映射后的引用<br>
+&nbsp;&nbsp;&nbsp;&nbsp;return remapReference(ref);<br>
+&nbsp;&nbsp;}<br><br>
+&nbsp;&nbsp;return ref;  // 无需重新映射，直接返回<br>
+}<br><br>
+// ZGC并发标记 - 三色标记变种（四色标记）<br>
+// Marked0=0, Marked1=0: 白色（未标记）<br>
+// Marked0=1, Marked1=0: 浅黑色（标记中）<br>
+// Marked0=1, Marked1=1: 深黑色（已标记）<br>
+// Marked0=0, Marked1=1: 灰色（待处理）
+                </code>
+            </div>
+        </div>
+
+        <!-- Shenandoah收集器 -->
+        <div class="card">
+            <h4>8.8 Shenandoah收集器 - Red Hat的超低停顿方案</h4>
+            <ul>
+                <li><strong>Brooks Pointers</strong>：每个对象前加转发指针，通过间接寻址实现并发移动</li>
+                <li><strong>读写屏障</strong>：读屏障处理转发，写屏障维护SATB日志</li>
+                <li><strong>与ZGC区别</strong>：不需要染色指针，使用对象头中的转发指针</li>
+                <li><strong>暂停时间</strong>：与堆大小无关，通常<10ms</li>
+                <li><strong>适用场景</strong>：类似ZGC，但不支持压缩（JDK 15后支持）</li>
+                <li><strong>启用参数</strong>：-XX:+UseShenandoahGC（JDK 11+）</li>
+            </ul>
+            
+            <!-- ZGC vs Shenandoah对比 -->
+            <div class="mermaid-container">
+                <div class="mermaid-title">📊 ZGC vs Shenandoah对比</div>
+                <div class="mermaid">
+graph LR
+    A[超低停顿收集器] --> B[ZGC]
+    A --> C[Shenandoah]
+    
+    B --> D[染色指针]
+    B --> E[读屏障]
+    B --> F[多重映射]
+    B --> G[Oracle开发]
+    
+    C --> H[Brooks Pointers]
+    C --> I[读写屏障]
+    C --> J[对象头转发]
+    C --> K[Red Hat开发]
+    
+    style A fill:#6366f1,stroke:#4f46e5,color:#fff
+    style B fill:#f59e0b,stroke:#d97706,color:#fff
+    style C fill:#3b82f6,stroke:#2563eb,color:#fff
+    style D fill:#22c55e,stroke:#16a34a,color:#fff
+    style E fill:#22c55e,stroke:#16a34a,color:#fff
+    style F fill:#22c55e,stroke:#16a34a,color:#fff
+    style G fill:#22c55e,stroke:#16a34a,color:#fff
+    style H fill:#22c55e,stroke:#16a34a,color:#fff
+    style I fill:#22c55e,stroke:#16a34a,color:#fff
+    style J fill:#22c55e,stroke:#16a34a,color:#fff
+    style K fill:#22c55e,stroke:#16a34a,color:#fff
+                </div>
+            </div>
+        </div>
+
+        <!-- 收集器对比 -->
+        <div class="card">
+            <h4>8.9 收集器全面对比</h4>
+            <div class="table-wrapper">
+                <table>
+                    <tr>
+                        <th>收集器</th>
+                        <th>线程模式</th>
+                        <th>算法</th>
+                        <th>停顿时间</th>
+                        <th>吞吐/延迟</th>
+                        <th>JDK版本</th>
+                    </tr>
+                    <tr>
+                        <td>Serial</td>
+                        <td>单线程</td>
+                        <td>复制+整理</td>
+                        <td>长</td>
+                        <td>吞吐量</td>
+                        <td>1.0+</td>
+                    </tr>
+                    <tr>
+                        <td>Parallel</td>
+                        <td>多线程并行</td>
+                        <td>复制+整理</td>
+                        <td>中长</td>
+                        <td>吞吐量优先</td>
+                        <td>1.4+</td>
+                    </tr>
+                    <tr>
+                        <td>CMS</td>
+                        <td>并发+并行</td>
+                        <td>标记-清除</td>
+                        <td>短</td>
+                        <td>延迟优先</td>
+                        <td>5-8（废弃）</td>
+                    </tr>
+                    <tr>
+                        <td>G1</td>
+                        <td>并发+并行</td>
+                        <td>复制+整理</td>
+                        <td>可控</td>
+                        <td>平衡</td>
+                        <td>7+（默认9+）</td>
+                    </tr>
+                    <tr>
+                        <td>ZGC</td>
+                        <td>并发为主</td>
+                        <td>染色指针+复制</td>
+                        <td>&lt;10ms</td>
+                        <td>延迟极致</td>
+                        <td>11实验/15+生产</td>
+                    </tr>
+                    <tr>
+                        <td>Shenandoah</td>
+                        <td>并发为主</td>
+                        <td>Brooks Pointers</td>
+                        <td>&lt;10ms</td>
+                        <td>延迟极致</td>
+                        <td>11+（部分发行版）</td>
+                    </tr>
+                </table>
+            </div>
+            
+            <!-- 收集器性能对比可视化 -->
+            <div class="animation-container">
+                <div class="animation-title">收集器性能对比</div>
+                <div class="collector-comparison">
+                    <div style="color: #f59e0b; font-weight: bold; margin-bottom: 15px;">吞吐量对比（越高越好）</div>
+                    <div class="collector-bar">
+                        <div class="collector-name">Serial</div>
+                        <div class="bar-container"><div class="bar-fill throughput" style="width: 70%;"></div></div>
+                        <div class="bar-label">70%</div>
+                    </div>
+                    <div class="collector-bar">
+                        <div class="collector-name">Parallel</div>
+                        <div class="bar-container"><div class="bar-fill throughput" style="width: 95%;"></div></div>
+                        <div class="bar-label">95%</div>
+                    </div>
+                    <div class="collector-bar">
+                        <div class="collector-name">G1</div>
+                        <div class="bar-container"><div class="bar-fill throughput" style="width: 85%;"></div></div>
+                        <div class="bar-label">85%</div>
+                    </div>
+                    <div class="collector-bar">
+                        <div class="collector-name">ZGC</div>
+                        <div class="bar-container"><div class="bar-fill throughput" style="width: 80%;"></div></div>
+                        <div class="bar-label">80%</div>
+                    </div>
+                </div>
+                
+                <div class="collector-comparison" style="margin-top: 20px;">
+                    <div style="color: #ef4444; font-weight: bold; margin-bottom: 15px;">延迟对比（越低越好）</div>
+                    <div class="collector-bar">
+                        <div class="collector-name">Serial</div>
+                        <div class="bar-container"><div class="bar-fill latency" style="width: 90%;"></div></div>
+                        <div class="bar-label">高</div>
+                    </div>
+                    <div class="collector-bar">
+                        <div class="collector-name">Parallel</div>
+                        <div class="bar-container"><div class="bar-fill latency" style="width: 75%;"></div></div>
+                        <div class="bar-label">中高</div>
+                    </div>
+                    <div class="collector-bar">
+                        <div class="collector-name">G1</div>
+                        <div class="bar-container"><div class="bar-fill latency" style="width: 40%;"></div></div>
+                        <div class="bar-label">可控</div>
+                    </div>
+                    <div class="collector-bar">
+                        <div class="collector-name">ZGC</div>
+                        <div class="bar-container"><div class="bar-fill latency" style="width: 10%;"></div></div>
+                        <div class="bar-label">&lt;10ms</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 收集器选择决策树 -->
+            <div class="mermaid-container">
+                <div class="mermaid-title">📊 收集器选择决策树</div>
+                <div class="mermaid">
+graph TD
+    A[选择收集器] --> B{延迟敏感?}
+    B -->|是| C{堆大小?}
+    B -->|否| D{吞吐量优先?}
+    
+    C -->|<32GB| E[G1]
+    C -->|>32GB| F{需要压缩?}
+    F -->|是| G[ZGC]
+    F -->|否| H[Shenandoah]
+    
+    D -->|是| I[Parallel GC]
+    D -->|否| J{应用规模?}
+    
+    J -->|小型| K[Serial GC]
+    J -->|大型| E
+    
+    style A fill:#6366f1,stroke:#4f46e5,color:#fff
+    style B fill:#f59e0b,stroke:#d97706,color:#fff
+    style C fill:#f59e0b,stroke:#d97706,color:#fff
+    style D fill:#f59e0b,stroke:#d97706,color:#fff
+    style E fill:#22c55e,stroke:#16a34a,color:#fff
+    style F fill:#f59e0b,stroke:#d97706,color:#fff
+    style G fill:#22c55e,stroke:#16a34a,color:#fff
+    style H fill:#22c55e,stroke:#16a34a,color:#fff
+    style I fill:#22c55e,stroke:#16a34a,color:#fff
+    style J fill:#f59e0b,stroke:#d97706,color:#fff
+    style K fill:#22c55e,stroke:#16a34a,color:#fff
+                </div>
+            </div>
+        </div>
+
+        <!-- 实战调优 -->
+        <div class="card">
+            <h4>8.10 实战调优建议</h4>
+            
+            <!-- 收集器选择决策可视化 -->
+            <div class="decision-tree">
+                <div class="animation-title" style="margin-bottom: 20px;">收集器选择决策步骤</div>
+                <div class="decision-step">
+                    <h6>步骤1: 评估延迟需求</h6>
+                    <div class="decision-options">
+                        <div class="decision-option">延迟敏感 → ZGC/Shenandoah</div>
+                        <div class="decision-option">可接受停顿 → G1/Parallel</div>
+                        <div class="decision-option">不敏感 → Serial</div>
+                    </div>
+                </div>
+                <div class="decision-step">
+                    <h6>步骤2: 评估堆大小</h6>
+                    <div class="decision-options">
+                        <div class="decision-option">< 2GB → Serial</div>
+                        <div class="decision-option">2GB-32GB → G1</div>
+                        <div class="decision-option">32GB-100GB → G1调优或ZGC</div>
+                        <div class="decision-option">> 100GB → ZGC</div>
+                    </div>
+                </div>
+                <div class="decision-step">
+                    <h6>步骤3: 评估JDK版本</h6>
+                    <div class="decision-options">
+                        <div class="decision-option">JDK 8 → G1/Parallel/CMS</div>
+                        <div class="decision-option">JDK 11+ → G1/ZGC</div>
+                        <div class="decision-option">JDK 21+ → 分代ZGC</div>
+                    </div>
+                </div>
+            </div>
+            
+            <ul>
+                <li><strong>小型应用（<2G堆）</strong>：Serial GC，简单高效</li>
+                <li><strong>后台计算型（>4G堆）</strong>：Parallel GC，最大化吞吐量</li>
+                <li><strong>Web应用（4G-32G堆）</strong>：G1 GC，平衡吞吐量和延迟，JDK 9+默认</li>
+                <li><strong>大型应用（>32G堆）</strong>：G1或ZGC，G1可控停顿，ZGC极致低延迟</li>
+                <li><strong>超大堆（>100G）</strong>：ZGC或Shenandoah，停顿时间与堆大小无关</li>
+                <li><strong>G1调优</strong>：-XX:MaxGCPauseMillis=200（默认200ms），根据业务调整</li>
+                <li><strong>ZGC调优</strong>：-XX:+UseZGC -XX:+ZGenerational（JDK 21+分代ZGC）</li>
+                <li><strong>监控工具</strong>：-Xlog:gc*，配合GCViewer/GCEasy分析</li>
+            </ul>
+        </div>
+
+        <div class="highlight-box">
+            <h4>⚠️ 收集器选择决策树</h4>
+            <p><strong>1. 延迟敏感？</strong> 是 → ZGC/Shenandoah > G1 > CMS（已废弃）<br/>
+            <strong>2. 吞吐量优先？</strong> 是 → Parallel GC > G1 > Serial<br/>
+            <strong>3. 堆内存大小？</strong><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <2GB → Serial<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- 2GB-32GB → G1（推荐）或Parallel<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- 32GB-100GB → G1调优或ZGC<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- >100GB → ZGC（首选）<br/>
+            <strong>4. JDK版本？</strong> JDK 8 → G1/Parallel，JDK 11+ → G1/ZGC，JDK 21+ → 分代ZGC</p>
+        </div>
+    </div>
+    
+    <script>
+        mermaid.initialize({ 
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose',
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true,
+                curve: 'basis'
+            }
+        });
+    </script>
+</body>
+</html>

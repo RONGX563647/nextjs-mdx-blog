@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第二章：JVM架构 - 核心组件深度解析</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary: #6366f1; --secondary: #f59e0b; --bg-dark: #1e1e2e;
+            --bg-card: #27273a; --text-light: #f8f8f8; --text-gray: #a1a1aa;
+            --border: #3f3f5a; --success: #22c55e; --danger: #ef4444; --info: #3b82f6;
+        }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg-dark); color: var(--text-light); padding: 40px; line-height: 1.8; }
+        .chapter { margin-bottom: 60px; }
+        .chapter-title { font-size: 32px; margin-bottom: 15px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .chapter-desc { color: var(--text-gray); font-size: 16px; margin-bottom: 30px; line-height: 1.8; }
+        .card { background: var(--bg-card); border-radius: 12px; padding: 25px; margin-bottom: 25px; border: 1px solid var(--border); }
+        .card h4 { font-size: 18px; margin-bottom: 15px; color: var(--info); border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+        .card h5 { font-size: 16px; margin: 15px 0 10px; color: var(--secondary); }
+        .card p { color: var(--text-gray); margin-bottom: 12px; line-height: 1.8; }
+        .card ul { list-style: none; padding-left: 0; }
+        .card ul li { padding: 8px 0 8px 20px; position: relative; color: var(--text-gray); line-height: 1.6; }
+        .card ul li::before { content: '→'; position: absolute; left: 0; color: var(--primary); }
+        .card strong { color: var(--text-light); }
+        .highlight-box { background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%); border-left: 4px solid var(--primary); padding: 20px; border-radius: 0 10px 10px 0; margin: 25px 0; }
+        .highlight-box.warning { background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(239, 68, 68, 0.1) 100%); border-left-color: var(--secondary); }
+        .highlight-box.success { background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(34, 211, 238, 0.1) 100%); border-left-color: var(--success); }
+        .highlight-box h4 { margin-bottom: 10px; }
+        .highlight-box p { color: var(--text-gray); line-height: 1.8; margin-bottom: 8px; }
+        .highlight-box.success h4 { color: var(--success); }
+        .highlight-box.warning h4 { color: var(--secondary); }
+        .code-block { background: #0f0f1a; border-radius: 10px; padding: 20px; margin: 15px 0; border: 1px solid var(--border); overflow-x: auto; }
+        .code-block code { font-family: 'Courier New', monospace; font-size: 13px; line-height: 1.6; color: var(--text-light); white-space: pre; }
+        .code-block .comment { color: #6b7280; } .code-block .keyword { color: #c678dd; } .code-block .string { color: #98c379; } .code-block .type { color: #e5c07b; } .code-block .cmd { color: #56b6c2; }
+        .animation-container { background: #0f0f1a; border-radius: 12px; padding: 30px; margin: 25px 0; border: 1px solid var(--border); overflow: hidden; }
+        .animation-title { text-align: center; font-size: 14px; color: var(--text-gray); margin-bottom: 20px; }
+        .param-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        .param-table th, .param-table td { padding: 12px 15px; text-align: left; border-bottom: 1px solid var(--border); font-size: 14px; }
+        .param-table th { background: rgba(99, 102, 241, 0.2); color: var(--primary); font-weight: 600; }
+        .param-table code { background: #0f0f1a; padding: 3px 8px; border-radius: 4px; font-family: 'Courier New', monospace; font-size: 12px; color: var(--secondary); }
+        .jvm-arch { display: flex; flex-direction: column; gap: 15px; padding: 20px; }
+        .arch-layer { background: linear-gradient(135deg, #1a1a3e 0%, #2a1a4e 100%); border-radius: 10px; padding: 15px; border: 1px solid var(--border); }
+        .arch-layer h6 { color: var(--secondary); font-size: 13px; margin-bottom: 10px; }
+        .arch-components { display: flex; gap: 10px; flex-wrap: wrap; }
+        .arch-comp { background: rgba(99, 102, 241, 0.2); padding: 8px 15px; border-radius: 6px; font-size: 12px; color: var(--text-light); }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+        .arch-layer { animation: float 4s ease-in-out infinite; }
+        .arch-layer:nth-child(2) { animation-delay: 0.5s; } .arch-layer:nth-child(3) { animation-delay: 1s; } .arch-layer:nth-child(4) { animation-delay: 1.5s; } .arch-layer:nth-child(5) { animation-delay: 2s; }
+        .mermaid-container { background: #1a1a2e; padding: 20px; border-radius: 10px; margin: 20px 0; text-align: center; }
+        .mermaid-container svg { max-width: 100%; }
+        @media (max-width: 768px) { body { padding: 20px; } .arch-components { flex-direction: column; } }
+    </style>
+</head>
+<body>
+    <div class="chapter">
+        <h2 class="chapter-title">第二章：JVM架构 - 核心组件深度解析</h2>
+        <p class="chapter-desc">
+            深入JVM内部架构，了解类加载器、运行时数据区、执行引擎、本地接口等核心组件的工作原理与协作机制。
+        </p>
+
+        <!-- 2.1 JVM整体架构总览 -->
+        <div class="card">
+            <h4>2.1 JVM整体架构总览</h4>
+            
+            <div class="mermaid-container">
+                <div class="mermaid">
+graph TD
+    subgraph JVM架构
+        A[类加载器子系统] --> B[运行时数据区]
+        B --> C[执行引擎]
+        C --> D[本地方法接口JNI]
+    end
+    
+    subgraph 类加载器子系统
+        A1[Bootstrap ClassLoader]
+        A2[Extension ClassLoader]
+        A3[Application ClassLoader]
+        A --> A1
+        A --> A2
+        A --> A3
+    end
+    
+    subgraph 运行时数据区
+        B1[方法区Metaspace]
+        B2[堆Heap]
+        B3[Java栈]
+        B4[程序计数器]
+        B5[本地方法栈]
+        B --> B1
+        B --> B2
+        B --> B3
+        B --> B4
+        B --> B5
+    end
+    
+    subgraph 执行引擎
+        C1[解释器]
+        C2[JIT编译器]
+        C3[垃圾回收器]
+        C --> C1
+        C --> C2
+        C --> C3
+    end
+    
+    subgraph 本地接口
+        D1[本地方法库]
+        D2[C/C++动态链接库]
+        D3[操作系统API]
+        D --> D1
+        D1 --> D2
+        D2 --> D3
+    end
+    
+    style A fill:#6366f1,stroke:#333,color:#fff
+    style B fill:#f59e0b,stroke:#333,color:#fff
+    style C fill:#22c55e,stroke:#333,color:#fff
+    style D fill:#ef4444,stroke:#333,color:#fff
+                </div>
+            </div>
+
+            <h5>各组件协作流程</h5>
+            <div class="mermaid-container">
+                <div class="mermaid">
+sequenceDiagram
+    participant Class as .class文件
+    participant Loader as 类加载器
+    participant Method as 方法区
+    participant Heap as 堆内存
+    participant Stack as Java栈
+    participant Engine as 执行引擎
+    participant GC as 垃圾回收器
+    
+    Class->>Loader: 1. 加载类
+    Loader->>Method: 2. 存储类信息
+    Loader->>Engine: 3. 获取字节码
+    Engine->>Stack: 4. 创建栈帧
+    Engine->>Heap: 5. 分配对象
+    Engine->>Method: 6. 获取方法
+    loop 执行程序
+        Engine->>Stack: 执行指令
+        Engine->>Heap: 访问对象
+    end
+    GC->>Heap: 7. 垃圾回收
+    GC->>Method: 8. 卸载类
+                </div>
+            </div>
+
+            <p>1. 类加载器将.class文件加载到内存<br/>
+            2. 执行引擎从方法区获取字节码指令<br/>
+            3. 通过栈帧执行方法调用，操作数栈存储中间结果<br/>
+            4. 对象创建在堆上分配内存<br/>
+            5. 垃圾回收器定期清理无用对象<br/>
+            6. 遇到native方法时通过JNI调用本地库</p>
+        </div>
+
+        <!-- 2.2 类加载器子系统 -->
+        <div class="card">
+            <h4>2.2 类加载器子系统（Class Loader Subsystem）</h4>
+            
+            <h5>类加载器的三层架构</h5>
+            <table class="param-table">
+                <thead>
+                    <tr><th>类加载器</th><th>实现语言</th><th>加载范围</th><th>示例</th></tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>Bootstrap</code></td>
+                        <td>C++</td>
+                        <td>JAVA_HOME/jre/lib/rt.jar</td>
+                        <td>java.lang.*, java.util.*</td>
+                    </tr>
+                    <tr>
+                        <td><code>Extension</code></td>
+                        <td>Java</td>
+                        <td>JAVA_HOME/jre/lib/ext/*.jar</td>
+                        <td>javax.crypto.*</td>
+                    </tr>
+                    <tr>
+                        <td><code>Application</code></td>
+                        <td>Java</td>
+                        <td>CLASSPATH路径下的类</td>
+                        <td>用户自定义类</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h5>双亲委派模型工作流程</h5>
+            <div class="mermaid-container">
+                <div class="mermaid">
+sequenceDiagram
+    participant App as 应用程序
+    participant AppCL as Application ClassLoader
+    participant ExtCL as Extension ClassLoader
+    participant BootCL as Bootstrap ClassLoader
+    participant Cache as 类缓存
+    
+    App->>AppCL: 加载MyClass
+    AppCL->>Cache: 检查是否已加载
+    Cache-->>AppCL: 未加载
+    AppCL->>ExtCL: 委派父加载器
+    ExtCL->>Cache: 检查是否已加载
+    Cache-->>ExtCL: 未加载
+    ExtCL->>BootCL: 委派父加载器
+    BootCL->>Cache: 检查是否已加载
+    Cache-->>BootCL: 未加载
+    BootCL-->>ExtCL: 无法加载（非核心类）
+    ExtCL-->>AppCL: 无法加载（非扩展类）
+    AppCL->>AppCL: 自己加载MyClass
+    AppCL->>Cache: 缓存加载的类
+    AppCL-->>App: 返回Class对象
+                </div>
+            </div>
+
+            <ul>
+                <li><strong>步骤1</strong>：当前类加载器收到加载请求</li>
+                <li><strong>步骤2</strong>：检查该类是否已经被加载过（缓存机制）</li>
+                <li><strong>步骤3</strong>：如果未加载，将请求委派给父类加载器</li>
+                <li><strong>步骤4</strong>：父类加载器重复步骤2-3，直到Bootstrap ClassLoader</li>
+                <li><strong>步骤5</strong>：如果父类加载器无法加载，子类加载器尝试自己加载</li>
+            </ul>
+
+            <div class="highlight-box warning">
+                <h4>⚠️ 打破双亲委派的场景</h4>
+                <p>某些框架需要打破双亲委派模型来实现特定功能：<br/>
+                1. <strong>Tomcat</strong>：每个Web应用使用独立的ClassLoader，实现应用隔离<br/>
+                2. <strong>热部署</strong>：自定义ClassLoader重新加载修改后的类<br/>
+                3. <strong>OSGi</strong>：实现模块化的类加载，支持动态安装/卸载模块<br/>
+                4. <strong>加密类加载</strong>：自定义ClassLoader在加载时解密.class文件</p>
+            </div>
+
+            <div class="code-block"><code><span class="comment">// 自定义ClassLoader示例</span>
+<span class="keyword">public class</span> <span class="type">CustomClassLoader</span> <span class="keyword">extends</span> <span class="type">ClassLoader</span> {
+    <span class="keyword">protected</span> <span class="type">Class</span>&lt;?&gt; <span class="type">findClass</span>(<span class="type">String</span> name) <span class="keyword">throws</span> <span class="type">ClassNotFoundException</span> {
+        <span class="comment">// 1. 从自定义路径读取字节码</span>
+        <span class="keyword">byte</span>[] bytes = <span class="type">loadClassBytes</span>(name);
+        <span class="comment">// 2. 将字节码转换为Class对象</span>
+        <span class="keyword">return</span> <span class="type">defineClass</span>(name, bytes, <span class="number">0</span>, bytes.length);
+    }
+}</code></div>
+        </div>
+
+        <!-- 2.3 运行时数据区详解 -->
+        <div class="card">
+            <h4>2.3 运行时数据区（Runtime Data Area）</h4>
+            
+            <h5>数据区划分与线程关系</h5>
+            <div class="mermaid-container">
+                <div class="mermaid">
+graph LR
+    subgraph 线程共享区
+        A[方法区Metaspace]
+        B[堆Heap]
+    end
+    
+    subgraph 线程1私有区
+        C1[Java栈]
+        D1[程序计数器]
+        E1[本地方法栈]
+    end
+    
+    subgraph 线程2私有区
+        C2[Java栈]
+        D2[程序计数器]
+        E2[本地方法栈]
+    end
+    
+    style A fill:#6366f1,stroke:#333,color:#fff
+    style B fill:#f59e0b,stroke:#333,color:#fff
+    style C1 fill:#22c55e,stroke:#333,color:#fff
+    style C2 fill:#22c55e,stroke:#333,color:#fff
+                </div>
+            </div>
+
+            <table class="param-table">
+                <thead>
+                    <tr><th>区域</th><th>线程共享/私有</th><th>作用</th><th>OOM风险</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>堆（Heap）</td><td>共享</td><td>存储对象实例</td><td>OutOfMemoryError: Java heap space</td></tr>
+                    <tr><td>方法区（Metaspace）</td><td>共享</td><td>存储类信息、常量</td><td>OutOfMemoryError: Metaspace</td></tr>
+                    <tr><td>虚拟机栈</td><td>私有</td><td>方法调用栈帧</td><td>StackOverflowError</td></tr>
+                    <tr><td>本地方法栈</td><td>私有</td><td>Native方法调用</td><td>StackOverflowError</td></tr>
+                    <tr><td>程序计数器</td><td>私有</td><td>当前指令地址</td><td>无OOM</td></tr>
+                </tbody>
+            </table>
+
+            <h5>堆内存详细结构</h5>
+            <div class="mermaid-container">
+                <div class="mermaid">
+graph TD
+    subgraph JVM堆内存
+        A[堆Heap] --> B[新生代Young Gen]
+        A --> C[老年代Old Gen]
+        A --> D[元空间Metaspace]
+        
+        B --> E[Eden区]
+        B --> F[Survivor S0]
+        B --> G[Survivor S1]
+    end
+    
+    subgraph 对象生命周期
+        E -->|Minor GC| F
+        F -->|复制| G
+        G -->|复制| F
+        F -->|年龄15| C
+        G -->|年龄15| C
+    end
+    
+    style A fill:#6366f1,stroke:#333,color:#fff
+    style B fill:#f59e0b,stroke:#333,color:#fff
+    style C fill:#3b82f6,stroke:#333,color:#fff
+    style D fill:#ef4444,stroke:#333,color:#fff
+                </div>
+            </div>
+
+            <ul>
+                <li><strong>新生代（Young Generation）</strong>：占堆的1/3，分为Eden区和两个Survivor区（S0、S1）</li>
+                <li><strong>老年代（Old Generation）</strong>：占堆的2/3，存储长期存活的对象</li>
+                <li><strong>大对象直接进入老年代</strong>：通过-XX:PretenureSizeThreshold参数设置阈值</li>
+                <li><strong>TLAB（Thread Local Allocation Buffer）</strong>：线程本地分配缓冲区，减少同步开销</li>
+            </ul>
+
+            <h5>方法区演进（JDK版本变化）</h5>
+            <ul>
+                <li><strong>JDK 7及以前</strong>：永久代（PermGen），使用-XX:MaxPermSize设置大小</li>
+                <li><strong>JDK 8及以后</strong>：元空间（Metaspace），使用本地内存，默认无上限</li>
+                <li><strong>为什么改为Metaspace？</strong>：避免PermSize难以调优、字符串常量池移到堆中、支持动态类加载场景</li>
+            </ul>
+        </div>
+
+        <!-- 2.4 执行引擎 -->
+        <div class="card">
+            <h4>2.4 执行引擎（Execution Engine）</h4>
+            
+            <h5>解释器 vs JIT编译器</h5>
+            <div class="mermaid-container">
+                <div class="mermaid">
+graph TD
+    A[字节码] --> B{执行引擎}
+    B -->|首次执行| C[解释器]
+    B -->|热点代码| D[JIT编译器]
+    C --> E[逐条解释执行]
+    D --> F[C1快速编译]
+    D --> G[C2深度优化]
+    F --> H[本地机器码]
+    G --> H
+    H --> I[直接执行]
+    
+    E --> J[性能较慢]
+    I --> K[性能接近C++]
+    
+    style A fill:#f59e0b,stroke:#333,color:#fff
+    style B fill:#6366f1,stroke:#333,color:#fff
+    style C fill:#3b82f6,stroke:#333,color:#fff
+    style D fill:#22c55e,stroke:#333,color:#fff
+                </div>
+            </div>
+
+            <table class="param-table">
+                <thead>
+                    <tr><th>特性</th><th>解释器</th><th>JIT编译器</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>执行方式</td><td>逐条解释字节码</td><td>将字节码编译为机器码</td></tr>
+                    <tr><td>启动速度</td><td>快</td><td>慢（需要编译时间）</td></tr>
+                    <tr><td>运行性能</td><td>较慢</td><td>快（接近本地代码）</td></tr>
+                    <tr><td>内存占用</td><td>低</td><td>高（存储编译后代码）</td></tr>
+                    <tr><td>适用场景</td><td>启动阶段、非热点代码</td><td>热点代码（执行频繁）</td></tr>
+                </tbody>
+            </table>
+
+            <h5>热点代码探测机制</h5>
+            <ul>
+                <li><strong>方法调用计数器</strong>：记录方法被调用的次数，超过阈值触发JIT编译</li>
+                <li><strong>回边计数器</strong>：记录循环体执行的次数，检测循环热点</li>
+                <li><strong>阈值设置</strong>：Client模式默认1500次，Server模式默认10000次</li>
+                <li><strong>编译优化</strong>：JIT会进行方法内联、逃逸分析、锁优化等</li>
+            </ul>
+
+            <div class="highlight-box">
+                <h4>💡 方法内联（Method Inlining）</h4>
+                <p>方法内联是JIT最重要的优化之一，将小方法的代码直接嵌入调用处，消除方法调用开销：</p>
+                <div class="code-block"><code><span class="comment">// 优化前</span>
+<span class="keyword">public int</span> <span class="type">add</span>(<span class="keyword">int</span> a, <span class="keyword">int</span> b) { <span class="keyword">return</span> a + b; }
+<span class="keyword">public int</span> <span class="type">calculate</span>(<span class="keyword">int</span> x, <span class="keyword">int</span> y) {
+    <span class="keyword">return</span> <span class="type">add</span>(x, y) * <span class="number">2</span>;
+}
+
+<span class="comment">// JIT内联后（等价于）</span>
+<span class="keyword">public int</span> <span class="type">calculate</span>(<span class="keyword">int</span> x, <span class="keyword">int</span> y) {
+    <span class="keyword">return</span> (x + y) * <span class="number">2</span>;  <span class="comment">// 直接展开add方法体</span>
+}</code></div>
+                <p>内联条件：方法足够小（默认<35字节）、不是虚方法、调用频率高</p>
+            </div>
+        </div>
+
+        <!-- 2.5 垃圾回收系统 -->
+        <div class="card">
+            <h4>2.5 垃圾回收系统（Garbage Collection System）</h4>
+            
+            <h5>垃圾回收的三个核心问题</h5>
+            <div class="mermaid-container">
+                <div class="mermaid">
+graph TD
+    A[垃圾回收系统] --> B{哪些内存需要回收?}
+    A --> C{什么时候回收?}
+    A --> D{如何回收?}
+    
+    B --> B1[可达性分析]
+    B1 --> B2[GC Roots搜索]
+    B2 --> B3[不可达对象标记]
+    
+    C --> C1[Eden区满]
+    C --> C2[老年代满]
+    C1 --> C3[Minor GC]
+    C2 --> C4[Major GC]
+    
+    D --> D1[标记-清除]
+    D --> D2[标记-复制]
+    D --> D3[标记-整理]
+    
+    style A fill:#6366f1,stroke:#333,color:#fff
+    style B fill:#f59e0b,stroke:#333,color:#fff
+    style C fill:#22c55e,stroke:#333,color:#fff
+    style D fill:#ef4444,stroke:#333,color:#fff
+                </div>
+            </div>
+
+            <ul>
+                <li><strong>哪些内存需要回收？</strong>：通过可达性分析，从GC Roots出发，不可达的对象即为垃圾</li>
+                <li><strong>什么时候回收？</strong>：当新生代Eden区满时触发Minor GC，老年代满时触发Major GC</li>
+                <li><strong>如何回收？</strong>：根据收集器类型，使用标记-清除、标记-复制、标记-整理等算法</li>
+            </ul>
+
+            <h5>GC Roots的类型</h5>
+            <ul>
+                <li>虚拟机栈（栈帧中的局部变量）中引用的对象</li>
+                <li>方法区中静态属性引用的对象</li>
+                <li>方法区中常量引用的对象</li>
+                <li>本地方法栈中JNI（Native方法）引用的对象</li>
+                <li>活跃线程中的引用</li>
+            </ul>
+
+            <h5>对象生死判定算法对比</h5>
+            <table class="param-table">
+                <thead>
+                    <tr><th>算法</th><th>原理</th><th>优点</th><th>缺点</th><th>JVM使用</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>引用计数法</td><td>对象被引用次数</td><td>简单高效</td><td>无法处理循环引用</td><td>不常用</td></tr>
+                    <tr><td>可达性分析</td><td>从GC Roots搜索</td><td>解决循环引用</td><td>需要STW（Stop The World）</td><td>HotSpot使用</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 2.6 本地方法接口（JNI） -->
+        <div class="card">
+            <h4>2.6 本地方法接口（JNI）</h4>
+            
+            <h5>JNI的工作原理</h5>
+            <div class="mermaid-container">
+                <div class="mermaid">
+sequenceDiagram
+    participant Java as Java代码
+    participant JVM as JVM
+    participant JNI as JNI层
+    participant Native as C/C++代码
+    participant OS as 操作系统
+    
+    Java->>JVM: 调用native方法
+    JVM->>JNI: 查找本地方法
+    JNI->>JNI: 加载.so/.dll/.dylib
+    JNI->>Native: 调用C/C++函数
+    Native->>OS: 执行系统调用
+    OS-->>Native: 返回结果
+    Native-->>JNI: 返回处理结果
+    JNI-->>JVM: 转换返回值
+    JVM-->>Java: 返回Java对象
+                </div>
+            </div>
+
+            <p>JNI（Java Native Interface）是Java与C/C++等本地代码交互的桥梁。当Java程序调用native方法时：</p>
+            <ul>
+                <li><strong>步骤1</strong>：JVM通过JNI查找对应的本地方法实现</li>
+                <li><strong>步骤2</strong>：加载本地方法库（.so/.dll/.dylib）</li>
+                <li><strong>步骤3</strong>：建立Java方法签名与C/C++函数的映射</li>
+                <li><strong>步骤4</strong>：执行本地代码，处理参数转换和返回值</li>
+            </ul>
+
+            <h5>JNI的典型应用场景</h5>
+            <ul>
+                <li><strong>性能敏感操作</strong>：图像处理、加密算法、音视频编解码</li>
+                <li><strong>系统级操作</strong>：文件IO、网络编程、内存映射</li>
+                <li><strong>调用现有C/C++库</strong>：OpenCV、FFmpeg、TensorFlow等</li>
+                <li><strong>硬件交互</strong>：串口通信、设备控制</li>
+            </ul>
+
+            <div class="highlight-box warning">
+                <h4>⚠️ JNI使用注意事项</h4>
+                <p>1. <strong>内存泄漏风险</strong>：本地代码分配的内存不会自动回收，需要手动释放<br/>
+                2. <strong>线程安全</strong>：本地代码需要处理Java线程模型<br/>
+                3. <strong>调试困难</strong>：JNI错误可能导致JVM崩溃，难以定位<br/>
+                4. <strong>跨平台性</strong>：需要为每个平台编译不同的本地库</p>
+            </div>
+        </div>
+
+        <!-- 2.7 各版本JVM特性演进 -->
+        <div class="card">
+            <h4>2.7 JVM特性版本演进</h4>
+            
+            <div class="mermaid-container">
+                <div class="mermaid">
+timeline
+    title JVM特性版本演进
+    JDK 7 : invokedynamic指令 : G1收集器引入
+    JDK 8 : 移除永久代 : 引入Metaspace : 默认开启分层编译
+    JDK 9 : 模块化系统(Jigsaw) : G1成为默认收集器
+    JDK 11 : ZGC实验性引入 : Epsilon垃圾收集器
+    JDK 15+ : ZGC正式可用 : Shenandoah正式可用
+                </div>
+            </div>
+
+            <table class="param-table">
+                <thead>
+                    <tr><th>JDK版本</th><th>JVM重要特性</th><th>影响</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>JDK 7</td><td>invokedynamic指令、G1收集器引入</td><td>支持动态语言、新GC选项</td></tr>
+                    <tr><td>JDK 8</td><td>移除永久代、引入Metaspace、默认开启分层编译</td><td>类加载机制变化、性能提升</td></tr>
+                    <tr><td>JDK 9</td><td>模块化系统（Jigsaw）、G1成为默认收集器</td><td>更好的封装性、GC优化</td></tr>
+                    <tr><td>JDK 11</td><td>ZGC实验性引入、Epsilon垃圾收集器</td><td>超低延迟GC、无GC模式</td></tr>
+                    <tr><td>JDK 15+</td><td>ZGC正式可用、Shenandoah正式可用</td><td>生产级低延迟GC</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="highlight-box success">
+            <h4>✅ 本章小结</h4>
+            <p>JVM架构由类加载器子系统、运行时数据区、执行引擎和本地方法接口四大核心组件组成。理解各组件的职责和协作机制是掌握JVM调优的基础。本章深入分析了类加载器的双亲委派模型、运行时数据区的内存划分、执行引擎的解释器与JIT编译器、垃圾回收系统的工作原理以及JNI的底层实现机制。下一章我们将深入探讨JVM内存模型的具体细节。</p>
+        </div>
+    </div>
+
+    <script>
+        mermaid.initialize({ 
+            startOnLoad: true,
+            theme: 'dark',
+            themeVariables: {
+                primaryColor: '#6366f1',
+                primaryTextColor: '#f8f8f8',
+                primaryBorderColor: '#3f3f5a',
+                lineColor: '#a1a1aa',
+                secondaryColor: '#27273a',
+                tertiaryColor: '#1e1e2e'
+            }
+        });
+    </script>
+</body>
+</html>

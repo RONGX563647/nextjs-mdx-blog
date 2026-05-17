@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JVM 深度讲解教程</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary: #6366f1;
+            --secondary: #f59e0b;
+            --bg-dark: #1e1e2e;
+            --bg-card: #27273a;
+            --text-light: #f8f8f8;
+            --text-gray: #a1a1aa;
+            --border: #3f3f5a;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-light);
+        }
+        .app-container { display: flex; height: 100vh; overflow: hidden; }
+
+        /* 左侧导航 */
+        .sidebar {
+            width: 280px;
+            background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+            border-right: 1px solid var(--border);
+            padding: 20px 0;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 100;
+        }
+        .sidebar-header {
+            padding: 0 20px 20px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 20px;
+        }
+        .sidebar-header h1 {
+            font-size: 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+        }
+        .sidebar-header p { color: var(--text-gray); font-size: 12px; }
+        .nav-section { margin-bottom: 15px; }
+        .nav-section-title {
+            padding: 10px 20px;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-gray);
+            font-weight: 600;
+        }
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-left: 3px solid transparent;
+            gap: 12px;
+        }
+        .nav-item:hover { background: rgba(99, 102, 241, 0.1); border-left-color: var(--primary); }
+        .nav-item.active { background: rgba(99, 102, 241, 0.15); border-left-color: var(--primary); }
+        .nav-item-icon { width: 24px; text-align: center; font-size: 16px; }
+        .nav-item-text { font-size: 14px; font-weight: 500; }
+
+        /* 主内容区 */
+        .main-content { margin-left: 280px; flex: 1; height: 100vh; }
+
+        /* 页内目录 */
+        .toc-bar {
+            position: sticky;
+            top: 0;
+            background: rgba(30, 30, 46, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 15px 25px;
+            border-bottom: 1px solid var(--border);
+            z-index: 50;
+        }
+        .toc-bar h3 { font-size: 14px; color: var(--text-gray); margin-bottom: 10px; }
+        .toc-links { display: flex; gap: 10px; flex-wrap: wrap; }
+        .toc-link {
+            color: var(--primary);
+            text-decoration: none;
+            font-size: 13px;
+            padding: 5px 12px;
+            border-radius: 6px;
+            transition: all 0.3s;
+        }
+        .toc-link:hover { background: rgba(99, 102, 241, 0.2); }
+
+        /* iframe内容区 */
+        .content-frame {
+            width: 100%;
+            height: calc(100vh - 70px);
+            border: none;
+        }
+
+        /* 响应式 */
+        @media (max-width: 1024px) { .sidebar { width: 240px; } .main-content { margin-left: 240px; } }
+        @media (max-width: 768px) { .sidebar { display: none; } .main-content { margin-left: 0; } }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- 左侧导航栏 -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <h1>JVM 教程</h1>
+                <p>Java虚拟机深度讲解</p>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">基础概念</div>
+                <div class="nav-item active" onclick="loadChapter('chapter1-overview')">
+                    <span class="nav-item-icon">📖</span>
+                    <span class="nav-item-text">JVM概述</span>
+                </div>
+                <div class="nav-item" onclick="loadChapter('chapter2-architecture')">
+                    <span class="nav-item-icon">🏗️</span>
+                    <span class="nav-item-text">JVM架构</span>
+                </div>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">内存管理</div>
+                <div class="nav-item" onclick="loadChapter('chapter3-memory')">
+                    <span class="nav-item-icon">🧠</span>
+                    <span class="nav-item-text">内存模型</span>
+                </div>
+                <div class="nav-item" onclick="loadChapter('chapter4-heap')">
+                    <span class="nav-item-icon">📦</span>
+                    <span class="nav-item-text">堆区详解</span>
+                </div>
+                <div class="nav-item" onclick="loadChapter('chapter5-stack')">
+                    <span class="nav-item-icon">📚</span>
+                    <span class="nav-item-text">栈区详解</span>
+                </div>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">垃圾回收</div>
+                <div class="nav-item" onclick="loadChapter('chapter6-gc-overview')">
+                    <span class="nav-item-icon">♻️</span>
+                    <span class="nav-item-text">GC概述</span>
+                </div>
+                <div class="nav-item" onclick="loadChapter('chapter7-gc-algorithms')">
+                    <span class="nav-item-icon">🔄</span>
+                    <span class="nav-item-text">GC算法</span>
+                </div>
+                <div class="nav-item" onclick="loadChapter('chapter8-gc-collectors')">
+                    <span class="nav-item-icon">⚙️</span>
+                    <span class="nav-item-text">垃圾收集器</span>
+                </div>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">类加载机制</div>
+                <div class="nav-item" onclick="loadChapter('chapter9-class-loading')">
+                    <span class="nav-item-icon">📋</span>
+                    <span class="nav-item-text">类加载过程</span>
+                </div>
+                <div class="nav-item" onclick="loadChapter('chapter10-classloader')">
+                    <span class="nav-item-icon">🔧</span>
+                    <span class="nav-item-text">类加载器</span>
+                </div>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">运行时</div>
+                <div class="nav-item" onclick="loadChapter('chapter11-execution')">
+                    <span class="nav-item-icon">⚡</span>
+                    <span class="nav-item-text">执行流程</span>
+                </div>
+                <div class="nav-item" onclick="loadChapter('chapter12-jit')">
+                    <span class="nav-item-icon">🚀</span>
+                    <span class="nav-item-text">JIT编译</span>
+                </div>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">性能调优</div>
+                <div class="nav-item" onclick="loadChapter('chapter13-params')">
+                    <span class="nav-item-icon">🎯</span>
+                    <span class="nav-item-text">JVM参数</span>
+                </div>
+                <div class="nav-item" onclick="loadChapter('chapter14-monitoring')">
+                    <span class="nav-item-icon">📊</span>
+                    <span class="nav-item-text">监控工具</span>
+                </div>
+            </div>
+        </nav>
+
+        <!-- 主内容区 -->
+        <main class="main-content">
+            <!-- 页内目录 -->
+            <div class="toc-bar">
+                <h3>📑 当前章节</h3>
+                <div class="toc-links" id="toc-links">
+                    <a href="javascript:void(0)" class="toc-link" onclick="loadChapter('chapter1-overview')">JVM概述</a>
+                </div>
+            </div>
+            <!-- 内容通过iframe加载 -->
+            <iframe class="content-frame" id="content-frame" src="chapter1-overview.html"></iframe>
+        </main>
+    </div>
+
+    <script>
+        // 章节与页面映射
+        const chapterMap = {
+            'chapter1-overview': 'chapter1-overview.html',
+            'chapter2-architecture': 'chapter2-architecture.html',
+            'chapter3-memory': 'chapter3-memory.html',
+            'chapter4-heap': 'chapter4-heap.html',
+            'chapter5-stack': 'chapter5-stack.html',
+            'chapter6-gc-overview': 'chapter6-gc-overview.html',
+            'chapter7-gc-algorithms': 'chapter7-gc-algorithms.html',
+            'chapter8-gc-collectors': 'chapter8-gc-collectors.html',
+            'chapter9-class-loading': 'chapter9-class-loading.html',
+            'chapter10-classloader': 'chapter10-classloader.html',
+            'chapter11-execution': 'chapter11-execution.html',
+            'chapter12-jit': 'chapter12-jit.html',
+            'chapter13-params': 'chapter13-params.html',
+            'chapter14-monitoring': 'chapter14-monitoring.html'
+        };
+
+        function loadChapter(chapterId) {
+            const frame = document.getElementById('content-frame');
+            frame.src = chapterMap[chapterId];
+            
+            // 更新导航高亮
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+        }
+    </script>
+</body>
+</html>

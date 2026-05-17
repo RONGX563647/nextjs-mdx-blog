@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第十四章：JVM监控与诊断工具</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary: #6366f1; --secondary: #f59e0b; --bg-dark: #1e1e2e;
+            --bg-card: #27273a; --text-light: #f8f8f8; --text-gray: #a1a1aa;
+            --border: #3f3f5a; --success: #22c55e; --danger: #ef4444; --info: #3b82f6;
+        }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg-dark); color: var(--text-light); padding: 40px; line-height: 1.6; }
+        .chapter { margin-bottom: 60px; }
+        .chapter-title { font-size: 32px; margin-bottom: 15px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .chapter-desc { color: var(--text-gray); font-size: 16px; margin-bottom: 30px; line-height: 1.8; }
+        .card { background: var(--bg-card); border-radius: 12px; padding: 25px; margin-bottom: 20px; border: 1px solid var(--border); }
+        .card h4 { font-size: 18px; margin-bottom: 15px; color: var(--info); }
+        .card ul { list-style: none; padding-left: 0; }
+        .card ul li { padding: 8px 0; padding-left: 20px; position: relative; color: var(--text-gray); }
+        .card ul li::before { content: '→'; position: absolute; left: 0; color: var(--primary); }
+        .highlight-box { background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(34, 211, 238, 0.1) 100%); border-left: 4px solid var(--success); padding: 20px; border-radius: 0 10px 10px 0; margin: 20px 0; }
+        .highlight-box h4 { margin-bottom: 10px; color: var(--success); }
+        .code-block { background: #0f0f1a; border-radius: 10px; padding: 20px; margin: 15px 0; border: 1px solid var(--border); overflow-x: auto; }
+        .code-block code { font-family: 'Courier New', monospace; font-size: 14px; line-height: 1.8; color: var(--text-light); }
+        .code-block .comment { color: #6b7280; } .code-block .keyword { color: #c678dd; }
+        .param-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        .param-table th, .param-table td { padding: 12px 15px; text-align: left; border-bottom: 1px solid var(--border); }
+        .param-table th { background: rgba(99, 102, 241, 0.2); color: var(--primary); font-weight: 600; }
+        .param-table tr:hover { background: rgba(99, 102, 241, 0.05); }
+        .param-table code { background: #0f0f1a; padding: 4px 8px; border-radius: 4px; font-family: 'Courier New', monospace; font-size: 13px; color: var(--secondary); }
+        .case-study { background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(245, 158, 11, 0.1) 100%); border-left: 4px solid var(--danger); padding: 20px; border-radius: 0 10px 10px 0; margin: 20px 0; }
+        .case-study h4 { margin-bottom: 10px; color: var(--danger); }
+        .tool-category { background: var(--bg-card); border-radius: 12px; padding: 25px; margin-bottom: 20px; border-left: 4px solid var(--secondary); }
+        .tool-category h3 { color: var(--secondary); margin-bottom: 15px; font-size: 20px; }
+        .step { background: var(--bg-card); border-radius: 8px; padding: 15px; margin: 10px 0; border-left: 4px solid var(--primary); }
+        .step-title { color: var(--primary); font-weight: 600; margin-bottom: 8px; }
+        .warning-box { background: rgba(239, 68, 68, 0.1); border-left: 4px solid var(--danger); padding: 15px; border-radius: 0 10px 10px 0; margin: 15px 0; }
+        .warning-box h4 { color: var(--danger); margin-bottom: 8px; }
+        .mermaid { background: #0f0f1a; border-radius: 10px; padding: 20px; margin: 20px 0; border: 1px solid var(--border); }
+        .mermaid-label { color: var(--primary); font-size: 16px; font-weight: 600; margin-bottom: 15px; text-align: center; }
+        .tool-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin: 20px 0; }
+        .tool-card { background: var(--bg-dark); border-radius: 10px; padding: 20px; text-align: center; border-top: 4px solid var(--border); transition: all 0.3s; }
+        .tool-card:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
+        .tool-card .icon { font-size: 32px; margin-bottom: 10px; }
+        .tool-card .name { font-size: 16px; font-weight: 700; color: var(--info); margin-bottom: 5px; }
+        .tool-card .desc { font-size: 12px; color: var(--text-gray); }
+        .diagnostic-flow { background: var(--bg-dark); border-radius: 10px; padding: 20px; margin: 20px 0; }
+        .flow-step { display: flex; align-items: center; margin: 10px 0; }
+        .flow-num { width: 30px; height: 30px; background: var(--primary); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; margin-right: 15px; flex-shrink: 0; }
+        .flow-content { flex: 1; }
+        .flow-content .title { font-weight: 600; color: var(--text-light); }
+        .flow-content .desc { font-size: 13px; color: var(--text-gray); }
+        .flow-arrow { text-align: center; color: var(--secondary); font-size: 20px; margin: 5px 0 5px 15px; }
+        .issue-type-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin: 20px 0; }
+        .issue-card { background: var(--bg-dark); border-radius: 10px; padding: 20px; border-left: 4px solid var(--border); }
+        .issue-card.cpu { border-color: #ef4444; }
+        .issue-card.memory { border-color: #3b82f6; }
+        .issue-card.gc { border-color: #f59e0b; }
+        .issue-card.thread { border-color: #22c55e; }
+        .issue-card h5 { color: var(--text-light); margin-bottom: 10px; }
+        .issue-card p { font-size: 13px; color: var(--text-gray); line-height: 1.6; }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>
+        mermaid.initialize({ startOnLoad: true, theme: 'dark', themeVariables: { primaryColor: '#6366f1', primaryTextColor: '#f8f8f8', primaryBorderColor: '#3f3f5a', lineColor: '#6366f1', secondaryColor: '#f59e0b', tertiaryColor: '#1e1e2e' } });
+    </script>
+</head>
+<body>
+    <div class="chapter">
+        <h2 class="chapter-title">第十四章：JVM监控与诊断工具</h2>
+        <p class="chapter-desc">全面掌握JVM监控与诊断工具的使用，深入理解故障排查方法论、性能调优SOP、Arthas实战技巧以及GC日志分析方法。</p>
+
+        <div class="tool-category">
+            <h3>🔧 JDK内置工具全景图</h3>
+            <p>JDK提供了丰富的命令行工具，可用于监控、诊断和调优Java应用：</p>
+            
+            <div class="tool-grid">
+                <div class="tool-card">
+                    <div class="icon">📋</div>
+                    <div class="name">jps</div>
+                    <div class="desc">列出Java进程</div>
+                </div>
+                <div class="tool-card">
+                    <div class="icon">📊</div>
+                    <div class="name">jstat</div>
+                    <div class="desc">监控GC和内存</div>
+                </div>
+                <div class="tool-card">
+                    <div class="icon">💾</div>
+                    <div class="name">jmap</div>
+                    <div class="desc">堆内存分析</div>
+                </div>
+                <div class="tool-card">
+                    <div class="icon">🧵</div>
+                    <div class="name">jstack</div>
+                    <div class="desc">线程堆栈追踪</div>
+                </div>
+                <div class="tool-card">
+                    <div class="icon">⚙️</div>
+                    <div class="name">jinfo</div>
+                    <div class="desc">查看和修改参数</div>
+                </div>
+                <div class="tool-card">
+                    <div class="icon">🔧</div>
+                    <div class="name">jcmd</div>
+                    <div class="desc">多功能诊断</div>
+                </div>
+            </div>
+
+        <div class="card">
+            <h4>1. jps - Java进程状态查看工具</h4>
+            <p>用于列出所有Java进程，类似于Linux的ps命令</p>
+            <table class="param-table">
+                <thead>
+                    <tr><th>参数</th><th>说明</th><th>示例</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td><code>-l</code></td><td>输出主类全名</td><td>jps -l</td></tr>
+                    <tr><td><code>-v</code></td><td>输出JVM参数</td><td>jps -v</td></tr>
+                    <tr><td><code>-m</code></td><td>输出传递给main方法的参数</td><td>jps -m</td></tr>
+                    <tr><td><code>-V</code></td><td>输出通过flagfile传入的参数</td><td>jps -V</td></tr>
+                </tbody>
+            </table>
+            <div class="code-block">
+                <code>
+<span class="comment">// 输出示例：</span>
+<span class="comment">// 12345 com.example.Application -Xms2g -Xmx2g</span>
+<span class="comment">// 12346 sun.tools.jps.Jps -l -v</span>
+
+<span class="comment">// 实际使用：</span>
+jps -l
+<span class="comment">// 12345 com.example.webapp.Application</span>
+<span class="comment">// 12346 sun.tools.jps.Jps</span>
+                </code>
+            </div>
+        </div>
+
+        <div class="card">
+            <h4>2. jstat - JVM统计信息监控工具</h4>
+            <p>实时监控JVM的内存、GC、类加载等统计信息</p>
+            <table class="param-table">
+                <thead>
+                    <tr><th>参数</th><th>监控内容</th><th>示例</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td><code>-gc</code></td><td>垃圾回收统计</td><td>jstat -gc 12345 1000 10</td></tr>
+                    <tr><td><code>-gcutil</code></td><td>GC利用率(百分比)</td><td>jstat -gcutil 12345 1000</td></tr>
+                    <tr><td><code>-gccapacity</code></td><td>堆各区域容量</td><td>jstat -gccapacity 12345</td></tr>
+                    <tr><td><code>-gcnew</code></td><td>新生代GC统计</td><td>jstat -gcnew 12345</td></tr>
+                    <tr><td><code>-gcold</code></td><td>老年代GC统计</td><td>jstat -gcold 12345</td></tr>
+                    <tr><td><code>-class</code></td><td>类加载统计</td><td>jstat -class 12345</td></tr>
+                    <tr><td><code>-compiler</code></td><td>JIT编译统计</td><td>jstat -compiler 12345</td></tr>
+                </tbody>
+            </table>
+            <div class="code-block">
+                <code>
+<span class="comment">// jstat -gcutil 输出示例：</span>
+<span class="comment">//   S0     S1     E      O      M     CCS    YGC     YGCT    FGC    FGCT     GCT</span>
+<span class="comment">//  0.00  99.12  45.67  67.89  89.12  78.45    123    5.678     2    1.234    6.912</span>
+<span class="comment">//  0.00  99.12  46.23  67.90  89.12  78.45    124    5.689     2    1.234    6.923</span>
+
+<span class="comment">// 列说明：</span>
+<span class="comment">// S0/S1: Survivor0/1使用率</span>
+<span class="comment">// E: Eden使用率</span>
+<span class="comment">// O: Old(老年代)使用率</span>
+<span class="comment">// M: Metaspace使用率</span>
+<span class="comment">// YGC/FGC: Young/Full GC次数</span>
+<span class="comment">// YGCT/FGCT: Young/Full GC总耗时</span>
+<span class="comment">// GCT: GC总耗时</span>
+
+<span class="comment">// 监控建议：</span>
+<span class="comment">// 1. 每1秒输出一次，持续监控：</span>
+jstat -gcutil 12345 1000
+
+<span class="comment">// 2. 关注FGC频率，如果频繁Full GC说明有问题</span>
+<span class="comment">// 3. 老年代使用率持续增长可能预示内存泄漏</span>
+                </code>
+            </div>
+        </div>
+
+        <div class="card">
+            <h4>3. jmap - 内存映像工具</h4>
+            <p>生成堆转储快照(dump)，查看内存使用情况</p>
+            <table class="param-table">
+                <thead>
+                    <tr><th>参数</th><th>说明</th><th>示例</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td><code>-heap</code></td><td>打印堆详细信息</td><td>jmap -heap 12345</td></tr>
+                    <tr><td><code>-histo</code></td><td>打印对象直方图</td><td>jmap -histo 12345</td></tr>
+                    <tr><td><code>-histo:live</code></td><td>仅统计存活对象</td><td>jmap -histo:live 12345</td></tr>
+                    <tr><td><code>-dump:live,format=b,file=</code></td><td>生成堆转储文件</td><td>jmap -dump:live,format=b,file=heap.hprof 12345</td></tr>
+                </tbody>
+            </table>
+            <div class="code-block">
+                <code>
+<span class="comment">// jmap -heap 输出示例(G1收集器)：</span>
+<span class="comment">// Garbage-First (G1) GC with 8 thread(s)</span>
+<span class="comment">// Heap Configuration:</span>
+<span class="comment">//    MinHeapFreeRatio         = 40</span>
+<span class="comment">//    MaxHeapFreeRatio         = 70</span>
+<span class="comment">//    MaxHeapSize              = 4294967296 (4.0GB)</span>
+<span class="comment">//    NewRatio                 = 2</span>
+<span class="comment">//    SurvivorRatio            = 8</span>
+
+<span class="comment">// jmap -histo:live 输出示例：</span>
+<span class="comment">// num     #instances         #bytes  class name</span>
+<span class="comment">// 1:        123456       12345678  [B</span>
+<span class="comment">// 2:         98765       9876543  [C</span>
+<span class="comment">// 3:         45678       4567890  java.lang.String</span>
+<span class="comment">// 4:         23456       2345678  java.util.HashMap$Node</span>
+
+<span class="comment">// 生成堆转储文件(线上谨慎使用，会导致STW)：</span>
+jmap -dump:live,format=b,file=/tmp/heap_$(date +%Y%m%d_%H%M%S).hprof 12345
+                </code>
+            </div>
+            <div class="warning-box">
+                <h4>⚠️ 生产环境警告</h4>
+                <p>jmap -dump会触发Full GC并暂停应用，生成dump文件可能占用大量磁盘空间。线上环境建议在业务低峰期执行，或使用Arthas的heapdump命令(支持压缩)。</p>
+            </div>
+        </div>
+
+        <div class="card">
+            <h4>4. jstack - 线程堆栈追踪工具</h4>
+            <p>生成线程快照，用于诊断死锁、线程阻塞等问题</p>
+            <table class="param-table">
+                <thead>
+                    <tr><th>参数</th><th>说明</th><th>示例</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td><code>-l</code></td><td>打印锁信息</td><td>jstack -l 12345</td></tr>
+                    <tr><td><code>-m</code></td><td>打印native方法栈</td><td>jstack -m 12345</td></tr>
+                    <tr><td><code>-F</code></td><td>强制输出(无响应时)</td><td>jstack -F 12345</td></tr>
+                </tbody>
+            </table>
+            <div class="code-block">
+                <code>
+<span class="comment">// jstack 输出示例：</span>
+<span class="comment">// "main" #1 prio=5 os_prio=31 tid=0x00007fb8c0001000 nid=0x1b03 runnable</span>
+<span class="comment">// java.lang.Thread.State: RUNNABLE</span>
+<span class="comment">//     at java.io.FileInputStream.readBytes(Native Method)</span>
+<span class="comment">//     at java.io.FileInputStream.read(FileInputStream.java:255)</span>
+<span class="comment">//     at java.io.BufferedInputStream.read1(BufferedInputStream.java:284)</span>
+
+<span class="comment">// 线程状态说明：</span>
+<span class="comment">// NEW: 新建，尚未启动</span>
+<span class="comment">// RUNNABLE: 运行中或就绪</span>
+<span class="comment">// BLOCKED: 等待获取监视器锁</span>
+<span class="comment">// WAITING: 无限期等待</span>
+<span class="comment">// TIMED_WAITING: 限期等待</span>
+<span class="comment">// TERMINATED: 已终止</span>
+
+<span class="comment">// 导出线程快照：</span>
+jstack -l 12345 > /tmp/thread_dump_$(date +%Y%m%d_%H%M%S).txt
+
+<span class="comment">// 快速分析线程状态分布：</span>
+jstack -l 12345 | grep "java.lang.Thread.State" | sort | uniq -c
+<span class="comment">// 输出示例：</span>
+<span class="comment">// 10 java.lang.Thread.State: BLOCKED</span>
+<span class="comment">// 45 java.lang.Thread.State: WAITING</span>
+<span class="comment">// 3 java.lang.Thread.State: TIMED_WAITING</span>
+<span class="comment">// 2 java.lang.Thread.State: RUNNABLE</span>
+                </code>
+            </div>
+        </div>
+
+        <div class="card">
+            <h4>5. jcmd - 多功能诊断命令</h4>
+            <p>JDK 7+引入的多功能工具，可替代jps、jstat、jmap、jstack</p>
+            <table class="param-table">
+                <thead>
+                    <tr><th>命令</th><th>等效工具</th><th>说明</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td><code>jcmd -l</code></td><td>jps -l</td><td>列出Java进程</td></tr>
+                    <tr><td><code>jcmd &lt;pid&gt; GC.heap_info</code></td><td>jmap -heap</td><td>堆信息</td></tr>
+                    <tr><td><code>jcmd &lt;pid&gt; GC.class_histogram</code></td><td>jmap -histo</td><td>类直方图</td></tr>
+                    <tr><td><code>jcmd &lt;pid&gt; Thread.print</code></td><td>jstack</td><td>线程快照</td></tr>
+                    <tr><td><code>jcmd &lt;pid&gt; VM.flags</code></td><td>jinfo -flags</td><td>JVM参数</td></tr>
+                    <tr><td><code>jcmd &lt;pid&gt; GC.run</code></td><td>手动触发GC</td><td>执行GC</td></tr>
+                    <tr><td><code>jcmd &lt;pid&gt; VM.system_properties</code></td><td>-</td><td>系统属性</td></tr>
+                </tbody>
+            </table>
+            <div class="code-block">
+                <code>
+<span class="comment">// 查看所有可用命令：</span>
+jcmd 12345 help
+
+<span class="comment">// 生成堆转储：</span>
+jcmd 12345 GC.heap_dump /tmp/heap.hprof
+
+<span class="comment">// 触发GC：</span>
+jcmd 12345 GC.run
+
+<span class="comment">// 查看JIT编译信息：</span>
+jcmd 12345 compiler.codecache
+                </code>
+            </div>
+        </div>
+
+        <div class="diagnostic-flow">
+            <p style="color: var(--primary); font-size: 16px; font-weight: 600; margin-bottom: 15px; text-align: center;">🔍 诊断工具使用流程</p>
+            <div class="flow-step">
+                <div class="flow-num">1</div>
+                <div class="flow-content">
+                    <div class="title">jps -l → 获取进程ID</div>
+                    <div class="desc">列出所有Java进程，找到目标应用PID</div>
+                </div>
+            </div>
+            <div class="flow-arrow">↓</div>
+            <div class="flow-step">
+                <div class="flow-num">2</div>
+                <div class="flow-content">
+                    <div class="title">jstat -gcutil PID 1000 → 监控GC状态</div>
+                    <div class="desc">观察内存使用率、GC频率和耗时，判断是否存在内存问题</div>
+                </div>
+            </div>
+            <div class="flow-arrow">↓</div>
+            <div class="flow-step">
+                <div class="flow-num">3</div>
+                <div class="flow-content">
+                    <div class="title">jstack -l PID → 分析线程状态</div>
+                    <div class="desc">检查是否有死锁、线程阻塞、CPU占用高的线程</div>
+                </div>
+            </div>
+            <div class="flow-arrow">↓</div>
+            <div class="flow-step">
+                <div class="flow-num">4</div>
+                <div class="flow-content">
+                    <div class="title">jmap -histo:live PID → 查看对象分布</div>
+                    <div class="desc">找出内存占用最大的对象类型，定位可能的内存泄漏</div>
+                </div>
+            </div>
+            <div class="flow-arrow">↓</div>
+            <div class="flow-step">
+                <div class="flow-num">5</div>
+                <div class="flow-content">
+                    <div class="title">Arthas → 深度诊断</div>
+                    <div class="desc">使用trace/watch/profiler等命令进行深度分析</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="tool-category">
+            <h3>🚀 Arthas - 阿里巴巴开源诊断神器</h3>
+            <p>Arthas是Alibaba开源的Java诊断工具，支持线上环境无侵入诊断：</p>
+            
+            <div class="mermaid">
+                <p class="mermaid-label">问题诊断决策树</p>
+                <div class="mermaid">
+                    graph TD
+                        A[应用性能问题] --> B{问题类型?}
+                        B -->|CPU高| C[CPU占用分析]
+                        B -->|内存涨| D[内存泄漏分析]
+                        B -->|响应慢| E[方法耗时分析]
+                        B -->|卡死| F[死锁检测]
+                        C --> G[thread -n 3]
+                        G --> H[profiler生成火焰图]
+                        D --> I[heapdump]
+                        I --> J[MAT分析大对象]
+                        E --> K[trace方法调用链]
+                        K --> L[watch查看入参返回值]
+                        F --> M[jstack -l]
+                        M --> N[查找BLOCKED线程]
+                        style A fill:#6366f1,stroke:#3f3f5a,color:#f8f8f8
+                        style B fill:#f59e0b,stroke:#3f3f5a,color:#f8f8f8
+                        style C fill:#ef4444,stroke:#3f3f5a,color:#f8f8f8
+                        style D fill:#3b82f6,stroke:#3f3f5a,color:#f8f8f8
+                        style E fill:#f59e0b,stroke:#3f3f5a,color:#f8f8f8
+                        style F fill:#22c55e,stroke:#3f3f5a,color:#f8f8f8
+                        style G fill:#ef4444,stroke:#3f3f5a,color:#f8f8f8
+                        style H fill:#ef4444,stroke:#3f3f5a,color:#f8f8f8
+                        style I fill:#3b82f6,stroke:#3f3f5a,color:#f8f8f8
+                        style J fill:#3b82f6,stroke:#3f3f5a,color:#f8f8f8
+                        style K fill:#f59e0b,stroke:#3f3f5a,color:#f8f8f8
+                        style L fill:#f59e0b,stroke:#3f3f5a,color:#f8f8f8
+                        style M fill:#22c55e,stroke:#3f3f5a,color:#f8f8f8
+                        style N fill:#22c55e,stroke:#3f3f5a,color:#f8f8f8
+                </div>
+            </div>
+            
+            <div class="issue-type-grid">
+                <div class="issue-card cpu">
+                    <h5>🔥 CPU占用过高</h5>
+                    <p>使用thread -n找出CPU占用最高的线程，通过profiler生成火焰图定位热点代码。</p>
+                </div>
+                <div class="issue-card memory">
+                    <h5>💧 内存泄漏</h5>
+                    <p>使用heapdump生成堆转储文件，通过MAT分析大对象和GC Roots引用链。</p>
+                </div>
+                <div class="issue-card gc">
+                    <h5>♻️ GC频繁</h5>
+                    <p>使用jstat监控GC频率，分析GC日志，调整堆大小或选择合适的GC收集器。</p>
+                </div>
+                <div class="issue-card thread">
+                    <h5>🧵 线程死锁</h5>
+                    <p>使用jstack -l生成线程快照，查找BLOCKED状态的线程和锁竞争关系。</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h4>Arthas核心命令</h4>
+            <table class="param-table">
+                <thead>
+                    <tr><th>命令</th><th>功能</th><th>典型使用场景</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td><code>dashboard</code></td><td>实时仪表盘</td><td>查看CPU、内存、GC、线程概况</td></tr>
+                    <tr><td><code>thread</code></td><td>线程信息</td><td>查看线程状态、找出CPU占用最高线程</td></tr>
+                    <tr><td><code>jvm</code></td><td>JVM信息</td><td>查看JVM详细信息</td></tr>
+                    <tr><td><code>sysprop</code></td><td>系统属性</td><td>查看和修改系统属性</td></tr>
+                    <tr><td><code>sysenv</code></td><td>环境变量</td><td>查看环境变量</td></tr>
+                    <tr><td><code>vmoption</code></td><td>JVM参数</td><td>查看和动态更新JVM参数</td></tr>
+                    <tr><td><code>heapdump</code></td><td>堆转储</td><td>生成堆转储文件</td></tr>
+                    <tr><td><code>sc</code></td><td>搜索类</td><td>查找已加载的类</td></tr>
+                    <tr><td><code>sm</code></td><td>搜索方法</td><td>查找类的方法</td></tr>
+                    <tr><td><code>jad</code></td><td>反编译</td><td>反编译查看源码</td></tr>
+                    <tr><td><code>watch</code></td><td>方法调用观察</td><td>查看方法入参、返回值、异常</td></tr>
+                    <tr><td><code>trace</code></td><td>方法调用路径追踪</td><td>查看方法内部调用链路及耗时</td></tr>
+                    <tr><td><code>monitor</code></td><td>方法执行监控</td><td>统计方法调用频率、成功率</td></tr>
+                    <tr><td><code>stack</code></td><td>方法调用堆栈</td><td>查看方法被谁调用</td></tr>
+                    <tr><td><code>tt</code></td><td>时空隧道</td><td>记录方法调用现场</td></tr>
+                    <tr><td><code>redefine</code></td><td>热更新代码</td><td>线上热修复代码</td></tr>
+                    <tr><td><code>profiler</code></td><td>性能分析</td><td>生成Flame Graph火焰图</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="case-study">
+            <h4>🔍 Arthas实战案例</h4>
+            
+            <div class="step">
+                <div class="step-title">案例1：定位CPU占用过高问题</div>
+                <div class="code-block">
+                    <code>
+<span class="comment">// 1. 启动Arthas并attach到目标进程</span>
+java -jar arthas-boot.jar
+<span class="comment">// 或使用as.sh</span>
+./as.sh
+
+<span class="comment">// 2. 查看线程CPU占用排行</span>
+thread -n 3
+<span class="comment">// 输出CPU占用最高的3个线程及其堆栈</span>
+
+<span class="comment">// 3. 查看线程整体状态</span>
+thread --state RUNNABLE
+<span class="comment">// 查看所有运行中的线程</span>
+
+<span class="comment">// 4. 使用profiler生成火焰图</span>
+profiler start
+<span class="comment">// 等待一段时间</span>
+profiler stop --format svg
+<span class="comment">// 生成CPU火焰图，定位热点代码</span>
+                    </code>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-title">案例2：排查方法执行慢的问题</div>
+                <div class="code-block">
+                    <code>
+<span class="comment">// 1. trace方法内部调用链路，找出耗时环节</span>
+trace com.example.service.UserService getUser
+<span class="comment">// 输出每个方法的耗时</span>
+
+<span class="comment">// 2. 指定耗时阈值，只输出超过100ms的调用</span>
+trace com.example.service.UserService getUser '#cost > 100'
+
+<span class="comment">// 3. watch方法入参和返回值</span>
+watch com.example.service.UserService getUser "{params,returnObj}" -x 2
+<span class="comment">// -x 2表示展开2层对象属性</span>
+
+<span class="comment">// 4. 查看方法被谁调用</span>
+stack com.example.service.UserService getUser
+                    </code>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-title">案例3：排查OOM问题</div>
+                <div class="code-block">
+                    <code>
+<span class="comment">// 1. 生成堆转储文件</span>
+heapdump /tmp/heapdump.hprof
+
+<span class="comment">// 2. 查看大对象分布</span>
+dashboard
+<span class="comment">// 观察内存使用情况</span>
+
+<span class="comment">// 3. 查看类的实例数量和占用内存</span>
+sc -d *UserService*
+<span class="comment">// 查看类的详细信息</span>
+
+<span class="comment">// 4. 使用jmap+MAT深入分析</span>
+jmap -histo:live 12345 | head -20
+<span class="comment">// 查看内存占用前20的类</span>
+
+<span class="comment">// 5. 使用OQL查询特定对象</span>
+<span class="comment">// 在MAT或JVisualVM中执行OQL：</span>
+<span class="comment">// SELECT * FROM java.lang.String WHERE toString(s).like(".*leak.*")</span>
+                    </code>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-title">案例4：线上热修复</div>
+                <div class="code-block">
+                    <code>
+<span class="comment">// 1. 反编译需要修改的类</span>
+jad --source-only com.example.service.UserService > /tmp/UserService.java
+
+<span class="comment">// 2. 编辑代码修复bug</span>
+vim /tmp/UserService.java
+
+<span class="comment">// 3. 编译修改后的代码(需找到正确的classpath)</span>
+sc -d com.example.service.UserService | grep classLoaderHash
+<span class="comment">// 获取ClassLoaderHash后编译</span>
+mc -c 1a2b3c4d /tmp/UserService.java -d /tmp/
+
+<span class="comment">// 4. 热更新类</span>
+redefine /tmp/com/example/service/UserService.class
+
+<span class="comment">// 5. 验证修复效果</span>
+watch com.example.service.UserService getUser "{params,returnObj}" -x 2
+                    </code>
+                </div>
+            </div>
+        </div>
+
+        <div class="tool-category">
+            <h3>📊 GC日志分析方法论</h3>
+            <p>GC日志是性能调优的重要依据，掌握分析方法至关重要：</p>
+        </div>
+
+        <div class="card">
+            <h4>GC日志字段解读</h4>
+            <div class="code-block">
+                <code>
+<span class="comment">// G1 GC日志示例：</span>
+<span class="comment">// 2024-01-15T10:30:45.123+0800: 1234.567: [GC pause (G1 Evacuation Pause) (young)</span>
+<span class="comment">// [Parallel Time: 12.3 ms, GC Workers: 8]</span>
+<span class="comment">//   [GC Worker Start (ms):  1234567.0,  1234567.1,  1234567.2, ...]</span>
+<span class="comment">//   [Ext Root Scanning (ms):  1.2,  1.3,  1.1, ...]</span>
+<span class="comment">//   [Update RS (ms):  0.5,  0.4,  0.6, ...]</span>
+<span class="comment">//   [Scan RS (ms):  2.1,  2.0,  2.2, ...]</span>
+<span class="comment">//   [Object Copy (ms):  5.6,  5.5,  5.7, ...]</span>
+<span class="comment">//   [Termination (ms):  0.8,  0.7,  0.9, ...]</span>
+<span class="comment">// [Eden: 1024.0M(1024.0M)->0.0B(1024.0M) Survivors: 128.0M->128.0M Heap: 2048.0M(4096.0M)->1152.0M(4096.0M)]</span>
+
+<span class="comment">// 关键字段解释：</span>
+<span class="comment">// - GC pause: GC类型(停顿类型)</span>
+<span class="comment">// - Parallel Time: 并行阶段耗时</span>
+<span class="comment">// - GC Workers: 参与GC的工作线程数</span>
+<span class="comment">// - Ext Root Scanning: 扫描外部根对象耗时</span>
+<span class="comment">// - Update RS: 更新Remembered Set耗时</span>
+<span class="comment">// - Scan RS: 扫描Remembered Set耗时</span>
+<span class="comment">// - Object Copy: 对象复制耗时</span>
+<span class="comment">// - Termination: 线程终止耗时</span>
+<span class="comment">// - Eden/Survivors/Heap: 各区域GC前后对比</span>
+                </code>
+            </div>
+        </div>
+
+        <div class="card">
+            <h4>GC日志分析关键指标</h4>
+            
+            <div class="mermaid">
+                <p class="mermaid-label">GC问题分析决策树</p>
+                <div class="mermaid">
+                    graph TD
+                        A[GC问题] --> B{GC类型?}
+                        B -->|频繁Minor GC| C[新生代过小?]
+                        B -->|频繁Full GC| D[老年代空间?]
+                        B -->|GC停顿时间长| E[GC算法合适?]
+                        C -->|是| F[增大-Xmn]
+                        C -->|否| G[对象分配过快]
+                        G --> H[优化对象创建]
+                        D -->|是| I[增大-Xmx]
+                        D -->|否| J[内存泄漏?]
+                        J -->|是| K[heapdump分析]
+                        J -->|否| L[调整晋升年龄]
+                        E -->|G1| M[调整MaxGCPauseMillis]
+                        E -->|CMS| N[切换G1/ZGC]
+                        E -->|Parallel| O[切换G1]
+                        style A fill:#6366f1,stroke:#3f3f5a,color:#f8f8f8
+                        style B fill:#f59e0b,stroke:#3f3f5a,color:#f8f8f8
+                        style C fill:#3b82f6,stroke:#3f3f5a,color:#f8f8f8
+                        style D fill:#3b82f6,stroke:#3f3f5a,color:#f8f8f8
+                        style E fill:#3b82f6,stroke:#3f3f5a,color:#f8f8f8
+                        style F fill:#22c55e,stroke:#3f3f5a,color:#f8f8f8
+                        style G fill:#f59e0b,stroke:#3f3f5a,color:#f8f8f8
+                        style H fill:#22c55e,stroke:#3f3f5a,color:#f8f8f8
+                        style I fill:#22c55e,stroke:#3f3f5a,color:#f8f8f8
+                        style J fill:#f59e0b,stroke:#3f3f5a,color:#f8f8f8
+                        style K fill:#ef4444,stroke:#3f3f5a,color:#f8f8f8
+                        style L fill:#22c55e,stroke:#3f3f5a,color:#f8f8f8
+                        style M fill:#22c55e,stroke:#3f3f5a,color:#f8f8f8
+                        style N fill:#22c55e,stroke:#3f3f5a,color:#f8f8f8
+                        style O fill:#22c55e,stroke:#3f3f5a,color:#f8f8f8
+                </div>
+            </div>
+            
+            <table class="param-table">
+                <thead>
+                    <tr><th>指标</th><th>计算公式</th><th>健康标准</th><th>优化方向</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>GC频率</td><td>GC次数/时间</td><td>Minor GC: 每分钟<10次</td><td>增大新生代</td></tr>
+                    <tr><td>GC耗时</td><td>单次GC耗时</td><td>Minor GC: <50ms, Full GC: <500ms</td><td>减小堆、优化GC算法</td></tr>
+                    <tr><td>GC吞吐量</td><td>1 - (GC时间/总时间)</td><td>>99%</td><td>增大堆、使用Parallel GC</td></tr>
+                    <tr><td>GC停顿时间</td><td>单次STW时间</td><td><200ms(低延迟应用)</td><td>使用G1/ZGC，减小堆</td></tr>
+                    <tr><td>内存分配速率</td><td>(Eden回收量)/时间</td><td>根据业务而定</td><td>优化对象生命周期</td></tr>
+                    <tr><td>晋升速率</td><td>(老年代增量)/时间</td><td>应远小于分配速率</td><td>调整晋升年龄</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="case-study">
+            <h4>🔧 GC日志分析实战</h4>
+            <div class="code-block">
+                <code>
+<span class="comment">// 使用脚本分析GC日志</span>
+<span class="comment">// 1. 统计GC总次数和总耗时</span>
+grep "GC pause" gc.log | wc -l
+<span class="comment">// 输出GC总次数</span>
+
+<span class="comment">// 2. 找出耗时最长的GC事件</span>
+grep "GC pause" gc.log | sort -t: -k3 -n | tail -5
+<span class="comment">// 找出最慢的5次GC</span>
+
+<span class="comment">// 3. 计算GC频率(每小时)</span>
+grep "GC pause" gc.log | awk '{print $1}' | cut -dT -f1 | sort | uniq -c
+<span class="comment">// 按天统计GC次数</span>
+
+<span class="comment">// 4. 使用工具分析</span>
+<span class="comment">// GCViewer: 可视化GC日志，生成报告</span>
+<span class="comment">// GCEasy: 在线GC日志分析平台</span>
+<span class="comment">// IBM Pattern Modeling: 高级GC分析</span>
+
+<span class="comment">// 5. 识别问题模式：</span>
+<span class="comment">// a) 频繁Minor GC → 新生代过小，对象分配过快</span>
+<span class="comment">// b) 频繁Full GC → 老年代空间不足，可能存在内存泄漏</span>
+<span class="comment">// c) GC时间逐渐增长 → 堆碎片化严重或内存泄漏</span>
+<span class="comment">// d) GC后内存回收很少 → 存活对象过多，可能存在内存泄漏</span>
+                </code>
+            </div>
+        </div>
+
+        <div class="tool-category">
+            <h3>📋 性能调优标准作业程序(SOP)</h3>
+        </div>
+
+        <div class="mermaid">
+            <p class="mermaid-label">性能调优SOP流程图</p>
+            <div class="mermaid">
+                graph LR
+                    A[Step 1<br/>确定目标] --> B[Step 2<br/>建立基线]
+                    B --> C[Step 3<br/>定位瓶颈]
+                    C --> D{瓶颈类型?}
+                    D -->|CPU| E[优化算法]
+                    D -->|内存| F[优化对象]
+                    D -->|GC| G[调整GC参数]
+                    D -->|I/O| H[异步化]
+                    D -->|锁| I[减少锁粒度]
+                    E --> J[Step 5<br/>验证效果]
+                    F --> J
+                    G --> J
+                    H --> J
+                    I --> J
+                    J --> K{达标?}
+                    K -->|否| C
+                    K -->|是| L[Step 6<br/>持续监控]
+                    style A fill:#6366f1,stroke:#3f3f5a,color:#f8f8f8
+                    style B fill:#6366f1,stroke:#3f3f5a,color:#f8f8f8
+                    style C fill:#6366f1,stroke:#3f3f5a,color:#f8f8f8
+                    style D fill:#f59e0b,stroke:#3f3f5a,color:#f8f8f8
+                    style E fill:#ef4444,stroke:#3f3f5a,color:#f8f8f8
+                    style F fill:#3b82f6,stroke:#3f3f5a,color:#f8f8f8
+                    style G fill:#f59e0b,stroke:#3f3f5a,color:#f8f8f8
+                    style H fill:#22c55e,stroke:#3f3f5a,color:#f8f8f8
+                    style I fill:#22c55e,stroke:#3f3f5a,color:#f8f8f8
+                    style J fill:#6366f1,stroke:#3f3f5a,color:#f8f8f8
+                    style K fill:#f59e0b,stroke:#3f3f5a,color:#f8f8f8
+                    style L fill:#22c55e,stroke:#3f3f5a,color:#f8f8f8
+            </div>
+        </div>
+
+        <div class="card">
+            <h4>性能调优SOP步骤</h4>
+            <div class="step">
+                <div class="step-title">Step 1: 确定性能目标</div>
+                <p>明确应用的性能指标要求：响应时间、吞吐量、并发数、内存使用等</p>
+                <div class="code-block">
+                    <code>
+<span class="comment">// 示例目标：</span>
+<span class="comment">// - 平均响应时间 < 200ms</span>
+<span class="comment">// - P99响应时间 < 500ms</span>
+<span class="comment">// - TPS > 1000</span>
+<span class="comment">// - GC停顿 < 100ms</span>
+<span class="comment">// - 堆内存使用 < 70%</span>
+                    </code>
+                </div>
+            </div>
+            
+            <div class="step">
+                <div class="step-title">Step 2: 建立性能基线</div>
+                <p>使用压测工具(如JMeter、wrk)建立当前性能基线，作为优化对比基准</p>
+                <div class="code-block">
+                    <code>
+<span class="comment">// 使用wrk进行HTTP压测</span>
+wrk -t12 -c400 -d30s http://localhost:8080/api/test
+<span class="comment">// 输出：Requests/sec, Latency分布等</span>
+
+<span class="comment">// 压测同时监控JVM指标</span>
+jstat -gcutil 12345 1000 > /tmp/jstat.log &
+                    </code>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-title">Step 3: 定位性能瓶颈</div>
+                <p>使用各种工具定位瓶颈：CPU、内存、GC、I/O、锁竞争等</p>
+                <div class="code-block">
+                    <code>
+<span class="comment">// CPU瓶颈定位：</span>
+top -Hp 12345
+<span class="comment">// 找出CPU占用最高的线程</span>
+
+<span class="comment">// 转换为16进制</span>
+printf "%x\n" 12346
+<span class="comment">// 输出: 303a</span>
+
+<span class="comment">// 在jstack输出中查找对应线程</span>
+jstack 12345 | grep 303a -A 20
+
+<span class="comment">// 内存瓶颈定位：</span>
+jstat -gcutil 12345 1000
+<span class="comment">// 观察内存使用趋势</span>
+
+<span class="comment">// GC瓶颈定位：</span>
+jstat -gc 12345 1000
+<span class="comment">// 观察GC频率和耗时</span>
+
+<span class="comment">// 锁竞争定位：</span>
+jstack -l 12345
+<span class="comment">// 查找BLOCKED状态的线程</span>
+                    </code>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-title">Step 4: 制定优化方案</div>
+                <p>根据瓶颈类型选择优化策略：</p>
+                <ul>
+                    <li><strong>CPU密集型</strong>：优化算法、减少不必要的计算、使用更高效的容器</li>
+                    <li><strong>内存密集型</strong>：优化对象生命周期、减少大对象创建、使用对象池</li>
+                    <li><strong>GC瓶颈</strong>：调整堆大小、选择合适的GC算法、优化内存分配</li>
+                    <li><strong>I/O瓶颈</strong>：使用异步I/O、批量处理、缓存优化</li>
+                    <li><strong>锁竞争</strong>：减少锁粒度、使用无锁数据结构、并发集合</li>
+                </ul>
+            </div>
+
+            <div class="step">
+                <div class="step-title">Step 5: 实施优化并验证</div>
+                <p>逐个实施优化措施，每次变更后重新压测，验证优化效果</p>
+                <div class="code-block">
+                    <code>
+<span class="comment">// 优化前记录基线数据</span>
+<span class="comment">// TPS: 850, P99: 650ms, GC: 5次/min</span>
+
+<span class="comment">// 实施优化(如调整堆大小)</span>
+java -Xms4g -Xmx4g -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -jar app.jar
+
+<span class="comment">// 重新压测验证</span>
+wrk -t12 -c400 -d30s http://localhost:8080/api/test
+<span class="comment">// TPS: 1050, P99: 420ms, GC: 3次/min ✓</span>
+                    </code>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-title">Step 6: 持续监控与优化</div>
+                <p>将优化后的配置部署到生产环境，建立持续监控机制</p>
+                <div class="code-block">
+                    <code>
+<span class="comment">// 配置Prometheus + Grafana监控</span>
+<span class="comment">// 使用jmx_exporter暴露JVM指标</span>
+java -javaagent:jmx_prometheus_javaagent.jar=9090:config.yml -jar app.jar
+
+<span class="comment">// Grafana Dashboard监控关键指标：</span>
+<span class="comment">// - JVM内存使用率</span>
+<span class="comment">// - GC频率和耗时</span>
+<span class="comment">// - 线程数和状态</span>
+<span class="comment">// - 类加载数量</span>
+<span class="comment">// - JIT编译统计</span>
+                    </code>
+                </div>
+            </div>
+        </div>
+
+        <div class="highlight-box">
+            <h4>✅ 最佳实践总结</h4>
+            <p>1. <strong>建立完善的监控体系</strong>：Prometheus + Grafana + 告警机制<br/>
+            2. <strong>GC日志必须开启</strong>：保留至少7天日志，便于问题回溯<br/>
+            3. <strong>定期进行性能压测</strong>：每次代码变更后验证性能指标<br/>
+            4. <strong>掌握Arthas等高级工具</strong>：提高线上问题排查效率<br/>
+            5. <strong>遵循调优SOP</strong>：避免盲目调整，确保每次变更可追溯<br/>
+            6. <strong>建立性能基线</strong>：作为优化效果的对比基准<br/>
+            7. <strong>关注业务指标</strong>：性能调优最终服务于业务目标</p>
+        </div>
+
+        <div class="warning-box">
+            <h4>⚠️ 线上排查注意事项</h4>
+            <p>1. 生产环境谨慎使用jmap -dump，会导致Full GC停顿<br/>
+            2. Arthas attach进程时会有短暂停顿<br/>
+            3. 开启详细GC日志会影响性能(约3-5%)<br/>
+            4. 线程快照(jstack)频繁执行会影响应用性能<br/>
+            5. 优先使用监控数据定位问题，而非直接上生产环境抓dump<br/>
+            6. 保留足够的磁盘空间用于日志和dump文件</p>
+        </div>
+
+        <div style="text-align: center; padding: 40px; color: var(--text-gray);">
+            <p style="font-size: 18px; margin-bottom: 10px;">🎉 恭喜完成JVM全面学习！</p>
+            <p style="font-size: 14px;">继续深入实践，掌握更多JVM高级特性与调优技巧</p>
+            <p style="font-size: 14px; margin-top: 10px;">建议：结合真实业务场景进行性能调优实践</p>
+        </div>
+    </div>
+</body>
+</html>

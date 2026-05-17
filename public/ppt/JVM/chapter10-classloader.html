@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第十章：类加载器详解</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary: #6366f1; --secondary: #f59e0b; --bg-dark: #1e1e2e;
+            --bg-card: #27273a; --text-light: #f8f8f8; --text-gray: #a1a1aa;
+            --border: #3f3f5a; --success: #22c55e; --danger: #ef4444; --info: #3b82f6;
+            --warning: #f97316; --purple: #a855f7; --teal: #14b8a6;
+        }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg-dark); color: var(--text-light); padding: 40px; line-height: 1.7; }
+        .chapter { margin-bottom: 80px; }
+        .chapter-title { font-size: 36px; margin-bottom: 15px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .chapter-desc { color: var(--text-gray); font-size: 18px; margin-bottom: 40px; line-height: 1.8; }
+        .section-title { font-size: 22px; margin: 35px 0 20px; color: var(--secondary); border-bottom: 2px solid var(--secondary); padding-bottom: 8px; }
+        .section-title-sub { font-size: 14px; color: var(--text-gray); font-weight: normal; }
+        .card { background: var(--bg-card); border-radius: 12px; padding: 28px; margin-bottom: 24px; border: 1px solid var(--border); }
+        .card h4 { font-size: 19px; margin-bottom: 18px; color: var(--info); }
+        .card ul { list-style: none; padding-left: 0; }
+        .card ul li { padding: 10px 0 10px 24px; position: relative; color: var(--text-gray); border-bottom: 1px solid rgba(63, 63, 90, 0.5); }
+        .card ul li:last-child { border-bottom: none; }
+        .card ul li::before { content: '→'; position: absolute; left: 0; color: var(--primary); font-weight: bold; }
+        .card ul li strong { color: var(--text-light); }
+        .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; margin: 25px 0; }
+        .card-sm { background: var(--bg-card); border-radius: 10px; padding: 22px; border: 1px solid var(--border); transition: all 0.3s; }
+        .card-sm:hover { transform: translateY(-4px); border-color: var(--primary); box-shadow: 0 8px 24px rgba(99, 102, 241, 0.2); }
+        .card-sm h5 { color: var(--secondary); margin-bottom: 12px; font-size: 16px; }
+        .card-sm p { color: var(--text-gray); font-size: 14px; line-height: 1.7; }
+        .highlight-box { background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%); border-left: 4px solid var(--primary); padding: 22px; border-radius: 0 10px 10px 0; margin: 24px 0; }
+        .highlight-box.warning { background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(239, 68, 68, 0.1) 100%); border-left-color: var(--warning); }
+        .highlight-box.success { background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(34, 211, 238, 0.1) 100%); border-left-color: var(--success); }
+        .highlight-box.purple { background: linear-gradient(135deg, rgba(168, 85, 247, 0.1) 0%, rgba(99, 102, 241, 0.1) 100%); border-left-color: var(--purple); }
+        .highlight-box.danger { background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(249, 115, 22, 0.1) 100%); border-left-color: var(--danger); }
+        .highlight-box h4 { margin-bottom: 12px; font-size: 17px; }
+        .highlight-box.warning h4 { color: var(--warning); }
+        .highlight-box.success h4 { color: var(--success); }
+        .highlight-box.purple h4 { color: var(--purple); }
+        .highlight-box.danger h4 { color: var(--danger); }
+        .highlight-box h4 { color: var(--primary); }
+        .highlight-box p { color: var(--text-gray); font-size: 14px; line-height: 1.8; }
+        .highlight-box code { background: rgba(99, 102, 241, 0.15); padding: 2px 8px; border-radius: 4px; color: var(--text-light); font-family: 'Consolas', monospace; font-size: 13px; }
+        .highlight-box pre { background: rgba(0, 0, 0, 0.3); padding: 15px; border-radius: 6px; margin-top: 12px; overflow-x: auto; }
+        .highlight-box pre code { background: none; padding: 0; }
+        .code-block { background: #0d0d1a; border-radius: 8px; padding: 20px; margin: 20px 0; overflow-x: auto; border: 1px solid var(--border); }
+        .code-block code { color: var(--text-light); font-family: 'Consolas', 'Monaco', monospace; font-size: 13px; line-height: 1.6; }
+        .code-block .comment { color: #6b7280; }
+        .code-block .keyword { color: var(--primary); }
+        .code-block .string { color: var(--success); }
+        .code-block .type { color: var(--secondary); }
+        .code-block .annotation { color: var(--warning); }
+        .flow-diagram { display: flex; align-items: center; gap: 15px; padding: 25px; background: rgba(15, 15, 26, 0.6); border-radius: 10px; margin: 20px 0; flex-wrap: wrap; justify-content: center; }
+        .flow-item { background: linear-gradient(135deg, #1a1a3e, #2a1a4e); padding: 18px 22px; border-radius: 8px; text-align: center; border: 1px solid var(--border); min-width: 140px; }
+        .flow-item .icon { font-size: 24px; margin-bottom: 8px; }
+        .flow-item h6 { color: var(--primary); font-size: 13px; margin-bottom: 5px; }
+        .flow-item p { color: var(--text-gray); font-size: 10px; }
+        .flow-arrow { color: var(--secondary); font-size: 22px; font-weight: bold; }
+        .table-wrapper { overflow-x: auto; margin: 20px 0; }
+        table { width: 100%; border-collapse: collapse; background: var(--bg-card); border-radius: 8px; overflow: hidden; }
+        th { background: rgba(99, 102, 241, 0.2); color: var(--text-light); padding: 14px; text-align: left; font-size: 14px; }
+        td { padding: 12px 14px; color: var(--text-gray); font-size: 13px; border-top: 1px solid var(--border); }
+        tr:hover td { background: rgba(99, 102, 241, 0.05); }
+        td code { background: rgba(99, 102, 241, 0.15); padding: 2px 6px; border-radius: 3px; color: var(--text-light); font-family: 'Consolas', monospace; font-size: 12px; }
+        .two-col { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin: 20px 0; }
+        .col-card { background: var(--bg-card); border-radius: 10px; padding: 22px; border: 1px solid var(--border); }
+        .col-card h5 { color: var(--success); margin-bottom: 14px; font-size: 16px; }
+        .col-card p { color: var(--text-gray); font-size: 13px; line-height: 1.8; }
+        .tag { display: inline-block; background: rgba(99, 102, 241, 0.2); color: var(--primary); padding: 3px 10px; border-radius: 12px; font-size: 12px; margin: 2px; }
+        .tag.green { background: rgba(34, 197, 94, 0.2); color: var(--success); }
+        .tag.orange { background: rgba(245, 158, 11, 0.2); color: var(--secondary); }
+        .tag.red { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
+        .loader-tree { background: rgba(15, 15, 26, 0.8); padding: 25px; border-radius: 10px; margin: 20px 0; border: 1px solid var(--border); }
+        .loader-level { display: flex; align-items: center; margin: 12px 0; }
+        .loader-node { background: linear-gradient(135deg, #2a1a4e, #1a1a3e); padding: 14px 20px; border-radius: 8px; border: 2px solid var(--primary); min-width: 180px; }
+        .loader-node.boot { border-color: var(--danger); background: linear-gradient(135deg, #3a1a1a, #2a1a2e); }
+        .loader-node.platform { border-color: var(--warning); background: linear-gradient(135deg, #3a2a1a, #2a2a1e); }
+        .loader-node.app { border-color: var(--success); background: linear-gradient(135deg, #1a3a1a, #1a2a2e); }
+        .loader-node.custom { border-color: var(--purple); background: linear-gradient(135deg, #2a1a3a, #1a1a3e); }
+        .loader-node h6 { color: var(--text-light); font-size: 14px; margin-bottom: 4px; }
+        .loader-node p { color: var(--text-gray); font-size: 11px; }
+        .loader-arrow { color: var(--secondary); margin: 0 15px; font-size: 20px; }
+        .loader-label { color: var(--text-gray); font-size: 12px; margin-left: 10px; }
+        .compare-table td:first-child { font-weight: bold; color: var(--text-light); }
+        
+        /* Mermaid图表样式 */
+        .mermaid-container { background: rgba(15, 15, 26, 0.8); border-radius: 12px; padding: 30px; margin: 25px 0; border: 1px solid var(--border); text-align: center; }
+        .mermaid-title { color: var(--secondary); font-size: 16px; margin-bottom: 15px; font-weight: 600; }
+        .mermaid { display: flex; justify-content: center; }
+        .mermaid svg { max-width: 100%; height: auto; }
+        .mermaid .node rect, .mermaid .node circle, .mermaid .node polygon { fill: var(--bg-card) !important; stroke: var(--primary) !important; }
+        .mermaid .node .label { color: var(--text-light) !important; }
+        .mermaid .edgeLabel { background-color: var(--bg-dark) !important; color: var(--text-gray) !important; }
+        .mermaid .cluster rect { fill: rgba(99, 102, 241, 0.1) !important; stroke: var(--primary) !important; }
+    </style>
+</head>
+<body>
+    <div class="chapter">
+        <h2 class="chapter-title">第十章：类加载器详解</h2>
+        <p class="chapter-desc">类加载器是JVM实现类加载的核心组件，决定了类如何被加载、何时被加载。深入理解双亲委派模型及其破坏场景，掌握自定义类加载器的实现原理。</p>
+
+        <!-- Mermaid: 类加载器层次结构 -->
+        <div class="mermaid-container">
+            <div class="mermaid-title">类加载器层次结构（双亲委派树）</div>
+            <pre class="mermaid">
+graph TD
+    A[Bootstrap ClassLoader<br/>启动类加载器] -->|parent| B[Platform ClassLoader<br/>平台类加载器]
+    B -->|parent| C[Application ClassLoader<br/>应用类加载器]
+    C -->|parent| D[自定义 ClassLoader<br/>用户自定义]
+    
+    A -->|加载| A1[$JAVA_HOME/lib<br/>核心类库]
+    B -->|加载| B1[Java SE模块<br/>javax.*等]
+    C -->|加载| C1[classpath<br/>用户类]
+    D -->|加载| D1[自定义路径<br/>特定类]
+    
+    style A fill:#ef4444,color:#fff
+    style B fill:#f59e0b,color:#fff
+    style C fill:#22c55e,color:#fff
+    style D fill:#a855f7,color:#fff
+            </pre>
+        </div>
+
+        <!-- Mermaid: 双亲委派流程 -->
+        <div class="mermaid-container">
+            <div class="mermaid-title">双亲委派模型工作流程</div>
+            <pre class="mermaid">
+sequenceDiagram
+    participant App as 应用程序
+    participant AppCL as AppClassLoader
+    participant PlatCL as PlatformClassLoader
+    participant BootCL as BootstrapClassLoader
+    participant Meta as 元空间
+    
+    App->>AppCL: loadClass("MyClass")
+    AppCL->>AppCL: findLoadedClass?
+    alt 未加载
+        AppCL->>PlatCL: parent.loadClass()
+        PlatCL->>BootCL: parent.loadClass()
+        BootCL->>BootCL: findBootstrapClass()
+        alt 找不到
+            BootCL-->>PlatCL: null
+            PlatCL->>PlatCL: findClass()
+            alt 找不到
+                PlatCL-->>AppCL: null
+                AppCL->>AppCL: findClass()
+                AppCL->>Meta: 读取.class
+                Meta-->>AppCL: 字节码
+                AppCL->>AppCL: defineClass()
+                AppCL-->>App: Class对象
+            else 找到
+                PlatCL-->>AppCL: Class对象
+                AppCL-->>App: Class对象
+            end
+        else 找到
+            BootCL-->>PlatCL: Class对象
+            PlatCL-->>AppCL: Class对象
+            AppCL-->>App: Class对象
+        end
+    else 已加载
+        AppCL-->>App: 直接返回
+    end
+            </pre>
+        </div>
+
+        <!-- 第一节：类加载器层次 -->
+        <h3 class="section-title">第一节：类加载器的层次结构 <span class="section-title-sub">- 从Bootstrap到自定义</span></h3>
+
+        <div class="card">
+            <h4>类加载器的职责</h4>
+            <ul>
+                <li><strong>唯一标识</strong>：在JVM中，类由"类加载器实例 + 类全限定名"唯一确定。即使相同字节码，由不同加载器加载也会产生不同的Class对象</li>
+                <li><strong>命名空间</strong>：每个类加载器有自己的命名空间，不同命名空间中的类相互隔离，即使全限定名相同</li>
+                <li><strong>可见性规则</strong>：子加载器可以访问父加载器加载的类，但父加载器不能访问子加载器加载的类</li>
+            </ul>
+        </div>
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>类加载器</th>
+                        <th>加载范围</th>
+                        <th>Java中获取</th>
+                        <th>实现类</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="tag red">Bootstrap</span></td>
+                        <td><code>$JAVA_HOME/lib</code> 或 <code>-Xbootclasspath</code> 指定的核心类库（rt.jar、java.base等）</td>
+                        <td><code>String.class.getClassLoader()</code> 返回 <code>null</code></td>
+                        <td>C++实现（sun.misc.Launcher$ExtClassLoader的父级）</td>
+                    </tr>
+                    <tr>
+                        <td><span class="tag orange">Platform</span></td>
+                        <td>JDK 9+的模块系统，加载Java SE平台模块（javax.*、java.sql.*等）</td>
+                        <td><code>ClassLoader.getPlatformClassLoader()</code></td>
+                        <td><code>jdk.internal.loader.ClassLoaders$PlatformClassLoader</code></td>
+                    </tr>
+                    <tr>
+                        <td><span class="tag green">Application</span></td>
+                        <td>用户classpath下的类，包括应用的jar包和class文件</td>
+                        <td><code>ClassLoader.getSystemClassLoader()</code></td>
+                        <td><code>jdk.internal.loader.ClassLoaders$AppClassLoader</code></td>
+                    </tr>
+                    <tr>
+                        <td><span class="tag">自定义</span></td>
+                        <td>用户自定义加载逻辑，通常加载特定路径或特定来源的类</td>
+                        <td><code>new MyClassLoader()</code></td>
+                        <td>继承<code>java.lang.ClassLoader</code></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="highlight-box warning">
+            <h4>⚠️ JDK 8 vs JDK 9+ 的重要变化</h4>
+            <p><strong>JDK 8及之前</strong>：</p>
+            <p>• Bootstrap → Extension (ExtClassLoader) → Application (AppClassLoader)</p>
+            <p>• 扩展类加载器加载 <code>$JAVA_HOME/lib/ext</code> 目录</p>
+            <br/>
+            <p><strong>JDK 9+（模块化后）</strong>：</p>
+            <p>• Bootstrap → Platform (PlatformClassLoader) → Application (AppClassLoader)</p>
+            <p>• Extension ClassLoader 被废弃，由 Platform ClassLoader 替代</p>
+            <p>• <code>java.ext.dirs</code> 系统属性不再被支持</p>
+        </div>
+
+        <!-- 第二节：双亲委派模型 -->
+        <h3 class="section-title">第二节：双亲委派模型 <span class="section-title-sub">- Java类加载的核心机制</span></h3>
+
+        <div class="code-block">
+            <code>
+<span class="comment">// ClassLoader.loadClass() 核心源码逻辑</span>
+<span class="keyword">protected</span> Class&lt;?&gt; <span class="type">loadClass</span>(String name, <span class="keyword">boolean</span> resolve) {
+    <span class="comment">// 1. 检查该类是否已被当前加载器加载</span>
+    Class&lt;?&gt; c = findLoadedClass(name);
+    <span class="keyword">if</span> (c == <span class="keyword">null</span>) {
+        <span class="keyword">try</span> {
+            <span class="comment">// 2. 有父加载器，委派给父加载器</span>
+            <span class="keyword">if</span> (parent != <span class="keyword">null</span>) {
+                c = parent.loadClass(name, <span class="keyword">false</span>);
+            } <span class="keyword">else</span> {
+                <span class="comment">// 3. 没有父加载器，使用Bootstrap</span>
+                c = findBootstrapClassOrNull(name);
+            }
+        } <span class="keyword">catch</span> (ClassNotFoundException e) {
+            <span class="comment">// 父加载器找不到，抛出异常</span>
+        }
+        <span class="keyword">if</span> (c == <span class="keyword">null</span>) {
+            <span class="comment">// 4. 父加载器加载失败，自己尝试加载</span>
+            c = findClass(name);
+        }
+    }
+    <span class="keyword">if</span> (resolve) {
+        resolveClass(c);
+    }
+    <span class="keyword">return</span> c;
+}
+            </code>
+        </div>
+
+        <div class="highlight-box success">
+            <h4>✅ 双亲委派模型的三大优势</h4>
+            <p><strong>1. 避免类的重复加载</strong></p>
+            <p>• 当父加载器已经加载了某个类时，子加载器不会再次加载，确保类在JVM中只有一个Class对象</p>
+            <p>• 节省内存，避免同一类的多个版本共存导致的混乱</p>
+            <br/>
+            <p><strong>2. 保证Java核心API不被篡改</strong></p>
+            <p>• 核心类库（如java.lang.String、java.lang.Object）由Bootstrap加载，用户自定义的ClassLoader无法加载这些类</p>
+            <p>• 即使恶意用户自定义了同名类，也会被委派给Bootstrap加载，确保使用的是官方版本</p>
+            <br/>
+            <p><strong>3. 类加载的信任链</strong></p>
+            <p>• 信任级别：Bootstrap > Platform > Application > 自定义</p>
+            <p>• 核心类库具有最高信任级别，安全敏感的操作只允许核心类执行</p>
+        </div>
+
+        <!-- 第三节：破坏双亲委派 -->
+        <h3 class="section-title">第三节：破坏双亲委派的场景 <span class="section-title-sub">- 何时需要打破规则</span></h3>
+
+        <!-- Mermaid: SPI机制 -->
+        <div class="mermaid-container">
+            <div class="mermaid-title">SPI机制中的线程上下文类加载器(TCCL)</div>
+            <pre class="mermaid">
+sequenceDiagram
+    participant App as 应用程序
+    participant DM as DriverManager<br/>(Bootstrap加载)
+    participant TCCL as TCCL<br/>(AppClassLoader)
+    participant MySQL as MySQL Driver<br/>(AppClassLoader加载)
+    
+    App->>DM: Class.forName("com.mysql.cj.jdbc.Driver")
+    DM->>DM: 静态代码块执行
+    DM->>DM: loadInitialDrivers()
+    Note over DM: Bootstrap无法直接加载<br/>用户classpath下的驱动
+    DM->>TCCL: Thread.currentThread()<br/>.getContextClassLoader()
+    TCCL->>MySQL: loadClass()
+    MySQL-->>TCCL: Driver类
+    TCCL-->>DM: 驱动实例
+    DM->>DM: 注册驱动
+    DM-->>App: 初始化完成
+            </pre>
+        </div>
+
+        <!-- Mermaid: Tomcat类加载器 -->
+        <div class="mermaid-container">
+            <div class="mermaid-title">Tomcat类加载器架构</div>
+            <pre class="mermaid">
+graph TD
+    A[Bootstrap] --> B[Common]
+    B --> C[Catalina<br/>服务器类]
+    B --> D[Shared<br/>共享类]
+    D --> E[WebApp1]
+    D --> F[WebApp2]
+    D --> G[WebApp3]
+    
+    E -.->|优先自己加载| E1[WEB-INF/classes]
+    F -.->|优先自己加载| F1[WEB-INF/classes]
+    
+    style A fill:#ef4444,color:#fff
+    style B fill:#f59e0b,color:#fff
+    style C fill:#3b82f6,color:#fff
+    style D fill:#22c55e,color:#fff
+    style E fill:#a855f7,color:#fff
+    style F fill:#a855f7,color:#fff
+    style G fill:#a855f7,color:#fff
+            </pre>
+        </div>
+
+        <div class="highlight-box purple">
+            <h4>🔑 破坏场景一：SPI（Service Provider Interface）机制</h4>
+            <p><strong>问题</strong>：JDBC的<code>java.sql.Driver</code>接口由Bootstrap加载，但具体驱动（如MySQL的<code>com.mysql.cj.jdbc.Driver</code>）由Application ClassLoader加载。按照双亲委派，Bootstrap无法加载Application的类。</p>
+            <p><strong>解决方案</strong>：引入<strong>线程上下文类加载器（Thread Context ClassLoader, TCCL）</strong></p>
+            <p><strong>原理</strong>：TCCL 是从上向下加载，与双亲委派方向相反，因此被称为"逆向委派"。</p>
+        </div>
+
+        <div class="highlight-box warning">
+            <h4>⚠️ 破坏场景二：Tomcat的类加载器架构</h4>
+            <p>Tomcat的类加载器层次（与传统双亲委派不同）：</p>
+            <p>• 优先加载：WebApp ClassLoader 先尝试自己加载，找不到才委托给父加载器（与双亲委派相反）</p>
+            <p>• 隔离：每个WebApp有独立的ClassLoader，不同应用的同名类相互隔离</p>
+            <p>• 共享：Shared ClassLoader 加载多个WebApp共享的类（如Spring、Hibernate）</p>
+        </div>
+
+        <!-- 第四节：线程上下文类加载器 -->
+        <h3 class="section-title">第四节：线程上下文类加载器 (TCCL) <span class="section-title-sub">- 逆向加载的桥梁</span></h3>
+
+        <!-- Mermaid: TCCL传递 -->
+        <div class="mermaid-container">
+            <div class="mermaid-title">TCCL在线程间的传递</div>
+            <pre class="mermaid">
+sequenceDiagram
+    participant Main as 主线程
+    participant TCCL as TCCL
+    participant Pool as 线程池
+    participant Worker as 工作线程
+    
+    Main->>TCCL: 设置TCCL=AppClassLoader
+    Main->>Pool: 提交任务
+    Pool->>Worker: 创建/复用线程
+    Note over Worker: TCCL可能被继承<br/>也可能丢失
+    Worker->>TCCL: getContextClassLoader()
+    alt TCCL正确
+        TCCL-->>Worker: AppClassLoader
+    else TCCL丢失
+        TCCL-->>Worker: 系统ClassLoader
+        Note over Worker: 可能导致<br/>ClassNotFoundException
+    end
+            </pre>
+        </div>
+
+        <div class="highlight-box">
+            <h4>💡 TCCL 的注意事项</h4>
+            <p><strong>1. 线程池环境</strong>：在线程池中，新线程的TCCL可能继承自创建线程，需要注意上下文切换</p>
+            <p><strong>2. Web环境</strong>：Web容器会为每个请求设置正确的TCCL（对应应用的ClassLoader），请求结束后恢复</p>
+            <p><strong>3. 异步编程</strong>：使用CompletableFuture等异步API时，TCCL可能丢失，需要手动传递</p>
+            <p><strong>4. 最佳实践</strong>：在异步/跨线程场景中，使用<code>try-finally</code>确保TCCL被正确恢复</p>
+        </div>
+
+        <!-- 第五节：自定义类加载器 -->
+        <h3 class="section-title">第五节：自定义类加载器 <span class="section-title-sub">- 实现原理与最佳实践</span></h3>
+
+        <!-- Mermaid: 自定义ClassLoader流程 -->
+        <div class="mermaid-container">
+            <div class="mermaid-title">自定义ClassLoader实现流程</div>
+            <pre class="mermaid">
+graph LR
+    A[调用loadClass] --> B{是否已加载?}
+    B -->|是| C[返回缓存Class]
+    B -->|否| D{有父加载器?}
+    D -->|是| E[委派给parent]
+    D -->|否| F[委托Bootstrap]
+    E --> G{父加载器找到?}
+    G -->|是| H[返回父加载器结果]
+    G -->|否| I[调用findClass]
+    F --> G
+    I --> J[读取字节码]
+    J --> K[defineClass]
+    K --> L[返回Class对象]
+    
+    style A fill:#6366f1,color:#fff
+    style C fill:#22c55e,color:#fff
+    style H fill:#22c55e,color:#fff
+    style L fill:#22c55e,color:#fff
+            </pre>
+        </div>
+
+        <div class="code-block">
+            <code>
+<span class="keyword">public class</span> <span class="type">MyClassLoader</span> <span class="keyword">extends</span> <span class="type">ClassLoader</span> {
+    <span class="keyword">private</span> String classPath;
+    
+    <span class="keyword">public</span> <span class="type">MyClassLoader</span>(String classPath, ClassLoader parent) {
+        <span class="keyword">super</span>(parent); <span class="comment">// 指定父加载器</span>
+        <span class="keyword">this</span>.classPath = classPath;
+    }
+    
+    <span class="annotation">@Override</span>
+    <span class="keyword">protected</span> Class&lt;?&gt; <span class="type">findClass</span>(String name) 
+        <span class="keyword">throws</span> ClassNotFoundException {
+        <span class="comment">// 1. 将类名转换为文件路径</span>
+        String path = classPath + <span class="string">"/"</span> + 
+            name.replace(<span class="string">'.'</span>, <span class="string">'/'</span>) + <span class="string">".class"</span>;
+        
+        <span class="comment">// 2. 读取字节码</span>
+        <span class="keyword">byte</span>[] classBytes = loadClassBytes(path);
+        
+        <span class="comment">// 3. 调用defineClass转换为Class对象</span>
+        <span class="keyword">return</span> defineClass(name, classBytes, <span class="string">0</span>, classBytes.length);
+    }
+}
+            </code>
+        </div>
+
+        <!-- 第六节：类加载器隔离与冲突排查 -->
+        <h3 class="section-title">第六节：类加载器隔离与冲突排查 <span class="section-title-sub">- 实战指南</span></h3>
+
+        <!-- Mermaid: 类加载器泄漏排查 -->
+        <div class="mermaid-container">
+            <div class="mermaid-title">ClassLoader泄漏排查流程</div>
+            <pre class="mermaid">
+graph TD
+    A[Metaspace OOM] --> B{是否频繁GC?}
+    B -->|是| C[检查类加载频率]
+    B -->|否| D[检查Metaspace大小]
+    C --> E[分析ClassLoader实例数]
+    E --> F{数量异常增长?}
+    F -->|是| G[分析GC Root引用链]
+    F -->|否| H[检查类卸载情况]
+    G --> I[查找持有ClassLoader的对象]
+    I --> J[常见泄漏源]
+    J --> J1[ThreadLocal]
+    J --> J2[静态缓存]
+    J --> J3[监听器/回调]
+    J --> J4[线程引用]
+    
+    style A fill:#ef4444,color:#fff
+    style G fill:#f59e0b,color:#fff
+    style J fill:#6366f1,color:#fff
+            </pre>
+        </div>
+
+        <div class="highlight-box purple">
+            <h4>🔑 实用排查命令</h4>
+            <pre><code># 查看类加载统计信息
+jcmd &lt;pid&gt; VM.classloader_stats
+
+# 查看类的加载器
+jcmd &lt;pid&gt; GC.class_stats | grep MyClass
+
+# 打印类加载详情（启动参数）
+-verbose:class
+
+# 查看Metaspace使用情况
+jcmd &lt;pid&gt; VM.metaspace
+
+# 分析ClassLoader泄漏（MAT工具）
+jmap -dump:live,format=b,file=heap.hprof &lt;pid&gt;</code></pre>
+        </div>
+
+        <div class="highlight-box success">
+            <h4>✅ 类加载器设计最佳实践</h4>
+            <p><strong>1. 优先使用双亲委派</strong>：除非有特殊需求，不要破坏双亲委派模型</p>
+            <p><strong>2. 明确加载范围</strong>：自定义ClassLoader应明确自己的加载范围，避免越权加载</p>
+            <p><strong>3. 及时释放引用</strong>：热部署场景下，确保旧ClassLoader能被GC回收</p>
+            <p><strong>4. 使用线程上下文类加载器</strong>：在SPI场景中正确使用TCCL</p>
+            <p><strong>5. 记录加载日志</strong>：在findClass中记录日志，便于排查问题</p>
+            <p><strong>6. 避免静态引用</strong>：ClassLoader相关的代码避免使用静态变量，防止泄漏</p>
+        </div>
+    </div>
+
+    <script>
+        mermaid.initialize({ 
+            startOnLoad: true,
+            theme: 'dark',
+            themeVariables: {
+                primaryColor: '#6366f1',
+                primaryTextColor: '#f8f8f8',
+                primaryBorderColor: '#6366f1',
+                lineColor: '#f59e0b',
+                secondaryColor: '#27273a',
+                tertiaryColor: '#1e1e2e'
+            }
+        });
+    </script>
+</body>
+</html>

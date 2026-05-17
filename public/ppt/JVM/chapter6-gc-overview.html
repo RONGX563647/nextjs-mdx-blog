@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第六章：垃圾回收概述 - 深入底层原理</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary: #6366f1; --secondary: #f59e0b; --bg-dark: #1e1e2e;
+            --bg-card: #27273a; --text-light: #f8f8f8; --text-gray: #a1a1aa;
+            --border: #3f3f5a; --success: #22c55e; --danger: #ef4444; --info: #3b82f6;
+        }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg-dark); color: var(--text-light); padding: 40px; line-height: 1.8; }
+        .chapter { margin-bottom: 60px; }
+        .chapter-title { font-size: 32px; margin-bottom: 15px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .chapter-desc { color: var(--text-gray); font-size: 16px; margin-bottom: 30px; line-height: 1.8; }
+        .card { background: var(--bg-card); border-radius: 12px; padding: 25px; margin-bottom: 20px; border: 1px solid var(--border); }
+        .card h4 { font-size: 18px; margin-bottom: 15px; color: var(--info); }
+        .card ul { list-style: none; padding-left: 0; }
+        .card ul li { padding: 8px 0; padding-left: 20px; position: relative; color: var(--text-gray); }
+        .card ul li::before { content: '→'; position: absolute; left: 0; color: var(--primary); }
+        .animation-container { background: #0f0f1a; border-radius: 12px; padding: 30px; margin: 25px 0; border: 1px solid var(--border); overflow: hidden; }
+        .animation-title { text-align: center; font-size: 14px; color: var(--text-gray); margin-bottom: 20px; }
+        .gc-animation { position: relative; height: 250px; background: #0a0a15; border-radius: 10px; overflow: hidden; }
+        .gc-object { position: absolute; width: 30px; height: 30px; border-radius: 5px; animation: gcCycle 4s ease-in-out infinite; }
+        .gc-object.alive { background: var(--success); box-shadow: 0 0 10px rgba(34, 197, 94, 0.5); }
+        .gc-object.dead { background: var(--danger); box-shadow: 0 0 10px rgba(239, 68, 68, 0.5); animation: die 4s ease-in-out infinite; }
+        .gc-object:nth-child(1) { left: 10%; top: 20%; } .gc-object:nth-child(2) { left: 25%; top: 40%; animation-delay: 0.3s; }
+        .gc-object:nth-child(3) { left: 40%; top: 60%; animation-delay: 0.6s; } .gc-object:nth-child(4) { left: 55%; top: 30%; animation-delay: 0.9s; }
+        .gc-object:nth-child(5) { left: 70%; top: 50%; animation-delay: 1.2s; } .gc-object:nth-child(6) { left: 85%; top: 70%; animation-delay: 1.5s; }
+        @keyframes gcCycle { 0%, 40% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(1.2); } 60%, 100% { opacity: 1; transform: scale(1); } }
+        @keyframes die { 0%, 40% { opacity: 1; } 50% { opacity: 0.3; transform: scale(0.5); } 60%, 100% { opacity: 0; transform: scale(0); } }
+        .gc-label { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); background: rgba(0, 0, 0, 0.8); padding: 8px 15px; border-radius: 20px; font-size: 12px; animation: labelPulse 4s ease-in-out infinite; }
+        @keyframes labelPulse { 0%, 40% { background: rgba(34, 197, 94, 0.3); } 50% { background: rgba(239, 68, 68, 0.5); } 60%, 100% { background: rgba(34, 197, 94, 0.3); } }
+        .highlight-box { background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(34, 211, 238, 0.1) 100%); border-left: 4px solid var(--success); padding: 20px; border-radius: 0 10px 10px 0; margin: 20px 0; }
+        .highlight-box h4 { margin-bottom: 10px; color: var(--success); }
+        .code-block { background: #0d0d1a; padding: 15px; border-radius: 8px; margin: 15px 0; overflow-x: auto; }
+        .code-block code { font-family: 'Courier New', monospace; font-size: 13px; color: #e0e0e0; }
+        .table-wrapper { overflow-x: auto; margin: 20px 0; }
+        table { width: 100%; border-collapse: collapse; background: var(--bg-card); border-radius: 8px; overflow: hidden; }
+        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid var(--border); }
+        th { background: rgba(99, 102, 241, 0.2); color: var(--info); font-weight: 600; }
+        td { color: var(--text-gray); }
+        .ref-visual { display: flex; align-items: center; justify-content: center; gap: 30px; padding: 20px; flex-wrap: wrap; }
+        .ref-type { background: linear-gradient(135deg, #1a1a3e 0%, #2a1a4e 100%); padding: 20px; border-radius: 10px; text-align: center; min-width: 120px; }
+        .ref-type .icon { font-size: 32px; margin-bottom: 10px; }
+        .ref-type h6 { color: var(--secondary); margin-bottom: 8px; }
+        .ref-type p { font-size: 12px; color: var(--text-gray); }
+        .arrow-flow { display: flex; align-items: center; justify-content: center; margin: 20px 0; flex-wrap: wrap; }
+        .flow-node { background: rgba(99, 102, 241, 0.2); padding: 12px 20px; border-radius: 8px; margin: 0 10px; text-align: center; }
+        .flow-arrow { color: var(--secondary); font-size: 20px; }
+        
+        /* GC Roots树形可视化 */
+        .gc-roots-tree { background: linear-gradient(135deg, #0f0f1a 0%, #1a1a3e 100%); border-radius: 10px; padding: 25px; margin: 20px 0; }
+        .tree-root { display: flex; flex-direction: column; align-items: center; }
+        .tree-node { background: linear-gradient(135deg, rgba(99, 102, 241, 0.3), rgba(118, 75, 162, 0.3)); padding: 10px 15px; border-radius: 8px; margin: 5px; border: 2px solid var(--primary); text-align: center; min-width: 120px; }
+        .tree-node.root { background: linear-gradient(135deg, rgba(245, 158, 11, 0.3), rgba(239, 68, 68, 0.3)); border-color: var(--secondary); }
+        .tree-node.alive { background: rgba(34, 197, 94, 0.2); border-color: var(--success); }
+        .tree-node.dead { background: rgba(239, 68, 68, 0.2); border-color: var(--danger); opacity: 0.6; }
+        .tree-branch { color: var(--text-gray); font-size: 20px; margin: 5px 0; }
+        .tree-level { display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; margin: 10px 0; }
+        .tree-label { font-size: 11px; color: var(--text-gray); margin-top: 5px; }
+        
+        /* 引用类型层级图 */
+        .ref-hierarchy { background: linear-gradient(135deg, #0f0f1a 0%, #1a1a3e 100%); border-radius: 10px; padding: 25px; margin: 20px 0; }
+        .ref-pyramid { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+        .ref-level { padding: 12px 30px; border-radius: 8px; text-align: center; transition: all 0.3s; cursor: pointer; }
+        .ref-level:hover { transform: scale(1.05); }
+        .ref-level.strong { background: linear-gradient(135deg, #ef4444, #dc2626); min-width: 300px; }
+        .ref-level.soft { background: linear-gradient(135deg, #f59e0b, #d97706); min-width: 250px; }
+        .ref-level.weak { background: linear-gradient(135deg, #3b82f6, #2563eb); min-width: 200px; }
+        .ref-level.phantom { background: linear-gradient(135deg, #6366f1, #4f46e5); min-width: 150px; }
+        .ref-level h6 { font-size: 14px; margin-bottom: 4px; }
+        .ref-level p { font-size: 11px; opacity: 0.9; }
+        .ref-arrow { color: var(--secondary); font-size: 20px; }
+        
+        /* 循环引用示意图 */
+        .circular-ref { background: #0f0f1a; border-radius: 10px; padding: 25px; margin: 20px 0; position: relative; height: 180px; }
+        .circular-obj { position: absolute; width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+        .circular-obj.obj-a { background: linear-gradient(135deg, #6366f1, #8b5cf6); left: 20%; top: 20%; }
+        .circular-obj.obj-b { background: linear-gradient(135deg, #f59e0b, #ef4444); right: 20%; top: 20%; }
+        .circular-ref .ref-arrow-vis { position: absolute; color: var(--success); font-size: 24px; font-weight: bold; }
+        .circular-ref .ref-arrow-vis.arrow1 { left: 35%; top: 25%; transform: rotate(15deg); }
+        .circular-ref .ref-arrow-vis.arrow2 { right: 35%; top: 40%; transform: rotate(165deg); }
+        .circular-ref .ref-label { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); background: rgba(239, 68, 68, 0.3); padding: 8px 15px; border-radius: 20px; font-size: 12px; }
+        
+        /* 两次标记流程图 */
+        .marking-process { background: linear-gradient(135deg, #0f0f1a 0%, #1a1a3e 100%); border-radius: 10px; padding: 25px; margin: 20px 0; }
+        .mark-step { display: flex; align-items: center; gap: 15px; margin: 15px 0; padding: 15px; background: rgba(99, 102, 241, 0.1); border-radius: 8px; }
+        .mark-step-num { background: var(--primary); color: white; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 18px; }
+        .mark-step-content h6 { color: var(--info); margin-bottom: 5px; }
+        .mark-step-content p { font-size: 13px; color: var(--text-gray); }
+        .mark-arrow { text-align: center; font-size: 24px; color: var(--secondary); margin: 10px 0; }
+        
+        /* Mermaid图容器 */
+        .mermaid-container { background: #fff; border-radius: 10px; padding: 20px; margin: 20px 0; }
+        .mermaid-title { text-align: center; color: var(--text-gray); margin-bottom: 15px; font-size: 14px; }
+        
+        /* 对象头结构图 */
+        .object-header { background: #0f0f1a; border-radius: 10px; padding: 20px; margin: 20px 0; }
+        .header-bits { display: flex; gap: 2px; margin: 15px 0; }
+        .bit-group { flex: 1; text-align: center; padding: 10px; border-radius: 5px; }
+        .bit-group.mark { background: rgba(34, 197, 94, 0.3); }
+        .bit-group.age { background: rgba(59, 130, 246, 0.3); }
+        .bit-group.lock { background: rgba(239, 68, 68, 0.3); }
+        .bit-group.hash { background: rgba(245, 158, 11, 0.3); }
+        .bit-label { font-size: 12px; font-weight: bold; margin-bottom: 5px; }
+        .bit-value { font-size: 11px; color: var(--text-gray); font-family: 'Courier New', monospace; }
+    </style>
+</head>
+<body>
+    <div class="chapter">
+        <h2 class="chapter-title">第六章：垃圾回收概述 - 深入底层原理</h2>
+        <p class="chapter-desc">垃圾回收（GC）是JVM自动管理内存的机制。本章深入探讨GC的底层原理、对象判定算法和引用类型实现。</p>
+
+        <!-- GC概述 -->
+        <div class="card">
+            <h4>6.1 GC的核心问题</h4>
+            <ul>
+                <li><strong>哪些内存需要回收？</strong> 堆、方法区（元空间）、直接内存</li>
+                <li><strong>什么时候回收？</strong> 内存不足、Young区满、显式调用System.gc()</li>
+                <li><strong>如何回收？</strong> 标记-清除、标记-复制、标记-整理算法</li>
+                <li><strong>如何判断对象存活？</strong> 引用计数法、可达性分析法</li>
+            </ul>
+            
+            <!-- GC核心问题Mermaid图 -->
+            <div class="mermaid-container">
+                <div class="mermaid-title">📊 GC核心问题思维导图</div>
+                <div class="mermaid">
+graph TD
+    A[垃圾回收 GC] --> B[哪些内存?]
+    A --> C[何时回收?]
+    A --> D[如何判断存活?]
+    A --> E[如何回收?]
+    
+    B --> B1[堆内存 Heap]
+    B --> B2[方法区 Metaspace]
+    B --> B3[直接内存 Direct]
+    
+    C --> C1[Young GC: Eden满]
+    C --> C2[Old GC: 老年代满]
+    C --> C3[Full GC: 空间不足]
+    
+    D --> D1[引用计数法]
+    D --> D2[可达性分析]
+    D2 --> D21[GC Roots]
+    D2 --> D22[引用链]
+    
+    E --> E1[标记-清除]
+    E --> E2[标记-复制]
+    E --> E3[标记-整理]
+    
+    classDef primary fill:#6366f1,stroke:#4f46e5,color:#fff
+    classDef secondary fill:#f59e0b,stroke:#d97706,color:#fff
+    classDef success fill:#22c55e,stroke:#16a34a,color:#fff
+    classDef danger fill:#ef4444,stroke:#dc2626,color:#fff
+    class A primary
+    class B,C,D,E secondary
+    class B1,B2,B3,D21,D22 success
+    class C1,C2,C3 danger
+                </div>
+            </div>
+        </div>
+
+        <!-- 引用计数法 -->
+        <div class="card">
+            <h4>6.2 引用计数法（Reference Counting）</h4>
+            <ul>
+                <li><strong>实现原理</strong>：对象头中维护reference_count字段，引用+1，失效-1</li>
+                <li><strong>底层数据结构</strong>：对象头中4字节计数器，支持64位引用计数</li>
+                <li><strong>优点</strong>：实时回收、无STW、实现简单、对象死亡时立即释放</li>
+                <li><strong>致命缺陷</strong>：循环引用导致内存泄漏</li>
+                <li><strong>线程安全开销</strong>：增减计数器需要原子操作（CAS或锁）</li>
+                <li><strong>Python采用</strong>：Python的垃圾回收使用引用计数+标记清除处理循环引用</li>
+            </ul>
+            
+            <!-- 引用计数法可视化 -->
+            <div class="animation-container">
+                <div class="animation-title">引用计数法工作原理</div>
+                <div class="gc-roots-tree">
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <div class="tree-node root" style="display: inline-block;">
+                            <div style="font-weight: bold;">引用计数器</div>
+                            <div class="tree-label">对象头 4字节</div>
+                        </div>
+                    </div>
+                    <div class="header-bits">
+                        <div class="bit-group mark">
+                            <div class="bit-label">Mark Bits</div>
+                            <div class="bit-value">2 bits</div>
+                        </div>
+                        <div class="bit-group age">
+                            <div class="bit-label">Age</div>
+                            <div class="bit-value">4 bits</div>
+                        </div>
+                        <div class="bit-group lock">
+                            <div class="bit-label">Lock</div>
+                            <div class="bit-value">2 bits</div>
+                        </div>
+                        <div class="bit-group hash">
+                            <div class="bit-label">Hash</div>
+                            <div class="bit-value">24 bits</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 循环引用问题示意图 -->
+            <div class="animation-container">
+                <div class="animation-title">⚠️ 循环引用导致内存泄漏</div>
+                <div class="circular-ref">
+                    <div class="circular-obj obj-a">
+                        <div>
+                            <div>Object A</div>
+                            <div class="tree-label">count=1</div>
+                        </div>
+                    </div>
+                    <div class="circular-obj obj-b">
+                        <div>
+                            <div>Object B</div>
+                            <div class="tree-label">count=1</div>
+                        </div>
+                    </div>
+                    <div class="ref-arrow-vis arrow1">→</div>
+                    <div class="ref-arrow-vis arrow2">→</div>
+                    <div class="ref-label">⚠️ 外部引用断开后，A和B的count仍为1，无法回收！</div>
+                </div>
+            </div>
+            
+            <!-- 引用计数法流程图 -->
+            <div class="mermaid-container">
+                <div class="mermaid-title">📊 引用计数法工作流程</div>
+                <div class="mermaid">
+graph TD
+    A[创建对象] --> B[reference_count = 1]
+    B --> C[被其他对象引用]
+    C --> D[reference_count++]
+    D --> E{引用失效?}
+    E -->|是| F[reference_count--]
+    F --> G{count == 0?}
+    G -->|是| H[立即回收对象]
+    G -->|否| I[对象继续存活]
+    E -->|否| I
+    
+    H --> J[递归检查引用对象]
+    J --> K[释放内存]
+    
+    classDef primary fill:#6366f1,stroke:#4f46e5,color:#fff
+    classDef success fill:#22c55e,stroke:#16a34a,color:#fff
+    classDef danger fill:#ef4444,stroke:#dc2626,color:#fff
+    classDef warning fill:#f59e0b,stroke:#d97706,color:#fff
+    class A,B,C primary
+    class H,J,K danger
+    class G,I warning
+    class E,F success
+                </div>
+            </div>
+            
+            <div class="code-block">
+                <code>
+// 引用计数法伪代码<br>
+class Object {<br>
+&nbsp;&nbsp;int reference_count = 1;  // 对象头中的引用计数器<br>
+&nbsp;&nbsp;void* data;<br>
+};<br><br>
+void add_reference(Object* obj) {<br>
+&nbsp;&nbsp;atomic_fetch_add(&obj->reference_count, 1);  // 原子操作<br>
+}<br><br>
+void release_reference(Object* obj) {<br>
+&nbsp;&nbsp;if (atomic_fetch_sub(&obj->reference_count, 1) == 1) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;delete obj;  // 引用为0，立即释放<br>
+&nbsp;&nbsp;}<br>
+}<br><br>
+// 循环引用问题<br>
+A.next = B;  // A引用B，B.ref_count = 1<br>
+B.next = A;  // B引用A，A.ref_count = 1<br>
+// 外部引用断开后，A和B的ref_count仍为1，无法回收！
+                </code>
+            </div>
+        </div>
+
+        <!-- 可达性分析法 -->
+        <div class="card">
+            <h4>6.3 可达性分析法（Reachability Analysis）</h4>
+            <ul>
+                <li><strong>核心思想</strong>：从GC Roots开始向下搜索，形成引用链（Reference Chain）</li>
+                <li><strong>数据结构</strong>：图论中的有向图，节点=对象，边=引用关系</li>
+                <li><strong>算法复杂度</strong>：O(V+E)，V=对象数，E=引用数</li>
+                <li><strong>搜索算法</strong>：深度优先搜索（DFS）或广度优先搜索（BFS）</li>
+                <li><strong>现代JVM实现</strong>：使用位图（Bitmap）标记对象状态，避免修改对象头</li>
+                <li><strong>三色标记法基础</strong>：为后续并发GC提供理论基础</li>
+            </ul>
+            
+            <!-- GC Roots树形可视化 -->
+            <div class="animation-container">
+                <div class="animation-title">GC Roots引用链可视化</div>
+                <div class="gc-roots-tree">
+                    <div class="tree-root">
+                        <div class="tree-node root">
+                            <div>🌳 GC Roots</div>
+                            <div class="tree-label">线程栈/静态变量</div>
+                        </div>
+                        <div class="tree-branch">↓</div>
+                        <div class="tree-level">
+                            <div class="tree-node alive">
+                                <div>对象 A</div>
+                                <div class="tree-label">存活 ✓</div>
+                            </div>
+                            <div class="tree-node alive">
+                                <div>对象 B</div>
+                                <div class="tree-label">存活 ✓</div>
+                            </div>
+                        </div>
+                        <div class="tree-branch">↓</div>
+                        <div class="tree-level">
+                            <div class="tree-node alive">
+                                <div>对象 C</div>
+                                <div class="tree-label">存活 ✓</div>
+                            </div>
+                            <div class="tree-node dead">
+                                <div>对象 D</div>
+                                <div class="tree-label">不可达 ✗</div>
+                            </div>
+                            <div class="tree-node dead">
+                                <div>对象 E</div>
+                                <div class="tree-label">不可达 ✗</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 可达性分析流程图 -->
+            <div class="mermaid-container">
+                <div class="mermaid-title">📊 可达性分析算法流程</div>
+                <div class="mermaid">
+graph TD
+    A[开始GC] --> B[标记所有对象为白色]
+    B --> C[从GC Roots开始扫描]
+    C --> D{对象是否被引用?}
+    D -->|是| E[标记为黑色-存活]
+    D -->|否| F[保持白色-可回收]
+    E --> G[递归扫描子引用]
+    G --> C
+    F --> H[加入回收列表]
+    H --> I{还有未扫描对象?}
+    I -->|是| C
+    I -->|否| J[回收所有白色对象]
+    J --> K[GC完成]
+    
+    classDef primary fill:#6366f1,stroke:#4f46e5,color:#fff
+    classDef success fill:#22c55e,stroke:#16a34a,color:#fff
+    classDef danger fill:#ef4444,stroke:#dc2626,color:#fff
+    classDef warning fill:#f59e0b,stroke:#d97706,color:#fff
+    class A,B,C primary
+    class E,G,K success
+    class F,H,J danger
+    class D,I warning
+                </div>
+            </div>
+            
+            <div class="arrow-flow">
+                <div class="flow-node" style="background: rgba(99, 102, 241, 0.3);">🌳 GC Roots</div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-node" style="background: rgba(34, 197, 94, 0.2);">对象A</div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-node" style="background: rgba(34, 197, 94, 0.2);">对象B</div>
+                <div class="flow-arrow" style="margin-left: 20px; transform: rotate(90deg);">→</div>
+                <div style="margin-left: 20px;">
+                    <div class="flow-node" style="background: rgba(239, 68, 68, 0.2);">对象D（不可达）</div>
+                    <div class="flow-node" style="background: rgba(239, 68, 68, 0.2); margin-top: 5px;">对象E（不可达）</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- GC Roots详解 -->
+        <div class="card">
+            <h4>6.4 GC Roots详细类型</h4>
+            
+            <!-- GC Roots类型Mermaid图 -->
+            <div class="mermaid-container">
+                <div class="mermaid-title">📊 GC Roots类型全景图</div>
+                <div class="mermaid">
+graph LR
+    A[GC Roots] --> B[虚拟机栈]
+    A --> C[方法区]
+    A --> D[JNI引用]
+    A --> E[同步锁]
+    A --> F[JVM内部]
+    A --> G[跨代引用]
+    
+    B --> B1[局部变量]
+    B --> B2[方法参数]
+    B --> B3[临时变量]
+    
+    C --> C1[static字段]
+    C --> C2[final常量]
+    
+    D --> D1[Global Ref]
+    D --> D2[Local Ref]
+    
+    E --> E1[ObjectMonitor]
+    E --> E2[synchronized]
+    
+    F --> F1[系统类加载器]
+    F --> F2[异常对象]
+    
+    G --> G1[Remembered Set]
+    G --> G2[Card Table]
+    
+    classDef root fill:#f59e0b,stroke:#d97706,color:#fff
+    classDef type1 fill:#6366f1,stroke:#4f46e5,color:#fff
+    classDef type2 fill:#22c55e,stroke:#16a34a,color:#fff
+    class A root
+    class B,C,D,E,F,G type1
+    class B1,B2,B3,C1,C2,D1,D2,E1,E2,F1,F2,G1,G2 type2
+                </div>
+            </div>
+            
+            <div class="table-wrapper">
+                <table>
+                    <tr>
+                        <th>GC Roots类型</th>
+                        <th>具体说明</th>
+                        <th>底层存储位置</th>
+                    </tr>
+                    <tr>
+                        <td>虚拟机栈局部变量</td>
+                        <td>方法参数、局部变量、临时变量</td>
+                        <td>Java栈帧（Stack Frame）</td>
+                    </tr>
+                    <tr>
+                        <td>方法区静态属性</td>
+                        <td>类的static字段引用</td>
+                        <td>Class对象常量池</td>
+                    </tr>
+                    <tr>
+                        <td>方法区常量</td>
+                        <td>final修饰的常量引用</td>
+                        <td>运行时常量池</td>
+                    </tr>
+                    <tr>
+                        <td>JNI本地方法引用</td>
+                        <td>Native方法中的全局引用</td>
+                        <td>JNI Global Reference Table</td>
+                    </tr>
+                    <tr>
+                        <td>同步锁对象</td>
+                        <td>synchronized持有的监视器锁</td>
+                        <td>ObjectMonitor</td>
+                    </tr>
+                    <tr>
+                        <td>JVM内部引用</td>
+                        <td>系统类加载器、异常对象、线程</td>
+                        <td>JVM内部数据结构</td>
+                    </tr>
+                    <tr>
+                        <td>跨代引用</td>
+                        <td>老年代引用新生代对象</td>
+                        <td>记忆集（Remembered Set）</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- 对象引用类型 -->
+        <div class="card">
+            <h4>6.5 四种引用类型 - 底层实现</h4>
+            
+            <!-- 引用类型层级图 -->
+            <div class="animation-container">
+                <div class="animation-title">引用类型强度层级（从强到弱）</div>
+                <div class="ref-hierarchy">
+                    <div class="ref-pyramid">
+                        <div class="ref-level strong">
+                            <h6>🔒 强引用 Strong Reference</h6>
+                            <p>Object obj = new Object() | 永远不会被GC回收</p>
+                        </div>
+                        <div class="ref-arrow">↓</div>
+                        <div class="ref-level soft">
+                            <h6>🛡️ 软引用 SoftReference</h6>
+                            <p>内存不足时才回收 | 适合缓存实现</p>
+                        </div>
+                        <div class="ref-arrow">↓</div>
+                        <div class="ref-level weak">
+                            <h6>🍃 弱引用 WeakReference</h6>
+                            <p>下次GC必定回收 | ThreadLocal、WeakHashMap</p>
+                        </div>
+                        <div class="ref-arrow">↓</div>
+                        <div class="ref-level phantom">
+                            <h6>👻 虚引用 PhantomReference</h6>
+                            <p>不影响存活 | 仅用于跟踪回收状态</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 引用类型对比Mermaid图 -->
+            <div class="mermaid-container">
+                <div class="mermaid-title">📊 四种引用类型对比</div>
+                <div class="mermaid">
+graph TD
+    A[Java引用类型] --> B[强引用]
+    A --> C[软引用]
+    A --> D[弱引用]
+    A --> E[虚引用]
+    
+    B --> B1[默认引用]
+    B --> B2[永不回收]
+    B --> B3[内存泄漏风险]
+    
+    C --> C1[SoftReference类]
+    C --> C2[内存不足回收]
+    C --> C3[适合缓存]
+    
+    D --> D1[WeakReference类]
+    D --> D2[下次GC必回收]
+    D --> D3[WeakHashMap]
+    
+    E --> E1[PhantomReference类]
+    E --> E2[必须配合ReferenceQueue]
+    E --> E3[监控回收状态]
+    
+    classDef primary fill:#6366f1,stroke:#4f46e5,color:#fff
+    classDef strong fill:#ef4444,stroke:#dc2626,color:#fff
+    classDef soft fill:#f59e0b,stroke:#d97706,color:#fff
+    classDef weak fill:#3b82f6,stroke:#2563eb,color:#fff
+    classDef phantom fill:#6366f1,stroke:#4f46e5,color:#fff
+    class A primary
+    class B,B1,B2,B3 strong
+    class C,C1,C2,C3 soft
+    class D,D1,D2,D3 weak
+    class E,E1,E2,E3 phantom
+                </div>
+            </div>
+            
+            <ul>
+                <li><strong>强引用（Strong Reference）</strong>：Object obj = new Object()，只要强引用存在，GC永远不会回收</li>
+                <li><strong>软引用（SoftReference）</strong>：内存不足时（-Xmx限制）才会回收，适合实现缓存</li>
+                <li><strong>弱引用（WeakReference）</strong>：无论内存是否充足，下次GC必定回收</li>
+                <li><strong>虚引用（PhantomReference）</strong>：必须配合ReferenceQueue使用，对象被回收时收到通知</li>
+                <li><strong>底层实现</strong>：通过java.lang.ref.Reference类实现，GC时会特殊处理这些引用类型</li>
+                <li><strong>引用队列</strong>：ReferenceQueue用于接收被回收的引用通知</li>
+            </ul>
+            
+            <div class="code-block">
+                <code>
+// 引用类型使用示例<br>
+// 1. 软引用 - 适合缓存<br>
+SoftReference&lt;byte[]&gt; softRef = new SoftReference&lt;&gt;(new byte[1024*1024]);<br>
+byte[] data = softRef.get();  // 可能返回null<br><br>
+// 2. 弱引用 - ThreadLocal、WeakHashMap<br>
+WeakReference&lt;Object&gt; weakRef = new WeakReference&lt;&gt;(new Object());<br>
+System.gc();  // 下次GC必定回收<br>
+assert weakRef.get() == null;<br><br>
+// 3. 虚引用 - 监控对象回收<br>
+ReferenceQueue&lt;Object&gt; queue = new ReferenceQueue&lt;&gt;();<br>
+PhantomReference&lt;Object&gt; phantomRef = new PhantomReference&lt;&gt;(obj, queue);<br>
+// phantomRef.get() 永远返回null<br>
+// 对象被回收时，phantomRef会被加入queue
+                </code>
+            </div>
+        </div>
+
+        <!-- 对象死亡标记过程 -->
+        <div class="card">
+            <h4>6.6 对象死亡标记过程 - 两次标记</h4>
+            
+            <!-- 两次标记流程图 -->
+            <div class="marking-process">
+                <div class="animation-title" style="margin-bottom: 20px;">对象死亡标记完整流程</div>
+                <div class="mark-step">
+                    <div class="mark-step-num">1</div>
+                    <div class="mark-step-content">
+                        <h6>第一次标记</h6>
+                        <p>可达性分析发现对象不可达，判断是否需要执行finalize()</p>
+                    </div>
+                </div>
+                <div class="mark-arrow">↓</div>
+                <div class="mark-step" style="background: rgba(245, 158, 11, 0.1);">
+                    <div class="mark-step-num" style="background: var(--secondary);">2</div>
+                    <div class="mark-step-content">
+                        <h6>finalize()判断</h6>
+                        <p>对象覆盖了finalize()且未被调用过，放入F-Queue队列等待执行</p>
+                    </div>
+                </div>
+                <div class="mark-arrow">↓</div>
+                <div class="mark-step" style="background: rgba(59, 130, 246, 0.1);">
+                    <div class="mark-step-num" style="background: var(--info);">3</div>
+                    <div class="mark-step-content">
+                        <h6>第二次标记</h6>
+                        <p>finalize()中对象重新关联（自救），则移除"即将回收"标记</p>
+                    </div>
+                </div>
+                <div class="mark-arrow">↓</div>
+                <div class="mark-step" style="background: rgba(239, 68, 68, 0.1);">
+                    <div class="mark-step-num" style="background: var(--danger);">4</div>
+                    <div class="mark-step-content">
+                        <h6>实际回收</h6>
+                        <p>第二次标记后仍不可达的对象，真正释放内存</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 两次标记Mermaid图 -->
+            <div class="mermaid-container">
+                <div class="mermaid-title">📊 对象死亡两次标记流程图</div>
+                <div class="mermaid">
+graph TD
+    A[对象不可达] --> B{第一次标记}
+    B -->|需要finalize| C[放入F-Queue]
+    B -->|不需要finalize| D[直接标记为可回收]
+    
+    C --> E[低优先级线程执行finalize]
+    E --> F{finalize中自救成功?}
+    
+    F -->|是| G[移除回收标记]
+    F -->|否| H[第二次标记]
+    
+    G --> I[对象复活成功]
+    I --> J[对象继续存活]
+    
+    H --> K{仍然不可达?}
+    K -->|是| L[真正回收内存]
+    K -->|否| J
+    
+    D --> L
+    
+    classDef primary fill:#6366f1,stroke:#4f46e5,color:#fff
+    classDef warning fill:#f59e0b,stroke:#d97706,color:#fff
+    classDef success fill:#22c55e,stroke:#16a34a,color:#fff
+    classDef danger fill:#ef4444,stroke:#dc2626,color:#fff
+    classDef info fill:#3b82f6,stroke:#2563eb,color:#fff
+    class A,B primary
+    class C,E warning
+    class G,I,J success
+    class D,H,K,F danger
+    class L info
+                </div>
+            </div>
+            
+            <ul>
+                <li><strong>第一次标记</strong>：可达性分析发现对象不可达，判断是否需要执行finalize()</li>
+                <li><strong>finalize()判断</strong>：对象覆盖了finalize()且未被调用过，放入F-Queue队列</li>
+                <li><strong>第二次标记</strong>：finalize()中对象重新关联（自救），则移除"即将回收"标记</li>
+                <li><strong>实际回收</strong>：第二次标记后仍不可达的对象，真正释放内存</li>
+                <li><strong>性能警告</strong>：finalize()开销大、不确定性强，Java 9标记为deprecated</li>
+                <li><strong>替代方案</strong>：使用Cleaner（JDK 9+）或try-with-resources管理资源</li>
+            </ul>
+            
+            <div class="code-block">
+                <code>
+// finalize()方法示例 - 不推荐使用<br>
+public class FinalizeDemo {<br>
+&nbsp;&nbsp;private static FinalizeDemo SAVE_HOOK = null;<br><br>
+&nbsp;&nbsp;@Override<br>
+&nbsp;&nbsp;protected void finalize() throws Throwable {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;super.finalize();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;// 对象自救 - 重新关联到GC Roots<br>
+&nbsp;&nbsp;&nbsp;&nbsp;SAVE_HOOK = this;<br>
+&nbsp;&nbsp;}<br><br>
+&nbsp;&nbsp;// Java 9+ 推荐使用 Cleaner<br>
+&nbsp;&nbsp;private static final Cleaner CLEANER = Cleaner.create();<br>
+&nbsp;&nbsp;private final Cleaner.Cleanable cleanable;<br><br>
+&nbsp;&nbsp;public CleanerDemo() {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;cleanable = CLEANER.register(this, () -> {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// 清理资源<br>
+&nbsp;&nbsp;&nbsp;&nbsp;});<br>
+&nbsp;&nbsp;}<br>
+}
+                </code>
+            </div>
+        </div>
+
+        <!-- 方法区GC -->
+        <div class="card">
+            <h4>6.7 方法区（元空间）垃圾回收</h4>
+            
+            <!-- 方法区GC Mermaid图 -->
+            <div class="mermaid-container">
+                <div class="mermaid-title">📊 方法区无用类判定条件</div>
+                <div class="mermaid">
+graph TD
+    A[方法区GC] --> B{类是否可回收?}
+    
+    B -->|条件1| C[所有实例已回收]
+    B -->|条件2| D[ClassLoader已回收]
+    B -->|条件3| E[Class对象无引用]
+    
+    C --> F{三个条件都满足?}
+    D --> F
+    E --> F
+    
+    F -->|是| G[回收类元数据]
+    F -->|否| H[类继续保留]
+    
+    G --> I[释放Metaspace内存]
+    
+    classDef primary fill:#6366f1,stroke:#4f46e5,color:#fff
+    classDef condition fill:#f59e0b,stroke:#d97706,color:#fff
+    classDef success fill:#22c55e,stroke:#16a34a,color:#fff
+    classDef danger fill:#ef4444,stroke:#dc2626,color:#fff
+    class A,B primary
+    class C,D,E condition
+    class F,G,I success
+    class H danger
+                </div>
+            </div>
+            
+            <ul>
+                <li><strong>回收内容</strong>：废弃常量、无用的类信息（Class元数据）</li>
+                <li><strong>废弃常量判定</strong>：常量池中常量不再被任何对象引用</li>
+                <li><strong>无用类判定（三个条件同时满足）</strong>：<br>
+&nbsp;&nbsp;① 该类所有实例已被回收<br>
+&nbsp;&nbsp;② 加载该类的ClassLoader已被回收<br>
+&nbsp;&nbsp;③ 该类对应的Class对象没有在任何地方被引用</li>
+                <li><strong>类回收控制</strong>：-XX:+CMSClassUnloadingEnabled（CMS时代）<br>
+&nbsp;&nbsp;G1默认启用类回收：-XX:+ClassUnloadingWithConcurrentMark</li>
+                <li><strong>元空间优化</strong>：使用本地内存（Non-Heap），默认无限制，可设置-XX:MaxMetaspaceSize</li>
+            </ul>
+        </div>
+
+        <!-- 直接内存回收 -->
+        <div class="card">
+            <h4>6.8 直接内存（Direct Memory）回收</h4>
+            
+            <!-- 直接内存回收Mermaid图 -->
+            <div class="mermaid-container">
+                <div class="mermaid-title">📊 直接内存回收机制</div>
+                <div class="mermaid">
+graph TD
+    A[ByteBuffer.allocateDirect] --> B[Unsafe.allocateMemory]
+    B --> C[分配Native Memory]
+    C --> D[创建DirectByteBuffer对象]
+    D --> E[注册Cleaner监控]
+    
+    E --> F{DirectByteBuffer被GC?}
+    F -->|是| G[Cleaner触发清理]
+    F -->|否| H[继续持有]
+    
+    G --> I[Unsafe.freeMemory]
+    I --> J[释放Native内存]
+    
+    classDef primary fill:#6366f1,stroke:#4f46e5,color:#fff
+    classDef success fill:#22c55e,stroke:#16a34a,color:#fff
+    classDef danger fill:#ef4444,stroke:#dc2626,color:#fff
+    classDef warning fill:#f59e0b,stroke:#d97706,color:#fff
+    class A,B,C primary
+    class D,E,F warning
+    class G,I,J success
+    class H danger
+                </div>
+            </div>
+            
+            <ul>
+                <li><strong>直接内存</strong>：通过ByteBuffer.allocateDirect()分配，使用Native Memory</li>
+                <li><strong>回收机制</strong>：Cleaner机制监控，当DirectByteBuffer对象被回收时释放Native内存</li>
+                <li><strong>底层实现</strong>：通过Unsafe.allocateMemory()分配，使用幻象引用跟踪</li>
+                <li><strong>内存泄漏风险</strong>：直接内存不受JVM堆大小限制，但受系统内存限制</li>
+                <li><strong>调优参数</strong>：-XX:MaxDirectMemorySize限制直接内存大小</li>
+                <li><strong>显式释放</strong>：((DirectBuffer) buffer).cleaner().clean()（非公开API）</li>
+            </ul>
+        </div>
+
+        <!-- GC性能指标 -->
+        <div class="card">
+            <h4>6.9 GC性能指标</h4>
+            
+            <!-- GC性能指标Mermaid图 -->
+            <div class="mermaid-container">
+                <div class="mermaid-title">📊 GC性能指标关系图</div>
+                <div class="mermaid">
+graph TD
+    A[GC性能] --> B[吞吐量 Throughput]
+    A --> C[延迟 Latency]
+    A --> D[GC频率]
+    A --> E[内存占用]
+    
+    B --> B1[用户时间 / 总时间]
+    B --> B2[目标 > 99%]
+    
+    C --> C1[单次GC停顿时间]
+    C --> C2[目标 < 100ms]
+    
+    D --> D1[Young GC频率]
+    D --> D2[Full GC频率]
+    
+    E --> E1[记忆集开销]
+    E --> E2[卡表开销]
+    
+    B -. 权衡 .-> C
+    
+    classDef primary fill:#6366f1,stroke:#4f46e5,color:#fff
+    classDef metric fill:#22c55e,stroke:#16a34a,color:#fff
+    classDef detail fill:#f59e0b,stroke:#d97706,color:#fff
+    class A primary
+    class B,C,D,E metric
+    class B1,B2,C1,C2,D1,D2,E1,E2 detail
+                </div>
+            </div>
+            
+            <div class="table-wrapper">
+                <table>
+                    <tr>
+                        <th>指标</th>
+                        <th>说明</th>
+                        <th>计算公式/目标</th>
+                    </tr>
+                    <tr>
+                        <td>吞吐量（Throughput）</td>
+                        <td>用户代码运行时间占比</td>
+                        <td>用户时间/(用户时间+GC时间)，目标>99%</td>
+                    </tr>
+                    <tr>
+                        <td>延迟（Latency）</td>
+                        <td>单次GC停顿时间</td>
+                        <td>Max Pause Time，目标<100ms（交互式）</td>
+                    </tr>
+                    <tr>
+                        <td>GC频率</td>
+                        <td>单位时间内GC次数</td>
+                        <td>Young GC: 分钟级，Full GC: 小时/天级</td>
+                    </tr>
+                    <tr>
+                        <td>内存占用</td>
+                        <td>GC额外消耗的内存</td>
+                        <td>记忆集、卡表、引用处理等开销</td>
+                    </tr>
+                    <tr>
+                        <td>GC日志</td>
+                        <td>监控GC行为</td>
+                        <td>-Xlog:gc*:file=gc.log:time,uptime,level,tags</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- 实战：GC调优思路 -->
+        <div class="highlight-box">
+            <h4>✅ 关键理解</h4>
+            <p><strong>GC调优黄金法则</strong>：<br/>
+            1. 大多数对象朝生夕死 - 优化Young区大小和Survivor比例<br/>
+            2. 减少跨代引用 - 降低记忆集扫描开销<br/>
+            3. 避免大对象 - 防止直接进入老年代触发Full GC<br/>
+            4. 合理设置堆大小 - -Xms=-Xmx避免动态扩展<br/>
+            5. 优先选择G1收集器 - JDK 9+默认，平衡吞吐量和延迟<br/>
+            6. 监控GC日志 - 使用GCViewer、GCEasy等工具分析</p>
+        </div>
+
+        <!-- 动画演示 -->
+        <div class="animation-container">
+            <div class="animation-title">垃圾回收过程动画演示</div>
+            <div class="gc-animation">
+                <div class="gc-object alive"></div>
+                <div class="gc-object dead"></div>
+                <div class="gc-object alive"></div>
+                <div class="gc-object dead"></div>
+                <div class="gc-object alive"></div>
+                <div class="gc-object alive"></div>
+                <div class="gc-label">GC进行中...</div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        mermaid.initialize({ 
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose',
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true,
+                curve: 'basis'
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第十二章：JIT编译技术</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary: #6366f1; --secondary: #f59e0b; --bg-dark: #1e1e2e;
+            --bg-card: #27273a; --text-light: #f8f8f8; --text-gray: #a1a1aa;
+            --border: #3f3f5a; --success: #22c55e; --danger: #ef4444; --info: #3b82f6;
+        }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg-dark); color: var(--text-light); padding: 40px; line-height: 1.6; }
+        .chapter { margin-bottom: 60px; }
+        .chapter-title { font-size: 32px; margin-bottom: 15px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .chapter-desc { color: var(--text-gray); font-size: 16px; margin-bottom: 30px; line-height: 1.8; }
+        .card { background: var(--bg-card); border-radius: 12px; padding: 25px; margin-bottom: 20px; border: 1px solid var(--border); }
+        .card h4 { font-size: 18px; margin-bottom: 15px; color: var(--info); }
+        .card ul { list-style: none; padding-left: 0; }
+        .card ul li { padding: 8px 0; padding-left: 20px; position: relative; color: var(--text-gray); }
+        .card ul li::before { content: '→'; position: absolute; left: 0; color: var(--primary); }
+        .highlight-box { background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%); border-left: 4px solid var(--primary); padding: 20px; border-radius: 0 10px 10px 0; margin: 20px 0; }
+        .highlight-box h4 { margin-bottom: 10px; color: var(--primary); }
+        .code-block { background: #0f0f1a; border-radius: 10px; padding: 20px; margin: 15px 0; border: 1px solid var(--border); overflow-x: auto; }
+        .code-block code { font-family: 'Courier New', monospace; font-size: 14px; line-height: 1.8; color: var(--text-light); }
+        .code-block .comment { color: #6b7280; } .code-block .keyword { color: #c678dd; } .code-block .string { color: #98c379; } .code-block .type { color: #e5c07b; }
+        .diagram { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin: 20px 0; text-align: center; }
+        .diagram .flow { display: inline-block; padding: 10px 20px; background: var(--primary); color: white; border-radius: 5px; margin: 5px; }
+        .diagram .arrow { color: var(--secondary); font-size: 20px; margin: 0 10px; }
+        .param-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        .param-table th, .param-table td { padding: 12px 15px; text-align: left; border-bottom: 1px solid var(--border); }
+        .param-table th { background: rgba(99, 102, 241, 0.2); color: var(--primary); font-weight: 600; }
+        .param-table tr:hover { background: rgba(99, 102, 241, 0.05); }
+        .param-table code { background: #0f0f1a; padding: 4px 8px; border-radius: 4px; font-family: 'Courier New', monospace; font-size: 13px; color: var(--secondary); }
+        .case-study { background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(99, 102, 241, 0.1) 100%); border-left: 4px solid var(--secondary); padding: 20px; border-radius: 0 10px 10px 0; margin: 20px 0; }
+        .case-study h4 { margin-bottom: 10px; color: var(--secondary); }
+        .mermaid { background: #0f0f1a; border-radius: 10px; padding: 20px; margin: 20px 0; border: 1px solid var(--border); }
+        .mermaid-label { color: var(--primary); font-size: 16px; font-weight: 600; margin-bottom: 15px; text-align: center; }
+        .tier-levels { display: flex; gap: 10px; margin: 20px 0; flex-wrap: wrap; }
+        .tier-card { flex: 1; min-width: 120px; background: var(--bg-dark); border-radius: 8px; padding: 15px; text-align: center; border: 2px solid var(--border); transition: all 0.3s; }
+        .tier-card:hover { transform: translateY(-5px); }
+        .tier-card .level { font-size: 24px; font-weight: 700; color: var(--primary); margin-bottom: 5px; }
+        .tier-card .label { font-size: 12px; color: var(--text-gray); }
+        .tier-card.l0 { border-color: var(--text-gray); }
+        .tier-card.l1 { border-color: #3b82f6; }
+        .tier-card.l2 { border-color: #22c55e; }
+        .tier-card.l3 { border-color: #f59e0b; }
+        .tier-card.l4 { border-color: #ef4444; }
+        .escape-visual { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin: 20px 0; }
+        .escape-box { background: var(--bg-dark); border-radius: 8px; padding: 15px; text-align: center; border-top: 4px solid var(--border); }
+        .escape-box.no-escape { border-color: var(--success); }
+        .escape-box.arg-escape { border-color: var(--secondary); }
+        .escape-box.global-escape { border-color: var(--danger); }
+        .escape-box .status { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+        .escape-box .desc { font-size: 13px; color: var(--text-gray); }
+        .optimization-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin: 20px 0; }
+        .opt-card { background: var(--bg-dark); border-radius: 10px; padding: 20px; border-left: 4px solid var(--primary); }
+        .opt-card h5 { color: var(--info); margin-bottom: 10px; font-size: 15px; }
+        .opt-card p { font-size: 13px; color: var(--text-gray); line-height: 1.6; }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>
+        mermaid.initialize({ startOnLoad: true, theme: 'dark', themeVariables: { primaryColor: '#6366f1', primaryTextColor: '#f8f8f8', primaryBorderColor: '#3f3f5a', lineColor: '#6366f1', secondaryColor: '#f59e0b', tertiaryColor: '#1e1e2e' } });
+    </script>
+</head>
+<body>
+    <div class="chapter">
+        <h2 class="chapter-title">第十二章：JIT编译技术</h2>
+        <p class="chapter-desc">深入理解JVM即时编译器(Just-In-Time Compiler)的底层原理，掌握C1/C2编译器工作机制、分层编译、优化技术以及去优化策略。</p>
+
+        <div class="card">
+            <h4>为什么需要JIT？</h4>
+            <ul>
+                <li><strong>解释执行瓶颈</strong>：字节码解释执行效率低，每条指令都需翻译</li>
+                <li><strong>AOT编译缺点</strong>：静态编译无法根据运行时信息优化</li>
+                <li><strong>JIT优势</strong>：结合解释+编译，热点代码编译为本地机器码</li>
+                <li><strong>Profile Guided Optimization</strong>：基于运行时性能数据做针对性优化</li>
+            </ul>
+        </div>
+
+        <div class="highlight-box">
+            <h4>🔑 JIT的核心思想</h4>
+            <p>只编译热点代码，而非所有代码。通过运行时的性能监控(Profile)，识别出执行频率高的方法或循环，将其编译为高效的本地机器码，实现"二八定律"的最优收益。</p>
+        </div>
+
+        <div class="card">
+            <h4>HotSpot的编译器选择</h4>
+            <ul>
+                <li><strong>Client编译器(C1)</strong>：32位JVM默认，启动快，优化少，适合桌面应用</li>
+                <li><strong>Server编译器(C2)</strong>：64位JVM默认，编译慢但优化激进，适合服务端</li>
+                <li><strong>Graal编译器</strong>：JDK 9+引入，Java编写的编译器，支持AOT</li>
+                <li><strong>分层编译(Tiered Compilation)</strong>：JDK 8默认启用，混合使用C1和C2</li>
+            </ul>
+        </div>
+
+        <div class="mermaid">
+            <p class="mermaid-label">JIT编译层次决策流程图</p>
+            <div class="mermaid">
+                graph TD
+                    A[字节码加载] --> B{是否热点?}
+                    B -->|否| C[Level 0: 解释执行]
+                    B -->|是| D{计数器阈值}
+                    D -->|低频率| E[Level 1: C1轻量编译]
+                    D -->|中频率| F[Level 2: C1+有限Profiling]
+                    D -->|高频率| G[Level 3: C1+完整Profiling]
+                    G --> H{Profile数据分析}
+                    H -->|适合深度优化| I[Level 4: C2编译]
+                    H -->|无需深度优化| E
+                    C --> D
+                    E --> B
+                    F --> G
+                    style A fill:#6366f1,stroke:#3f3f5a,color:#f8f8f8
+                    style B fill:#f59e0b,stroke:#3f3f5a,color:#f8f8f8
+                    style C fill:#6b7280,stroke:#3f3f5a,color:#f8f8f8
+                    style D fill:#f59e0b,stroke:#3f3f5a,color:#f8f8f8
+                    style E fill:#3b82f6,stroke:#3f3f5a,color:#f8f8f8
+                    style F fill:#22c55e,stroke:#3f3f5a,color:#f8f8f8
+                    style G fill:#f59e0b,stroke:#3f3f5a,color:#f8f8f8
+                    style H fill:#f59e0b,stroke:#3f3f5a,color:#f8f8f8
+                    style I fill:#ef4444,stroke:#3f3f5a,color:#f8f8f8
+            </div>
+        </div>
+
+        <div class="tier-levels">
+            <div class="tier-card l0">
+                <div class="level">L0</div>
+                <div class="label">解释执行<br/>无优化</div>
+            </div>
+            <div class="tier-card l1">
+                <div class="level">L1</div>
+                <div class="label">C1编译<br/>轻量优化</div>
+            </div>
+            <div class="tier-card l2">
+                <div class="level">L2</div>
+                <div class="label">C1+Profile<br/>中等优化</div>
+            </div>
+            <div class="tier-card l3">
+                <div class="level">L3</div>
+                <div class="label">C1+Full Profile<br/>收集数据</div>
+            </div>
+            <div class="tier-card l4">
+                <div class="level">L4</div>
+                <div class="label">C2编译<br/>深度优化</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h4>分层编译的5个级别</h4>
+            <table class="param-table">
+                <thead>
+                    <tr><th>层级</th><th>说明</th><th>优化程度</th><th>编译速度</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td><code>Level 0</code></td><td>解释执行</td><td>无优化</td><td>最快</td></tr>
+                    <tr><td><code>Level 1</code></td><td>C1编译，无profiling</td><td>轻量优化</td><td>快</td></tr>
+                    <tr><td><code>Level 2</code></td><td>C1编译，带有限profiling</td><td>中等优化</td><td>中</td></tr>
+                    <tr><td><code>Level 3</code></td><td>C1编译，带完整profiling</td><td>收集运行时数据</td><td>中</td></tr>
+                    <tr><td><code>Level 4</code></td><td>C2编译</td><td>深度优化</td><td>慢</td></tr>
+                </tbody>
+            </table>
+            <p style="margin-top: 15px;"><strong>编译策略：</strong></p>
+            <ul>
+                <li>方法从Level 0开始，根据调用计数器决定是否编译</li>
+                <li>Level 3收集完整的profile数据，为C2编译提供优化依据</li>
+                <li>频繁执行的方法最终会升级到Level 4(C2编译)</li>
+                <li>通过InvocationCounter和BackedgeCounter统计方法调用和循环回边次数</li>
+            </ul>
+        </div>
+
+        <div class="diagram">
+            <p style="color: var(--primary); font-size: 18px; margin-bottom: 15px;">JIT编译执行流程</p>
+            <span class="flow">源码.java</span>
+            <span class="arrow">→</span>
+            <span class="flow">javac编译</span>
+            <span class="arrow">→</span>
+            <span class="flow">字节码.class</span>
+            <span class="arrow">→</span>
+            <span class="flow">解释执行(L0)</span>
+            <span class="arrow">→</span>
+            <span class="flow">C1编译(L1-L3)</span>
+            <span class="arrow">→</span>
+            <span class="flow">C2编译(L4)</span>
+            <span class="arrow">→</span>
+            <span class="flow">本地机器码</span>
+        </div>
+
+        <div class="card">
+            <h4>热点代码检测机制</h4>
+            <ul>
+                <li><strong>方法调用计数器(Invocation Counter)</strong>：统计方法被调用次数</li>
+                <li><strong>回边计数器(Back Edge Counter)</strong>：统计循环执行次数</li>
+                <li><strong>阈值计算</strong>：-XX:CompileThreshold=10000(C1)，C2基于动态计算</li>
+                <li><strong>衰减机制</strong>：计数器定期衰减，避免早期热点影响后期优化</li>
+                <li><strong>OSR编译(On-Stack Replacement)</strong>：针对长循环的特殊编译，允许从循环中间开始执行编译后的代码</li>
+            </ul>
+        </div>
+
+        <div class="code-block">
+            <code>
+<span class="comment">// 热点代码检测触发条件</span>
+<span class="comment">// 方法调用计数器阈值计算：</span>
+<span class="keyword">int</span> methodThreshold = CompileThreshold / (Tier*2 + 1);
+<span class="comment">// Level 3: 10000 / (3*2+1) = 1428次调用后触发C1编译</span>
+<span class="comment">// Level 4: 基于profile数据，C2编译器决定是否编译</span>
+
+<span class="comment">// 回边计数器用于检测循环热点：</span>
+<span class="keyword">for</span>(<span class="keyword">int</span> i = 0; i < 1000000; i++) {
+    <span class="comment">// 每次循环回边，计数器+1</span>
+    <span class="comment">// 达到阈值后触发OSR编译</span>
+}
+            </code>
+        </div>
+
+        <div class="card">
+            <h4>JIT核心优化技术详解</h4>
+            
+            <div class="optimization-grid">
+                <div class="opt-card">
+                    <h5>🔧 方法内联</h5>
+                    <p>消除方法调用开销，将小方法展开到调用处。默认阈值35字节，频繁调用325字节。</p>
+                </div>
+                <div class="opt-card">
+                    <h5>🔍 逃逸分析</h5>
+                    <p>分析对象作用域，实现栈上分配、标量替换、同步消除三大优化。</p>
+                </div>
+                <div class="opt-card">
+                    <h5>🔒 锁优化</h5>
+                    <p>锁消除、锁粗化、偏向锁，减少同步开销，提升并发性能。</p>
+                </div>
+                <div class="opt-card">
+                    <h5>⚡ 其他优化</h5>
+                    <p>死代码消除、公共子表达式消除、数组边界检查消除、空指针检查消除。</p>
+                </div>
+            </div>
+            <ul>
+                <li><strong>方法内联(Method Inlining)</strong>
+                    <ul>
+                        <li>小方法调用直接展开，消除调用开销</li>
+                        <li>默认内联阈值：-XX:MaxInlineSize=35字节，-XX:FreqInlineSize=325字节</li>
+                        <li>虚方法内联需要结合类层次分析(CH A)和内联缓存(Inline Cache)</li>
+                        <li>通过-XX:+PrintInlining查看内联决策</li>
+                    </ul>
+                </li>
+                <li><strong>逃逸分析(Escape Analysis)</strong>
+                    <ul>
+                        <li>分析对象的作用域是否逃逸出方法或线程</li>
+                        <li>状态：GlobalEscape(全局逃逸)、ArgEscape(参数逃逸)、NoEscape(不逃逸)</li>
+                        <li>优化结果：栈上分配、标量替换、同步消除</li>
+                    </ul>
+                </li>
+                <li><strong>锁优化(Lock Optimization)</strong>
+                    <ul>
+                        <li>锁消除(Lock Elimination)：JIT发现锁对象不逃逸时，直接移除synchronized</li>
+                        <li>锁粗化(Lock Coarsening)：合并多个连续的加锁操作</li>
+                        <li>偏向锁(Biased Locking)：无竞争时，减少CAS操作</li>
+                    </ul>
+                </li>
+                <li><strong>其他优化</strong>
+                    <ul>
+                        <li>死代码消除(Dead Code Elimination)</li>
+                        <li>公共子表达式消除(Common Subexpression Elimination)</li>
+                        <li>数组边界检查消除(Array Bounds Check Elimination)</li>
+                        <li>空指针检查消除(Null Check Elimination)</li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+
+        <div class="highlight-box">
+            <h4>💡 逃逸分析实战案例</h4>
+            
+            <div class="escape-visual">
+                <div class="escape-box no-escape">
+                    <div class="status" style="color: var(--success);">✓ NoEscape</div>
+                    <div class="desc">对象未逃逸<br/>可栈上分配/标量替换</div>
+                </div>
+                <div class="escape-box arg-escape">
+                    <div class="status" style="color: var(--secondary);">⚠ ArgEscape</div>
+                    <div class="desc">作为参数传递<br/>部分优化可能</div>
+                </div>
+                <div class="escape-box global-escape">
+                    <div class="status" style="color: var(--danger);">✗ GlobalEscape</div>
+                    <div class="desc">全局可见<br/>无法优化</div>
+                </div>
+            </div>
+            
+            <p><strong>场景1：标量替换优化</strong></p>
+            <p>对象被拆解为基本类型，完全消除对象分配：</p>
+            <div class="code-block">
+                <code>
+<span class="comment">// 优化前：创建对象</span>
+<span class="keyword">public</span> <span class="type">Point</span> <span class="type">createPoint</span>() {
+    <span class="keyword">return</span> <span class="keyword">new</span> <span class="type">Point</span>(1, 2);  <span class="comment">// NoEscape，可优化</span>
+}
+
+<span class="comment">// JIT优化后：标量替换</span>
+<span class="comment">// 等价于：</span>
+<span class="keyword">public</span> <span class="type">Point</span> <span class="type">createPoint</span>() {
+    <span class="keyword">int</span> x = 1;
+    <span class="keyword">int</span> y = 2;
+    <span class="comment">// 直接返回x和y，无需创建Point对象</span>
+}
+                </code>
+            </div>
+            <p style="margin-top: 15px;"><strong>场景2：同步消除</strong></p>
+            <div class="code-block">
+                <code>
+<span class="comment">// StringBuffer的线程安全是不必要的</span>
+<span class="keyword">public</span> <span class="type">String</span> <span class="type">buildString</span>() {
+    <span class="type">StringBuffer</span> sb = <span class="keyword">new</span> <span class="type">StringBuffer</span>();
+    sb.append(<span class="string">"Hello"</span>);  <span class="comment">// synchronized方法</span>
+    sb.append(<span class="string">" World"</span>); <span class="comment">// synchronized方法</span>
+    <span class="keyword">return</span> sb.toString();
+}
+<span class="comment">// JIT会消除这些synchronized，因为sb没有逃逸</span>
+                </code>
+            </div>
+        </div>
+
+        <div class="card">
+            <h4>去优化(Deoptimization)机制</h4>
+            
+            <div class="mermaid">
+                <p class="mermaid-label">去优化触发流程图</p>
+                <div class="mermaid">
+                    graph LR
+                        A[C2优化代码执行中] --> B{运行时假设检查}
+                        B -->|假设成立| C[继续执行优化代码]
+                        B -->|假设失效| D[保存执行状态]
+                        D --> E[卸载优化代码]
+                        E --> F[回退到解释器]
+                        F --> G[重新收集Profile]
+                        G --> H[触发重新编译]
+                        H --> I[生成新优化代码]
+                        style A fill:#22c55e,stroke:#3f3f5a,color:#f8f8f8
+                        style B fill:#f59e0b,stroke:#3f3f5a,color:#f8f8f8
+                        style C fill:#22c55e,stroke:#3f3f5a,color:#f8f8f8
+                        style D fill:#ef4444,stroke:#3f3f5a,color:#f8f8f8
+                        style E fill:#ef4444,stroke:#3f3f5a,color:#f8f8f8
+                        style F fill:#3b82f6,stroke:#3f3f5a,color:#f8f8f8
+                        style G fill:#6366f1,stroke:#3f3f5a,color:#f8f8f8
+                        style H fill:#6366f1,stroke:#3f3f5a,color:#f8f8f8
+                        style I fill:#22c55e,stroke:#3f3f5a,color:#f8f8f8
+                </div>
+            </div>
+            
+            <ul>
+                <li><strong>为什么需要去优化？</strong>
+                    <ul>
+                        <li>JIT基于当前运行时的假设进行激进优化</li>
+                        <li>当假设被打破时，必须回退到解释执行或重新编译</li>
+                        <li>保证优化的正确性，同时保持灵活性</li>
+                    </ul>
+                </li>
+                <li><strong>触发去优化的场景</strong>
+                    <ul>
+                        <li>类型假设失效：内联缓存失效，发现新的子类</li>
+                        <li>分支预测失败：if条件概率分布发生变化</li>
+                        <li>空指针假设错误：之前认为不会null，现在出现了null</li>
+                        <li>数组类型假设错误：数组实际类型与假设不符</li>
+                    </ul>
+                </li>
+                <li><strong>去优化过程</strong>
+                    <ul>
+                        <li>保存当前执行状态(寄存器、局部变量等)</li>
+                        <li>卸载优化后的机器码</li>
+                        <li>恢复到解释器或重新触发编译</li>
+                        <li>记录去优化信息，影响后续编译决策</li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+
+        <div class="code-block">
+            <code>
+<span class="comment">// 去优化案例：类型假设失效</span>
+<span class="keyword">interface</span> <span class="type">Animal</span> {
+    <span class="keyword">void</span> <span class="type">speak</span>();
+}
+
+<span class="keyword">class</span> <span class="type">Dog</span> <span class="keyword">implements</span> <span class="type">Animal</span> {
+    <span class="keyword">public</span> <span class="keyword">void</span> <span class="type">speak</span>() { System.out.<span class="type">println</span>(<span class="string">"Woof"</span>); }
+}
+
+<span class="keyword">class</span> <span class="type">Cat</span> <span class="keyword">implements</span> <span class="type">Animal</span> {
+    <span class="keyword">public</span> <span class="keyword">void</span> <span class="type">speak</span>() { System.out.<span class="type">println</span>(<span class="string">"Meow"</span>); }
+}
+
+<span class="comment">// 前期只传入Dog，JIT假设animal是Dog类型并内联</span>
+<span class="comment">// 后期传入Cat，触发去优化，重新编译</span>
+<span class="keyword">public</span> <span class="keyword">void</span> <span class="type">makeSpeak</span>(<span class="type">Animal</span> animal) {
+    animal.<span class="type">speak</span>();  <span class="comment">// 可能触发去优化</span>
+}
+            </code>
+        </div>
+
+        <div class="card">
+            <h4>OSR(On-Stack Replacement)编译</h4>
+            <ul>
+                <li><strong>应用场景</strong>：超长循环方法，循环还未结束就已经达到编译阈值</li>
+                <li><strong>核心问题</strong>：编译完成后，如何从循环中间切入执行？</li>
+                <li><strong>解决方案</strong>：
+                    <ul>
+                        <li>保存当前循环状态(i的值、局部变量等)</li>
+                        <li>跳转到编译后的代码继续执行</li>
+                        <li>需要额外的状态保存和恢复逻辑</li>
+                    </ul>
+                </li>
+                <li><strong>OSR标记</strong>：方法名会显示为 methodName @ bci (字节码索引)</li>
+                <li><strong>性能影响</strong>：OSR编译的代码通常比正常编译的代码稍慢</li>
+            </ul>
+        </div>
+
+        <div class="card">
+            <h4>内联缓存(Inline Cache)</h4>
+            <ul>
+                <li><strong>问题背景</strong>：虚方法调用(polymorphism)需要动态分派，性能开销大</li>
+                <li><strong>单态内联缓存(Monomorphic)</strong>：只有一种类型，直接内联调用</li>
+                <li><strong>多态内联缓存(Polymorphic)</strong>：少数几种类型，类型检查后内联</li>
+                <li><strong>超多态内联缓存(Megamorphic)</strong>：类型太多，退化为虚方法调用</li>
+                <li><strong>优化建议</strong>：保持调用点的类型稳定，避免频繁的类型变化</li>
+            </ul>
+        </div>
+
+        <div class="code-block">
+            <code>
+<span class="comment">// 内联缓存示例</span>
+<span class="comment">// 单态缓存：JIT会假设list的类型是ArrayList</span>
+<span class="keyword">public</span> <span class="keyword">void</span> <span class="type">processList</span>(<span class="type">List</span> list) {
+    list.<span class="type">get</span>(0);  <span class="comment">// 如果一直是ArrayList，会内联调用</span>
+}
+
+<span class="comment">// 如果调用点交替传入ArrayList和LinkedList</span>
+<span class="comment">// 会升级为多态缓存，性能下降</span>
+<span class="comment">// 继续增加新类型会升级为超多态缓存，完全退化为虚调用</span>
+            </code>
+        </div>
+
+        <div class="case-study">
+            <h4>🔧 实战：JIT优化效果验证</h4>
+            <div class="code-block">
+                <code>
+<span class="comment">// 测试方法内联的效果</span>
+<span class="keyword">public</span> <span class="keyword">class</span> <span class="type">InliningTest</span> {
+    <span class="comment">// 小方法，会被内联</span>
+    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">int</span> <span class="type">add</span>(<span class="keyword">int</span> a, <span class="keyword">int</span> b) {
+        <span class="keyword">return</span> a + b;
+    }
+    
+    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="type">main</span>(<span class="type">String</span>[] args) {
+        <span class="keyword">long</span> start = System.<span class="type">nanoTime</span>();
+        <span class="keyword">int</span> sum = 0;
+        <span class="comment">// 预热+执行</span>
+        <span class="keyword">for</span>(<span class="keyword">int</span> i = 0; i < 100000000; i++) {
+            sum += <span class="type">add</span>(i, 1);
+        }
+        <span class="keyword">long</span> end = System.<span class="type">nanoTime</span>();
+        System.out.<span class="type">println</span>(<span class="string">"耗时: "</span> + (end - start) + <span class="string">"ns"</span>);
+    }
+}
+
+<span class="comment">// 运行参数：</span>
+<span class="comment">// java -XX:+UnlockDiagnosticVMOptions -XX:+PrintInlining InliningTest</span>
+<span class="comment">// 查看输出确认add方法是否被内联</span>
+                </code>
+            </div>
+        </div>
+
+        <div class="card">
+            <h4>JIT调试参数</h4>
+            <table class="param-table">
+                <thead>
+                    <tr><th>参数</th><th>作用</th><th>示例输出</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td><code>-XX:+PrintCompilation</code></td><td>打印编译信息</td><td>方法名、编译层级、编译大小</td></tr>
+                    <tr><td><code>-XX:+UnlockDiagnosticVMOptions</code></td><td>解锁诊断选项</td><td>开启其他JIT诊断参数</td></tr>
+                    <tr><td><code>-XX:+PrintInlining</code></td><td>打印内联决策</td><td>方法是否内联及原因</td></tr>
+                    <tr><td><code>-XX:+PrintEscapeAnalysis</code></td><td>打印逃逸分析结果</td><td>对象逃逸状态</td></tr>
+                    <tr><td><code>-XX:+PrintLocksOptimization</code></td><td>打印锁优化信息</td><td>锁消除/粗化信息</td></tr>
+                    <tr><td><code>-XX:-TieredCompilation</code></td><td>关闭分层编译</td><td>仅使用C1或C2</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="highlight-box">
+            <h4>🎯 JIT优化最佳实践</h4>
+            <p>1. <strong>保持方法短小</strong>：有利于方法内联，减少调用开销</p>
+            <p>2. <strong>避免频繁的类型变化</strong>：保持调用点的类型稳定，减少去优化</p>
+            <p>3. <strong>预热很重要</strong>：生产环境启动后应有预热期，让JIT充分编译</p>
+            <p>4. <strong>使用final关键字</strong>：帮助JIT做静态分派判断，减少虚方法调用</p>
+            <p>5. <strong>循环优化</strong>：避免在循环中创建不必要的对象，利用逃逸分析优化</p>
+            <p>6. <strong>谨慎使用synchronized</strong>：JIT可能无法优化某些复杂场景的锁</p>
+            <p>7. <strong>监控编译线程</strong>：编译线程数默认由CPU核数决定，高并发场景需关注</p>
+        </div>
+
+        <div class="card">
+            <h4>编译线程与编译队列</h4>
+            <ul>
+                <li><strong>编译线程</strong>：
+                    <ul>
+                        <li>C1编译线程数：-XX:CICompilerCount，默认根据CPU核数计算</li>
+                        <li>C2编译线程数：独立配置</li>
+                    </ul>
+                </li>
+                <li><strong>编译队列</strong>：
+                    <ul>
+                        <li>方法提交到编译队列等待编译</li>
+                        <li>队列满时，方法会在队列中等待或放弃编译</li>
+                        <li>可通过-XX:ReservedCodeCacheSize控制代码缓存大小</li>
+                    </ul>
+                </li>
+                <li><strong>代码缓存(Code Cache)</strong>：
+                    <ul>
+                        <li>存储编译后的本地机器码</li>
+                        <li>默认大小：240MB(Server JVM)</li>
+                        <li>缓存满时会触发Code Cache Flush，影响性能</li>
+                        <li>监控命令：jcmd <pid> compiler.codecache</li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+
+        <div class="code-block">
+            <code>
+<span class="comment">// 编译线程数计算</span>
+<span class="comment">// JDK 8+ 默认：</span>
+<span class="comment">// CICompilerCount = max(2, CPU核数 / 2 + 1)</span>
+
+<span class="comment">// 代码缓存监控</span>
+<span class="comment">// jcmd <pid> compiler.codecache</span>
+<span class="comment">// 输出：</span>
+<span class="comment">// CodeHeap 'non-profiled nmethods': size=120MB, used=45MB</span>
+<span class="comment">// CodeHeap 'profiled nmethods': size=120MB, used=67MB</span>
+<span class="comment">// CodeHeap 'non-nmethods': size=12MB, used=3MB</span>
+
+<span class="comment">// 如果used接近size，说明代码缓存不足</span>
+<span class="comment">// 可通过 -XX:ReservedCodeCacheSize=512m 增大</span>
+            </code>
+        </div>
+    </div>
+</body>
+</html>

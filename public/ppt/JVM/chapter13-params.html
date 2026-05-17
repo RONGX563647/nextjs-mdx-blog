@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第十三章：JVM参数配置</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary: #6366f1; --secondary: #f59e0b; --bg-dark: #1e1e2e;
+            --bg-card: #27273a; --text-light: #f8f8f8; --text-gray: #a1a1aa;
+            --border: #3f3f5a; --success: #22c55e; --danger: #ef4444; --info: #3b82f6;
+        }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg-dark); color: var(--text-light); padding: 40px; line-height: 1.6; }
+        .chapter { margin-bottom: 60px; }
+        .chapter-title { font-size: 32px; margin-bottom: 15px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .chapter-desc { color: var(--text-gray); font-size: 16px; margin-bottom: 30px; line-height: 1.8; }
+        .card { background: var(--bg-card); border-radius: 12px; padding: 25px; margin-bottom: 20px; border: 1px solid var(--border); }
+        .card h4 { font-size: 18px; margin-bottom: 15px; color: var(--info); }
+        .card ul { list-style: none; padding-left: 0; }
+        .card ul li { padding: 8px 0; padding-left: 20px; position: relative; color: var(--text-gray); }
+        .card ul li::before { content: '→'; position: absolute; left: 0; color: var(--primary); }
+        .highlight-box { background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(239, 68, 68, 0.1) 100%); border-left: 4px solid var(--secondary); padding: 20px; border-radius: 0 10px 10px 0; margin: 20px 0; }
+        .highlight-box h4 { margin-bottom: 10px; color: var(--secondary); }
+        .code-block { background: #0f0f1a; border-radius: 10px; padding: 20px; margin: 15px 0; border: 1px solid var(--border); overflow-x: auto; }
+        .code-block code { font-family: 'Courier New', monospace; font-size: 14px; line-height: 1.8; color: var(--text-light); }
+        .code-block .comment { color: #6b7280; } .code-block .keyword { color: #c678dd; }
+        .param-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        .param-table th, .param-table td { padding: 12px 15px; text-align: left; border-bottom: 1px solid var(--border); }
+        .param-table th { background: rgba(99, 102, 241, 0.2); color: var(--primary); font-weight: 600; }
+        .param-table tr:hover { background: rgba(99, 102, 241, 0.05); }
+        .param-table code { background: #0f0f1a; padding: 4px 8px; border-radius: 4px; font-family: 'Courier New', monospace; font-size: 13px; color: var(--secondary); }
+        .case-study { background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%); border-left: 4px solid var(--success); padding: 20px; border-radius: 0 10px 10px 0; margin: 20px 0; }
+        .case-study h4 { margin-bottom: 10px; color: var(--success); }
+        .param-category { background: var(--bg-card); border-radius: 12px; padding: 25px; margin-bottom: 20px; border-left: 4px solid var(--info); }
+        .param-category h3 { color: var(--info); margin-bottom: 15px; font-size: 20px; }
+        .tab-container { margin: 20px 0; }
+        .tab-header { display: flex; gap: 10px; margin-bottom: 15px; }
+        .tab { padding: 10px 20px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; color: var(--text-gray); }
+        .tab.active { background: var(--primary); color: white; border-color: var(--primary); }
+        .mermaid { background: #0f0f1a; border-radius: 10px; padding: 20px; margin: 20px 0; border: 1px solid var(--border); }
+        .mermaid-label { color: var(--primary); font-size: 16px; font-weight: 600; margin-bottom: 15px; text-align: center; }
+        .param-type-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin: 20px 0; }
+        .param-type-card { background: var(--bg-dark); border-radius: 8px; padding: 15px; text-align: center; border-top: 4px solid var(--border); }
+        .param-type-card.standard { border-color: #3b82f6; }
+        .param-type-card.x { border-color: #22c55e; }
+        .param-type-card.xx { border-color: #f59e0b; }
+        .param-type-card .type { font-size: 20px; font-weight: 700; margin-bottom: 5px; }
+        .param-type-card .desc { font-size: 12px; color: var(--text-gray); }
+        .gc-selector { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 20px 0; }
+        .gc-option { background: var(--bg-dark); border-radius: 8px; padding: 15px; text-align: center; border: 2px solid var(--border); transition: all 0.3s; }
+        .gc-option:hover { transform: translateY(-3px); }
+        .gc-option .name { font-size: 16px; font-weight: 700; color: var(--info); margin-bottom: 5px; }
+        .gc-option .use-case { font-size: 11px; color: var(--text-gray); }
+        .gc-option.recommended { border-color: var(--success); background: rgba(34, 197, 94, 0.1); }
+        .gc-option .badge { font-size: 10px; background: var(--success); color: white; padding: 2px 8px; border-radius: 10px; margin-top: 5px; display: inline-block; }
+        .memory-layout { background: var(--bg-dark); border-radius: 10px; padding: 20px; margin: 20px 0; }
+        .memory-bar { height: 40px; border-radius: 5px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; margin: 5px 0; }
+        .memory-bar.eden { background: #3b82f6; width: 80%; }
+        .memory-bar.survivor { background: #22c55e; width: 10%; }
+        .memory-bar.old { background: #ef4444; width: 66%; }
+        .memory-bar.metaspace { background: #f59e0b; width: auto; }
+        .memory-label { font-size: 12px; color: var(--text-gray); margin: 5px 0; }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>
+        mermaid.initialize({ startOnLoad: true, theme: 'dark', themeVariables: { primaryColor: '#6366f1', primaryTextColor: '#f8f8f8', primaryBorderColor: '#3f3f5a', lineColor: '#6366f1', secondaryColor: '#f59e0b', tertiaryColor: '#1e1e2e' } });
+    </script>
+</head>
+<body>
+    <div class="chapter">
+        <h2 class="chapter-title">第十三章：JVM参数配置</h2>
+        <p class="chapter-desc">全面掌握JVM参数分类体系，深入理解内存配置、垃圾收集器调优、JIT编译参数、日志诊断参数以及生产环境最佳实践。</p>
+
+        <div class="param-category">
+            <h3>📋 JVM参数分类体系</h3>
+            
+            <div class="param-type-grid">
+                <div class="param-type-card standard">
+                    <div class="type" style="color: #3b82f6;">-</div>
+                    <div class="desc">标准参数<br/>所有版本支持</div>
+                </div>
+                <div class="param-type-card x">
+                    <div class="type" style="color: #22c55e;">-X</div>
+                    <div class="desc">非标准参数<br/>JVM特定支持</div>
+                </div>
+                <div class="param-type-card xx">
+                    <div class="type" style="color: #f59e0b;">-XX</div>
+                    <div class="desc">实验性参数<br/>需显式启用</div>
+                </div>
+            </div>
+            
+            <ul style="list-style: none; padding-left: 0;">
+                <li><strong>标准参数</strong>：以 - 开头，所有JVM版本都支持，如 -Xms, -Xmx, -cp</li>
+                <li><strong>非标准参数</strong>：以 -X 开头，特定JVM实现支持，如 -Xloggc, -Xss</li>
+                <li><strong>实验性参数</strong>：以 -XX 开头，需要显式启用，如 -XX:+UseG1GC, -XX:MaxGCPauseMillis</li>
+                <li><strong>布尔型参数</strong>：格式为 -XX:+[参数名](启用) 或 -XX:-[参数名](禁用)</li>
+                <li><strong>数值型参数</strong>：格式为 -XX:参数名=值，支持单位k/m/g</li>
+                <li><strong>字符串型参数</strong>：格式为 -XX:参数名=字符串值</li>
+            </ul>
+        </div>
+
+        <div class="highlight-box">
+            <h4>🔑 参数配置核心原则</h4>
+            <p>1. 内存参数应与物理内存和业务负载相匹配<br/>
+            2. GC参数应根据应用类型(响应时间优先 vs 吞吐量优先)选择<br/>
+            3. 通过基准测试确定最优参数组合，而非经验猜测<br/>
+            4. 保持参数配置的简洁性，避免过度优化<br/>
+            5. 记录参数变更，便于问题回溯</p>
+        </div>
+
+        <div class="card">
+            <h4>堆内存配置参数</h4>
+             
+            <div class="memory-layout">
+                <p style="color: var(--primary); font-size: 14px; font-weight: 600; margin-bottom: 10px;">堆内存布局图（-Xms4g -Xmx4g -XX:NewRatio=2）</p>
+                <p class="memory-label">新生代 (1.33g) - 占比33%</p>
+                <div style="display: flex; gap: 2px; margin: 5px 0;">
+                    <div style="background: #3b82f6; height: 30px; width: 80%; display: flex; align-items: center; justify-content: center; color: white; font-size: 12px; border-radius: 4px;">Eden (1.07g) 80%</div>
+                    <div style="background: #22c55e; height: 30px; width: 10%; display: flex; align-items: center; justify-content: center; color: white; font-size: 12px; border-radius: 4px;">S0</div>
+                    <div style="background: #22c55e; height: 30px; width: 10%; display: flex; align-items: center; justify-content: center; color: white; font-size: 12px; border-radius: 4px;">S1</div>
+                </div>
+                <p class="memory-label" style="margin-top: 15px;">老年代 (2.67g) - 占比67%</p>
+                <div style="background: #ef4444; height: 30px; display: flex; align-items: center; justify-content: center; color: white; font-size: 12px; border-radius: 4px;">Old Gen (2.67g) 100%</div>
+                <p class="memory-label" style="margin-top: 15px;">SurvivorRatio=8: Eden:From:To = 8:1:1</p>
+            </div>
+            
+            <div class="mermaid">
+                <p class="mermaid-label">对象生命周期与晋升路径</p>
+                <div class="mermaid">
+                    graph LR
+                        A[新对象] -->|Eden区分配| B(Eden)
+                        B -->|Minor GC| C{存活?}
+                        C -->|否| D[回收]
+                        C -->|是| E[Survivor0]
+                        E -->|下次Minor GC| F{存活?}
+                        F -->|是| G[Survivor1]
+                        G -->|多次GC后| H[年龄+1]
+                        H -->|年龄<15| E
+                        H -->|年龄>=15| I[老年代]
+                        B -->|大对象| I
+                        style A fill:#3b82f6,stroke:#3f3f5a,color:#f8f8f8
+                        style B fill:#3b82f6,stroke:#3f3f5a,color:#f8f8f8
+                        style C fill:#f59e0b,stroke:#3f3f5a,color:#f8f8f8
+                        style D fill:#6b7280,stroke:#3f3f5a,color:#f8f8f8
+                        style E fill:#22c55e,stroke:#3f3f5a,color:#f8f8f8
+                        style F fill:#f59e0b,stroke:#3f3f5a,color:#f8f8f8
+                        style G fill:#22c55e,stroke:#3f3f5a,color:#f8f8f8
+                        style H fill:#6366f1,stroke:#3f3f5a,color:#f8f8f8
+                        style I fill:#ef4444,stroke:#3f3f5a,color:#f8f8f8
+                </div>
+            </div>
+            
+            <table class="param-table">
+                <thead>
+                    <tr><th>参数</th><th>说明</th><th>默认值</th><th>示例</th><th>调优建议</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td><code>-Xms</code></td><td>初始堆内存</td><td>物理内存的1/64</td><td>-Xms2g</td><td>与-Xmx设为相同值</td></tr>
+                    <tr><td><code>-Xmx</code></td><td>最大堆内存</td><td>物理内存的1/4</td><td>-Xmx4g</td><td>不超过物理内存的80%</td></tr>
+                    <tr><td><code>-Xmn</code></td><td>新生代大小</td><td>堆的1/3</td><td>-Xmn1g</td><td>设为堆的1/4到1/3</td></tr>
+                    <tr><td><code>-XX:NewRatio</code></td><td>老新比值</td><td>2(即1:2)</td><td>-XX:NewRatio=4</td><td>新生代占比1/(1+NewRatio)</td></tr>
+                    <tr><td><code>-XX:SurvivorRatio</code></td><td>Eden与Survivor比值</td><td>8</td><td>-XX:SurvivorRatio=8</td><td>Eden:From:To = 8:1:1</td></tr>
+                    <tr><td><code>-XX:MaxTenuringThreshold</code></td><td>最大晋升年龄</td><td>15</td><td>-XX:MaxTenuringThreshold=6</td><td>减少晋升次数，加速回收</td></tr>
+                </tbody>
+            </table>
+            <p style="margin-top: 15px;"><strong>新生代内存分配策略：</strong></p>
+            <ul>
+                <li>Eden区占8/10，两个Survivor各占1/10(SurvivorRatio=8)</li>
+                <li>对象优先在Eden区分配</li>
+                <li>大对象直接进入老年代(-XX:PretenureSizeThreshold)</li>
+                <li>长期存活对象进入老年代(默认年龄15)</li>
+            </ul>
+        </div>
+
+        <div class="code-block">
+            <code>
+<span class="comment">// 堆内存配置最佳实践</span>
+<span class="comment">// 生产环境推荐配置：</span>
+<span class="comment">// 固定堆大小，避免动态调整带来的性能波动</span>
+java -Xms4g -Xmx4g \
+     -XX:NewRatio=2 \
+     -XX:SurvivorRatio=8 \
+     -XX:MaxTenuringThreshold=6 \
+     -jar application.jar
+
+<span class="comment">// 新生代大小计算：</span>
+<span class="comment">// 堆=4g, NewRatio=2, 老年代:新生代=2:1</span>
+<span class="comment">// 新生代 = 4g / (2+1) = 1.33g</span>
+<span class="comment">// Eden = 1.33g * 8/10 = 1.07g</span>
+<span class="comment">// Survivor = 1.33g * 1/10 = 133m (每个)</span>
+            </code>
+        </div>
+
+        <div class="card">
+            <h4>非堆内存配置参数</h4>
+            <table class="param-table">
+                <thead>
+                    <tr><th>参数</th><th>说明</th><th>默认值</th><th>示例</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td><code>-Xss</code></td><td>线程栈大小</td><td>1m(64位)</td><td>-Xss256k</td></tr>
+                    <tr><td><code>-XX:MetaspaceSize</code></td><td>元空间初始大小</td><td>21m</td><td>-XX:MetaspaceSize=256m</td></tr>
+                    <tr><td><code>-XX:MaxMetaspaceSize</code></td><td>元空间最大大小</td><td>无限制</td><td>-XX:MaxMetaspaceSize=512m</td></tr>
+                    <tr><td><code>-XX:CompressedClassSpaceSize</code></td><td>压缩类空间大小</td><td>1g</td><td>-XX:CompressedClassSpaceSize=256m</td></tr>
+                    <tr><td><code>-XX:MaxDirectMemorySize</code></td><td>直接内存最大值</td><td>与-Xmx相同</td><td>-XX:MaxDirectMemorySize=2g</td></tr>
+                    <tr><td><code>-XX:ReservedCodeCacheSize</code></td><td>代码缓存大小</td><td>240m</td><td>-XX:ReservedCodeCacheSize=512m</td></tr>
+                </tbody>
+            </table>
+            <p style="margin-top: 15px;"><strong>关键说明：</strong></p>
+            <ul>
+                <li><strong>Metaspace</strong>：替代PermGen，使用本地内存，存储类元数据</li>
+                <li><strong>Direct Memory</strong>：NIO DirectBuffer使用的堆外内存</li>
+                <li><strong>Code Cache</strong>：JIT编译后的机器码存储区域</li>
+                <li><strong>线程栈</strong>：每个线程独立分配，影响可创建的线程总数</li>
+            </ul>
+        </div>
+
+        <div class="card">
+            <h4>垃圾收集器配置参数</h4>
+            
+            <div class="gc-selector">
+                <div class="gc-option">
+                    <div class="name">Serial GC</div>
+                    <div class="use-case">单核客户端<br/>内存小</div>
+                </div>
+                <div class="gc-option">
+                    <div class="name">Parallel GC</div>
+                    <div class="use-case">吞吐量优先<br/>科学计算</div>
+                </div>
+                <div class="gc-option recommended">
+                    <div class="name">G1 GC</div>
+                    <div class="use-case">大内存低延迟<br/>JDK9+默认</div>
+                    <div class="badge">推荐</div>
+                </div>
+                <div class="gc-option">
+                    <div class="name">ZGC</div>
+                    <div class="use-case">超大内存<br/>极低延迟</div>
+                </div>
+            </div>
+            
+            <table class="param-table">
+                <thead>
+                    <tr><th>参数</th><th>说明</th><th>适用场景</th><th>示例</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td><code>-XX:+UseSerialGC</code></td><td>串行收集器</td><td>单核、内存小、客户端应用</td><td>-XX:+UseSerialGC</td></tr>
+                    <tr><td><code>-XX:+UseParallelGC</code></td><td>并行收集器</td><td>吞吐量优先、科学计算</td><td>-XX:+UseParallelGC</td></tr>
+                    <tr><td><code>-XX:+UseParNewGC</code></td><td>ParNew+SerialOld</td><td>CMS组合(已废弃)</td><td>-XX:+UseParNewGC</td></tr>
+                    <tr><td><code>-XX:+UseConcMarkSweepGC</code></td><td>CMS收集器</td><td>响应时间优先(Web应用)</td><td>-XX:+UseConcMarkSweepGC</td></tr>
+                    <tr><td><code>-XX:+UseG1GC</code></td><td>G1收集器</td><td>大内存、低延迟、JDK9+默认</td><td>-XX:+UseG1GC</td></tr>
+                    <tr><td><code>-XX:+UseZGC</code></td><td>ZGC收集器</td><td>超大内存、极低延迟(JDK15+)</td><td>-XX:+UseZGC</td></tr>
+                    <tr><td><code>-XX:+UseShenandoahGC</code></td><td>Shenandoah收集器</td><td>大内存、低延迟</td><td>-XX:+UseShenandoahGC</td></tr>
+                </tbody>
+            </table>
+            <p style="margin-top: 15px;"><strong>G1收集器专用参数：</strong></p>
+            <ul>
+                <li><code>-XX:MaxGCPauseMillis</code>：期望最大GC停顿时间(默认200ms)</li>
+                <li><code>-XX:G1HeapRegionSize</code>：Region大小(1-32MB，自动计算)</li>
+                <li><code>-XX:InitiatingHeapOccupancyPercent</code>：触发并发标记的堆占用百分比(默认45%)</li>
+                <li><code>-XX:G1ReservePercent</code>：保留内存比例(默认10%，避免晋升失败)</li>
+                <li><code>-XX:G1NewSizePercent</code>：新生代最小占比(默认5%)</li>
+                <li><code>-XX:G1MaxNewSizePercent</code>：新生代最大占比(默认60%)</li>
+            </ul>
+        </div>
+
+        <div class="code-block">
+            <code>
+<span class="comment">// G1收集器生产配置示例</span>
+java -Xms8g -Xmx8g \
+     -XX:+UseG1GC \
+     -XX:MaxGCPauseMillis=200 \
+     -XX:InitiatingHeapOccupancyPercent=45 \
+     -XX:G1ReservePercent=10 \
+     -XX:G1HeapRegionSize=16m \
+     -XX:+ParallelRefProcEnabled \
+     -XX:+UnlockExperimentalVMOptions \
+     -XX:G1NewSizePercent=30 \
+     -XX:G1MaxNewSizePercent=40 \
+     -jar application.jar
+
+<span class="comment">// 参数解释：</span>
+<span class="comment">// - MaxGCPauseMillis=200：目标停顿200ms，G1会自动调整Region大小</span>
+<span class="comment">// - InitiatingHeapOccupancyPercent=45：堆使用45%时开始并发标记</span>
+<span class="comment">// - G1ReservePercent=10：预留10%内存，防止晋升失败(Failure)</span>
+<span class="comment">// - G1HeapRegionSize=16m：固定Region大小，适用于大对象多的场景</span>
+<span class="comment">// - ParallelRefProcEnabled：并行处理Reference对象</span>
+            </code>
+        </div>
+
+        <div class="card">
+            <h4>JIT编译参数配置</h4>
+            <table class="param-table">
+                <thead>
+                    <tr><th>参数</th><th>说明</th><th>默认值</th><th>调优建议</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td><code>-XX:+TieredCompilation</code></td><td>启用分层编译</td><td>true(JDK8+)</td><td>保持启用，优化启动和稳态性能</td></tr>
+                    <tr><td><code>-XX:CICompilerCount</code></td><td>编译线程数</td><td>CPU核数/2+1</td><td>高并发场景可适当增加</td></tr>
+                    <tr><td><code>-XX:ReservedCodeCacheSize</code></td><td>代码缓存大小</td><td>240m</td><td>大应用设为512m</td></tr>
+                    <tr><td><code>-XX:MaxInlineSize</code></td><td>内联方法大小阈值</td><td>35字节</td><td>一般无需修改</td></tr>
+                    <tr><td><code>-XX:FreqInlineSize</code></td><td>频繁调用方法阈值</td><td>325字节</td><td>一般无需修改</td></tr>
+                    <tr><td><code>-XX:CompileThreshold</code></td><td>C1编译阈值</td><td>1500</td><td>降低可提前编译，增加启动负担</td></tr>
+                    <tr><td><code>-XX:+UseOnStackReplacement</code></td><td>启用OSR编译</td><td>true</td><td>循环密集应用应保持启用</td></tr>
+                    <tr><td><code>-XX:+EliminateAllocations</code></td><td>启用逃逸分析优化</td><td>true</td><td>保持启用</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="card">
+            <h4>GC日志与诊断参数</h4>
+            <table class="param-table">
+                <thead>
+                    <tr><th>参数</th><th>说明</th><th>示例</th><th>JDK版本</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td><code>-Xloggc</code></td><td>指定GC日志文件</td><td>-Xloggc:/var/log/app/gc.log</td><td>8及以前</td></tr>
+                    <tr><td><code>-XX:+PrintGCDetails</code></td><td>打印详细GC信息</td><td>-XX:+PrintGCDetails</td><td>8及以前</td></tr>
+                    <tr><td><code>-XX:+PrintGCDateStamps</code></td><td>打印GC时间戳</td><td>-XX:+PrintGCDateStamps</td><td>8及以前</td></tr>
+                    <tr><td><code>-Xlog:gc*</code></td><td>统一日志GC信息</td><td>-Xlog:gc*:file=/var/log/gc.log:time,uptime:filecount=10,filesize=100m</td><td>9+</td></tr>
+                    <tr><td><code>-XX:+HeapDumpOnOutOfMemoryError</code></td><td>OOM时生成堆转储</td><td>-XX:+HeapDumpOnOutOfMemoryError</td><td>全版本</td></tr>
+                    <tr><td><code>-XX:HeapDumpPath</code></td><td>堆转储文件路径</td><td>-XX:HeapDumpPath=/var/log/heapdump.hprof</td><td>全版本</td></tr>
+                    <tr><td><code>-XX:+PrintCommandLineFlags</code></td><td>打印命令行参数</td><td>-XX:+PrintCommandLineFlags</td><td>全版本</td></tr>
+                    <tr><td><code>-XX:+UnlockDiagnosticVMOptions</code></td><td>解锁诊断参数</td><td>-XX:+UnlockDiagnosticVMOptions</td><td>全版本</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="code-block">
+            <code>
+<span class="comment">// JDK 8 GC日志配置</span>
+java -Xloggc:/var/log/app/gc.log \
+     -XX:+PrintGCDetails \
+     -XX:+PrintGCDateStamps \
+     -XX:+PrintGCTimeStamps \
+     -XX:+PrintGCCause \
+     -XX:+UseGCLogFileRotation \
+     -XX:NumberOfGCLogFiles=10 \
+     -XX:GCLogFileSize=100M \
+     -jar application.jar
+
+<span class="comment">// JDK 11+ GC日志配置(统一日志)</span>
+java -Xlog:gc*:file=/var/log/app/gc.log:time,uptime:filecount=10,filesize=100m \
+     -jar application.jar
+
+<span class="comment">// 日志输出示例：</span>
+<span class="comment">// 2024-01-15T10:30:45.123+0800: 1234.567: [GC (Allocation Failure)</span>
+<span class="comment">// [PSYoungGen: 512000K->64000K(1048576K)]</span>
+<span class="comment">// 512000K->64000K(1048576K), 0.0123456 secs]</span>
+<span class="comment">// [Times: user=0.02 sys=0.01, real=0.01 secs]</span>
+            </code>
+        </div>
+
+        <div class="case-study">
+            <h4>🔧 生产环境JVM配置案例</h4>
+            <p><strong>案例1：Web应用(Spring Boot)</strong></p>
+            <div class="code-block">
+                <code>
+<span class="comment"># 8核16G服务器，运行Spring Boot Web应用</span>
+java -Xms8g -Xmx8g \
+     -XX:MetaspaceSize=256m \
+     -XX:MaxMetaspaceSize=512m \
+     -XX:+UseG1GC \
+     -XX:MaxGCPauseMillis=200 \
+     -XX:InitiatingHeapOccupancyPercent=45 \
+     -XX:G1ReservePercent=10 \
+     -XX:ParallelGCThreads=8 \
+     -XX:ConcGCThreads=2 \
+     -Xloggc:/var/log/app/gc.log \
+     -XX:+PrintGCDetails \
+     -XX:+PrintGCDateStamps \
+     -XX:+HeapDumpOnOutOfMemoryError \
+     -XX:HeapDumpPath=/var/log/heapdump.hprof \
+     -Djava.security.egd=file:/dev/./urandom \
+     -jar webapp.jar
+                </code>
+            </div>
+
+            <p style="margin-top: 20px;"><strong>案例2：大数据处理应用</strong></p>
+            <div class="code-block">
+                <code>
+<span class="comment"># 16核32G服务器，批量数据处理</span>
+java -Xms24g -Xmx24g \
+     -XX:MetaspaceSize=512m \
+     -XX:MaxMetaspaceSize=1g \
+     -XX:+UseParallelGC \
+     -XX:ParallelGCThreads=16 \
+     -XX:MaxGCPauseMillis=500 \
+     -XX:+PrintGCDetails \
+     -XX:+PrintGCDateStamps \
+     -XX:ReservedCodeCacheSize=512m \
+     -Djava.io.tmpdir=/data/tmp \
+     -jar dataprocessor.jar
+                </code>
+            </div>
+
+            <p style="margin-top: 20px;"><strong>案例3：低延迟交易系统</strong></p>
+            <div class="code-block">
+                <code>
+<span class="comment"># 8核16G服务器，要求极低延迟</span>
+java -Xms12g -Xmx12g \
+     -XX:+UseZGC \
+     -XX:ZCollectionInterval=0 \
+     -XX:ZAllocationSpikeTolerance=5 \
+     -XX:+ZProactive \
+     -Xlog:gc*:file=/var/log/zgc.log:time,uptime \
+     -XX:ReservedCodeCacheSize=512m \
+     -XX:CodeCacheExpansionSize=64m \
+     -jar trading.jar
+                </code>
+            </div>
+        </div>
+
+        <div class="card">
+            <h4>性能调优关键参数详解</h4>
+            <ul>
+                <li><strong>吞吐量优化</strong>
+                    <ul>
+                        <li>增大新生代，减少Minor GC频率</li>
+                        <li>使用Parallel GC，最大化CPU利用率</li>
+                        <li>设置合理的-XX:ParallelGCThreads</li>
+                    </ul>
+                </li>
+                <li><strong>延迟优化</strong>
+                    <ul>
+                        <li>使用G1或ZGC，控制GC停顿时间</li>
+                        <li>减小堆大小，降低GC扫描时间</li>
+                        <li>使用-XX:MaxGCPauseMillis限制停顿</li>
+                    </ul>
+                </li>
+                <li><strong>内存优化</strong>
+                    <ul>
+                        <li>启用压缩指针(-XX:+UseCompressedOops)</li>
+                        <li>调整Metaspace大小，避免类加载OOM</li>
+                        <li>监控直接内存使用(-XX:MaxDirectMemorySize)</li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+
+        <div class="highlight-box">
+            <h4>⚠️ 常见参数配置陷阱</h4>
+            <p>1. <strong>-Xms和-Xmx不一致</strong>：导致频繁堆内存扩展，影响性能<br/>
+            2. <strong>新生代过小</strong>：对象过早进入老年代，增加Major GC频率<br/>
+            3. <strong>Survivor区过小</strong>：对象提前晋升，降低GC效率<br/>
+            4. <strong>MaxGCPauseMillis过小</strong>：G1可能无法达成，导致频繁GC<br/>
+            5. <strong>Metaspace不设上限</strong>：可能无限增长，耗尽系统内存<br/>
+            6. <strong>忽略代码缓存</strong>：代码缓存满会导致JIT停止编译，性能骤降<br/>
+            7. <strong>GC日志未轮转</strong>：日志文件无限增长，占用磁盘空间</p>
+        </div>
+
+        <div class="card">
+            <h4>JVM参数验证与监控</h4>
+            <table class="param-table">
+                <thead>
+                    <tr><th>命令</th><th>用途</th><th>示例</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td><code>java -XX:+PrintFlagsFinal -version</code></td><td>查看所有JVM参数</td><td>输出所有参数及默认值</td></tr>
+                    <tr><td><code>java -XX:+PrintCommandLineFlags</code></td><td>打印实际使用的参数</td><td>显示显式设置的参数</td></tr>
+                    <tr><td><code>jinfo -flags &lt;pid&gt;</code></td><td>查看运行中JVM参数</td><td>jinfo -flags 1234</td></tr>
+                    <tr><td><code>jinfo -flag &lt;name&gt; &lt;pid&gt;</code></td><td>查看特定参数值</td><td>jinfo -flag MaxHeapSize 1234</td></tr>
+                    <tr><td><code>jstat -gc &lt;pid&gt; 1000</code></td><td>监控GC状态</td><td>每秒输出一次GC统计</td></tr>
+                    <tr><td><code>jcmd &lt;pid&gt; VM.flags</code></td><td>查看JVM启动参数</td><td>jcmd 1234 VM.flags</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="code-block">
+            <code>
+<span class="comment">// 参数调优验证流程</span>
+<span class="comment">// 1. 查看当前JVM参数配置</span>
+jinfo -flags $(pgrep -f java)
+
+<span class="comment">// 2. 监控GC活动情况</span>
+jstat -gcutil $(pgrep -f java) 1000
+
+<span class="comment">// 3. 检查内存使用情况</span>
+jmap -heap $(pgrep -f java)
+
+<span class="comment">// 4. 分析GC日志</span>
+<span class="comment">// 使用GCViewer或GCEasy工具分析日志文件</span>
+
+<span class="comment">// 5. 动态调整部分参数(部分参数支持运行时修改)</span>
+jinfo -flag +PrintGCDetails $(pgrep -f java)
+            </code>
+        </div>
+    </div>
+</body>
+</html>
